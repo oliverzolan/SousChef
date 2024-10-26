@@ -2,7 +2,7 @@
 //  SousChefApp.swift
 //  SousChef
 //
-//  Created by Oliver Zolan on 10/26/24.
+//  Created by Oliver Zolan, Sutter Reynolds on 10/26/24.
 //
 
 import SwiftUI
