@@ -24,9 +24,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		E2481D932CCD94C00086213B /* SousChef.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SousChef.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		E2481DA32CCD94C20086213B /* SousChefTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SousChefTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		E2481DAD2CCD94C20086213B /* SousChefUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SousChefUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E2481D932CCD94C00086213B /* SousChef.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = SousChef.app; path = "/Users/garrygomes/Documents/SousChef/build/Debug-iphoneos/SousChef.app"; sourceTree = "<absolute>"; };
+		E2481DA32CCD94C20086213B /* SousChefTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = SousChefTests.xctest; path = "/Users/garrygomes/Documents/SousChef/build/Debug-iphoneos/SousChef.app/PlugIns/SousChefTests.xctest"; sourceTree = "<absolute>"; };
+		E2481DAD2CCD94C20086213B /* SousChefUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = SousChefUITests.xctest; path = "/Users/garrygomes/Documents/SousChef/build/Debug-iphoneos/SousChefUITests-Runner.app/PlugIns/SousChefUITests.xctest"; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -75,21 +75,10 @@
 		E2481D8A2CCD94C00086213B = {
 			isa = PBXGroup;
 			children = (
-				E2481D952CCD94C00086213B /* SousChef */,
 				E2481DA62CCD94C20086213B /* SousChefTests */,
 				E2481DB02CCD94C20086213B /* SousChefUITests */,
-				E2481D942CCD94C00086213B /* Products */,
+				E2481D952CCD94C00086213B /* SousChef */,
 			);
-			sourceTree = "<group>";
-		};
-		E2481D942CCD94C00086213B /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				E2481D932CCD94C00086213B /* SousChef.app */,
-				E2481DA32CCD94C20086213B /* SousChefTests.xctest */,
-				E2481DAD2CCD94C20086213B /* SousChefUITests.xctest */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -196,7 +185,7 @@
 			mainGroup = E2481D8A2CCD94C00086213B;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = E2481D942CCD94C00086213B /* Products */;
+			productRefGroup = E2481D8A2CCD94C00086213B;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
