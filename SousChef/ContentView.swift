@@ -2,7 +2,7 @@
 //  ContentView.swift
 //  SousChef
 //
-//  Created by Oliver Zolan, Sutter Reynolds on 10/26/24.
+//  Created by Oliver Zolan, Sutter Reynolds, Bennet Rau on 10/26/24.
 //
 
 import SwiftUI
