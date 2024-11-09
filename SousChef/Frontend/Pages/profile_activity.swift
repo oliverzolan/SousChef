@@ -7,13 +7,36 @@
 
 import SwiftUI
 
+
 struct profile_activity: View {
     var body: some View {
         VStack {
             Text("User Login Page")
                 .font(.title)
                 .padding()
-            // Add any other UI elements for your login page here
+            // Button to go to the Login View
+                           NavigationLink(destination: LoginView()) {
+                               Text("Go to Login")
+                                   .font(.headline)
+                                   .foregroundColor(.white)
+                                   .padding()
+                                   .frame(maxWidth: .infinity)
+                                   .background(Color.blue)
+                                   .cornerRadius(8)
+                                   .padding(.horizontal)
+                           }
+
+            // Button to go to the Create Account View
+                           NavigationLink(destination: CreateAccountView()) {
+                               Text("Create New Account")
+                                   .font(.headline)
+                                   .foregroundColor(.white)
+                                   .padding()
+                                   .frame(maxWidth: .infinity)
+                                   .background(Color.green)
+                                   .cornerRadius(8)
+                                   .padding(.horizontal)
+                           }
         }
         .background(Color.white) // Customize background color if needed
         .edgesIgnoringSafeArea(.all)

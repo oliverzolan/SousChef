@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		30495E962CDF3DEA00CC154B /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 30495E952CDF3DEA00CC154B /* FirebaseAuth */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		E2481DA42CCD94C20086213B /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -65,6 +69,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				30495E962CDF3DEA00CC154B /* FirebaseAuth in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -125,6 +130,7 @@
 			);
 			name = SousChef;
 			packageProductDependencies = (
+				30495E952CDF3DEA00CC154B /* FirebaseAuth */,
 			);
 			productName = SousChef;
 			productReference = E2481D932CCD94C00086213B /* SousChef.app */;
@@ -208,6 +214,9 @@
 			);
 			mainGroup = E2481D8A2CCD94C00086213B;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				30495E942CDF3DEA00CC154B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E2481D942CCD94C00086213B /* Products */;
 			projectDirPath = "";
@@ -569,6 +578,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		30495E942CDF3DEA00CC154B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.4.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		30495E952CDF3DEA00CC154B /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 30495E942CDF3DEA00CC154B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = E2481D8B2CCD94C00086213B /* Project object */;
 }
