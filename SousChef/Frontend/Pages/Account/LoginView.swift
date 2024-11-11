@@ -39,9 +39,16 @@ struct LoginView: View {
             .cornerRadius(8)
 
             // Conditional navigation for successful login
-            NavigationLink(destination: profile_activity(), isActive: $isAuthenticated) {
-                EmptyView()
+            NavigationStack {
+                // Use a Button, Text, or other UI element to trigger the navigation by setting `isAuthenticated` to true
+                Button("Go to Profile Activity") {
+                    isAuthenticated = true
+                }
+                .navigationDestination(isPresented: $isAuthenticated) {
+                    profile_activity()
+                }
             }
+
         }
         .padding()
     }

@@ -39,8 +39,14 @@ struct CreateAccountView: View {
                 .foregroundColor(.white)
                 .cornerRadius(8)
 
-                NavigationLink(destination: LoginView(), isActive: $isLoggedIn) {
-                    EmptyView()
+                NavigationStack {
+                    // Use a Button, Text, or other trigger to set `isLoggedIn` to true when needed
+                    Button("Log In") {
+                        isLoggedIn = true
+                    }
+                    .navigationDestination(isPresented: $isLoggedIn) {
+                        LoginView()
+                    }
                 }
             }
             .padding()
