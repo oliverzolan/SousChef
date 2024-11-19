@@ -157,22 +157,30 @@ struct homepage_activity: View {
                             Spacer()
                             //Pantry
                             VStack {
-                                Image(systemName: "cart")
-                                    .font(.system(size: 40))
+                                NavigationLink(destination: pantry_activity()) {
+                                    Image(systemName: "cart")
+                                        .font(.system(size: 40))
+                                }
+                                
                             }
                             Spacer()
                             //Camera
                             VStack {
-                                Image(systemName: "camera.fill")
-                                    .font(.system(size: 40))
-                                    .padding()
+                                NavigationLink(destination: camera_activity()){
+                                    Image(systemName: "camera.fill")
+                                        .font(.system(size: 40))
+                                        .padding()
+                                }
                             }
                             Spacer()
                             //Ask AI
                             VStack {
-                                Image(systemName: "questionmark.circle")
-                                    .font(.system(size: 40))
+                                NavigationLink(destination: askAI_activity()){
+                                    Image(systemName: "questionmark.circle")
+                                        .font(.system(size: 40))
+                                }
                             }
+                            
                             Spacer()
                         }
                         .foregroundColor(.white)
