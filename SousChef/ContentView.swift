@@ -8,18 +8,18 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var result = "No result"
+
     var body: some View {
         VStack {
-            Image(systemName: "globe")
-                .resizable()
-                .frame(width: 50, height: 50)
-                .foregroundStyle(.tint)
-            Text("SousChef App")
+            CameraView(result: $result)
+                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height * 0.7)
+            
+            Text(result)
+                .padding()
+                .font(.title)
+                .multilineTextAlignment(.center)
         }
-        .padding()
+        .edgesIgnoringSafeArea(.all)
     }
-}
-
-#Preview {
-    ContentView()
 }
