@@ -114,14 +114,16 @@ struct homepage_activity: View {
                     
                     HStack(spacing: 20) {
                         VStack {
-                            Image(systemName: "doc.text.viewfinder")
-                                .font(.system(size: 30))
-                                .padding(.bottom, 5)
-                                .foregroundColor(.white)
-                            Text("Scan Receipt")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                        }
+                            NavigationLink(destination: receipt_activity()) {
+                                
+                                Image(systemName: "doc.text.viewfinder")
+                                    .font(.system(size: 30))
+                                    .padding(.bottom, 5)
+                                    .foregroundColor(.white)
+                                Text("Scan Receipt")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                            }}
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(AppColors.cardColor)
