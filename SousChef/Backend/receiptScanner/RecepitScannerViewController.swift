@@ -1,10 +1,9 @@
 //
-//  Untitled.swift
+//  ReceiptScannerViewController.swift
 //  SousChef
 //
 //  Created by Bennet Rau on 11/14/24.
 //
-
 
 import UIKit
 import Vision
@@ -20,14 +19,14 @@ class ReceiptScannerViewController: UIViewController, UIImagePickerControllerDel
         "fish", "rice", "pasta", "cheese", "milk", "butter", "salt", "sugar", "flour", "egg",
         "pepper", "olive oil", "lemon", "lime", "bread", "spinach", "broccoli", "cucumber", "lettuce",
         "mushroom", "corn", "peanut butter", "honey", "chocolate", "cream", "yogurt", "beans",
-        "peas", "lentils", "avocado", "chili", "soy sauce", "vinegar", "basil", "parsley", "cilantro",
+        "peas", "lentils", "avocados", "chili", "soy sauce", "vinegar", "basil", "parsley", "cilantro",
         "mint", "rosemary", "thyme", "oregano", "paprika", "cinnamon", "cumin", "turmeric",
         "ginger", "watermelon", "strawberry", "blueberry", "raspberry", "orange", "peach",
         "pear", "grape", "pineapple", "coconut", "almond", "walnut", "cashew", "hazelnut",
         "shrimp", "crab", "lobster", "salmon", "tuna", "cod", "bread crumbs", "zucchini",
         "eggplant", "bell pepper", "cauliflower", "cabbage", "celery", "kale", "chard",
         "beet", "radish", "asparagus", "artichoke", "leek", "scallion", "bok choy",
-        "tofu", "tempeh", "seitan", "quinoa", "bulgur", "oats", "barley", "chia", "flaxseed"
+        "tofu", "tempeh", "seitan", "quinoa", "bulgur", "oats", "barley", "chia", "flaxseed", "poppi", "eggs"
     ]
 
 
@@ -135,13 +134,18 @@ class ReceiptScannerViewController: UIViewController, UIImagePickerControllerDel
 
         for observation in results {
             let topCandidate = observation.topCandidates(1).first
-            if let recognizedText = topCandidate?.string.lowercased() {
-                if commonIngredients.contains(recognizedText) {
-                    recognizedItems.append(recognizedText)
+            if let recognizedText = topCandidate?.string {
+                // Split text into components based on common delimiters
+                let components = recognizedText.split(whereSeparator: { $0.isPunctuation || $0.isWhitespace })
+                
+                for component in components {
+                    let normalizedText = normalizeText(String(component)) // Normalize each part
+                    if commonIngredients.contains(normalizedText) {
+                        recognizedItems.append(normalizedText)
+                    }
                 }
             }
         }
-
 
         DispatchQueue.main.async {
             if self.recognizedItems.isEmpty {
@@ -151,5 +155,15 @@ class ReceiptScannerViewController: UIViewController, UIImagePickerControllerDel
             }
             self.onItemsScanned?(self.recognizedItems)
         }
+    }
+
+    // Helper function to normalize text
+    private func normalizeText(_ text: String) -> String {
+        // Remove punctuation and trim whitespace
+        let cleanedText = text
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased() // Convert to lowercase
+            .filter { $0.isLetter || $0.isWhitespace } // Remove non-letter characters
+        return cleanedText
     }
 }
