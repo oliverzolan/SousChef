@@ -1,17 +1,15 @@
 import SwiftUI
 
 struct ReceiptScannerView: UIViewControllerRepresentable {
-    @Binding var scannedItems: [String]
+    @Binding var scannedItems: [String] // The SwiftUI state that receives the scanned items
 
-    func makeUIViewController(context: Context) -> ReceiptScannerViewController {
-        let viewController = ReceiptScannerViewController()
-        viewController.onItemsScanned = { items in
-            scannedItems = items // Update the SwiftUI view with scanned items
-        }
+    func makeUIViewController(context: Context) -> LiveReceiptScannerViewController {
+        let viewController = LiveReceiptScannerViewController()
         return viewController
     }
-    
-    func updateUIViewController(_ uiViewController: ReceiptScannerViewController, context: Context) {
-        // No updates needed
+
+    func updateUIViewController(_ uiViewController: LiveReceiptScannerViewController, context: Context) {
+        // No updates are needed; the ViewController handles live updates
     }
 }
+

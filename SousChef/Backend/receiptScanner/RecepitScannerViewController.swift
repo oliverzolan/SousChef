@@ -6,13 +6,16 @@
 //
 
 import UIKit
+import AVFoundation
 import Vision
-import VisionKit
 
-class ReceiptScannerViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-    
+class LiveReceiptScannerViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate {
     var recognizedItems: [String] = []
-    var onItemsScanned: (([String]) -> Void)? // Completion handler to pass data back
+    var onItemsScanned: (([String]) -> Void)? // Closure to send scanned items back to SwiftUI
+
+    private let doneButton = UIButton(type: .system)
+    private let overlayView = UIView()
+    private let itemsTableView = UITableView()
 
     let commonIngredients: Set<String> = [
         "apple", "banana", "carrot", "onion", "garlic", "potato", "tomato", "chicken", "beef", "pork",
@@ -29,118 +32,135 @@ class ReceiptScannerViewController: UIViewController, UIImagePickerControllerDel
         "tofu", "tempeh", "seitan", "quinoa", "bulgur", "oats", "barley", "chia", "flaxseed", "poppi", "eggs"
     ]
 
-
-    lazy var scanButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("Scan Receipt", for: .normal)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.addTarget(self, action: #selector(startScanning), for: .touchUpInside)
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 16) // Smaller font size
-        return button
-    }()
-
-    lazy var resultsLabel: UILabel = {
-        let label = UILabel()
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.numberOfLines = 0
-        label.textAlignment = .center
-        label.text = "Scan a receipt to see ingredients."
-        label.backgroundColor = UIColor.systemGray6 // Light gray background
-        label.layer.cornerRadius = 8
-        label.layer.masksToBounds = true
-        return label
-    }()
+    private let captureSession = AVCaptureSession()
+    private var previewLayer: AVCaptureVideoPreviewLayer!
+    private var textDetectionRequest: VNRecognizeTextRequest!
+    private var frameCount = 0
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupUI()
+        setupCamera()
+        setupTextRecognition()
+        setupOverlay()
     }
 
-    func setupUI() {
-        view.backgroundColor = .white
-        view.addSubview(scanButton)
-        view.addSubview(resultsLabel)
-        NSLayoutConstraint.activate([
-            scanButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            scanButton.bottomAnchor.constraint(equalTo: resultsLabel.topAnchor, constant: -20),
-            scanButton.heightAnchor.constraint(equalToConstant: 40),
-            scanButton.widthAnchor.constraint(equalToConstant: 150),
+    private func setupCamera() {
+        guard let videoCaptureDevice = AVCaptureDevice.default(for: .video),
+              let videoInput = try? AVCaptureDeviceInput(device: videoCaptureDevice) else {
+            fatalError("No video camera available")
+        }
+        captureSession.addInput(videoInput)
 
-            resultsLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            resultsLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            resultsLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            resultsLabel.heightAnchor.constraint(equalToConstant: 100), // Fixed height for results area
-            resultsLabel.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -50)
+        let videoOutput = AVCaptureVideoDataOutput()
+        videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "cameraFrameProcessingQueue"))
+        captureSession.addOutput(videoOutput)
+
+        previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
+        previewLayer.frame = view.bounds
+        previewLayer.videoGravity = .resizeAspectFill
+        view.layer.addSublayer(previewLayer)
+
+        captureSession.startRunning()
+    }
+
+    private func setupTextRecognition() {
+        textDetectionRequest = VNRecognizeTextRequest { [weak self] request, error in
+            guard let self = self else { return }
+            if let error = error {
+                print("Text recognition error: \(error)")
+                return
+            }
+            self.handleTextRecognitionResults(request.results)
+        }
+        textDetectionRequest.recognitionLevel = .accurate
+        textDetectionRequest.usesLanguageCorrection = true
+    }
+
+    private func setupOverlay() {
+        // Configure the overlay view
+        overlayView.backgroundColor = UIColor.black.withAlphaComponent(0.6)
+        overlayView.layer.cornerRadius = 10
+        overlayView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(overlayView)
+
+        // Configure the table view for displaying recognized items
+        itemsTableView.backgroundColor = .clear
+        itemsTableView.separatorStyle = .none
+        itemsTableView.dataSource = self
+        itemsTableView.translatesAutoresizingMaskIntoConstraints = false
+        overlayView.addSubview(itemsTableView)
+
+        // Configure the "Done" button
+        doneButton.setTitle("Done", for: .normal)
+        doneButton.setTitleColor(.white, for: .normal)
+        doneButton.backgroundColor = UIColor.systemBlue
+        doneButton.layer.cornerRadius = 10
+        doneButton.translatesAutoresizingMaskIntoConstraints = false
+        doneButton.addTarget(self, action: #selector(doneButtonTapped), for: .touchUpInside)
+        overlayView.addSubview(doneButton)
+
+
+        // Layout the overlay view, table view, and done button
+        NSLayoutConstraint.activate([
+            // Overlay view constraints
+            overlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            overlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            overlayView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10),
+            overlayView.heightAnchor.constraint(equalToConstant: 200),
+
+            // Items table view constraints (above the "Done" button)
+            itemsTableView.topAnchor.constraint(equalTo: overlayView.topAnchor, constant: 8),
+            itemsTableView.leadingAnchor.constraint(equalTo: overlayView.leadingAnchor, constant: 8),
+            itemsTableView.trailingAnchor.constraint(equalTo: overlayView.trailingAnchor, constant: -8),
+            itemsTableView.bottomAnchor.constraint(equalTo: doneButton.topAnchor, constant: -10),
+
+            // Done button constraints (at the bottom of the overlay)
+            doneButton.leadingAnchor.constraint(equalTo: overlayView.leadingAnchor, constant: 8),
+            doneButton.trailingAnchor.constraint(equalTo: overlayView.trailingAnchor, constant: -8),
+            doneButton.bottomAnchor.constraint(equalTo: overlayView.bottomAnchor, constant: -8),
+            doneButton.heightAnchor.constraint(equalToConstant: 50)
         ])
     }
 
-    @objc func startScanning() {
-        let imagePicker = UIImagePickerController()
-        imagePicker.sourceType = .camera
-        imagePicker.delegate = self
-        imagePicker.allowsEditing = false
-        present(imagePicker, animated: true, completion: nil)
+
+    @objc private func doneButtonTapped() {
+        print("Done button tapped!") // Debugging
+
+        // Ensure the `onItemsScanned` closure is called
+        onItemsScanned?(recognizedItems)
+
+        // Navigate to the ScannedIngredientsViewController
+        let summaryViewController = ScannedIngredientsViewController()
+        summaryViewController.scannedItems = recognizedItems
+
+        if let navigationController = navigationController {
+            // Push the new view controller if inside a UINavigationController
+            navigationController.pushViewController(summaryViewController, animated: true)
+        } else {
+            // Present the view controller modally
+            present(summaryViewController, animated: true, completion: nil)
+        }
     }
 
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
-        picker.dismiss(animated: true, completion: nil)
 
-        guard let selectedImage = info[.originalImage] as? UIImage else {
-            resultsLabel.text = "No image found. Please try again."
-            return
-        }
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        frameCount += 1
+        if frameCount % 10 != 0 { return }
 
-        processImage(selectedImage)
-    }
-
-    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-        picker.dismiss(animated: true, completion: nil)
-        resultsLabel.text = "Scanning cancelled."
-    }
-    
-    func processImage(_ image: UIImage) {
-        guard let cgImage = image.cgImage else {
-            resultsLabel.text = "Unable to convert UIImage to CGImage. Please try again."
-            return
-        }
-
-        let request = VNRecognizeTextRequest { (request, error) in
-            if let error = error {
-                self.resultsLabel.text = "Text recognition error: \(error.localizedDescription)"
-                return
-            }
-
-            self.handleTextRecognitionResults(request.results)
-        }
-
-        request.recognitionLevel = .accurate
-        request.usesLanguageCorrection = true
-
-        let requestHandler = VNImageRequestHandler(cgImage: cgImage, options: [:])
-        do {
-            try requestHandler.perform([request])
-        } catch {
-            self.resultsLabel.text = "Failed to perform text recognition: \(error.localizedDescription)"
-        }
+        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        let requestHandler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:])
+        try? requestHandler.perform([textDetectionRequest])
     }
 
     private func handleTextRecognitionResults(_ results: [Any]?) {
-        guard let results = results as? [VNRecognizedTextObservation] else {
-            resultsLabel.text = "No text found. Please try again."
-            return
-        }
-
-        recognizedItems = [] // Clear previous results
+        guard let results = results as? [VNRecognizedTextObservation] else { return }
 
         for observation in results {
-            let topCandidate = observation.topCandidates(1).first
-            if let recognizedText = topCandidate?.string {
-                // Split text into components based on common delimiters
+            if let recognizedText = observation.topCandidates(1).first?.string {
                 let components = recognizedText.split(whereSeparator: { $0.isPunctuation || $0.isWhitespace })
-                
                 for component in components {
-                    let normalizedText = normalizeText(String(component)) // Normalize each part
-                    if commonIngredients.contains(normalizedText) {
+                    let normalizedText = normalizeText(String(component))
+                    if commonIngredients.contains(normalizedText) && !recognizedItems.contains(normalizedText) {
                         recognizedItems.append(normalizedText)
                     }
                 }
@@ -148,22 +168,26 @@ class ReceiptScannerViewController: UIViewController, UIImagePickerControllerDel
         }
 
         DispatchQueue.main.async {
-            if self.recognizedItems.isEmpty {
-                self.resultsLabel.text = "No common ingredients found. Please try again."
-            } else {
-                self.resultsLabel.text = "Recognized Ingredients: \(self.recognizedItems.joined(separator: ", "))"
-            }
-            self.onItemsScanned?(self.recognizedItems)
+            self.itemsTableView.reloadData() // Update the table view
+            self.onItemsScanned?(self.recognizedItems) // Notify SwiftUI about updates
         }
     }
 
-    // Helper function to normalize text
     private func normalizeText(_ text: String) -> String {
-        // Remove punctuation and trim whitespace
-        let cleanedText = text
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased() // Convert to lowercase
-            .filter { $0.isLetter || $0.isWhitespace } // Remove non-letter characters
-        return cleanedText
+        return text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+}
+
+extension LiveReceiptScannerViewController: UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return recognizedItems.count
+    }
+
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
+        cell.textLabel?.text = recognizedItems[indexPath.row]
+        cell.backgroundColor = .clear
+        cell.textLabel?.textColor = .white
+        return cell
     }
 }

@@ -8,17 +8,16 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var scannedItems: [String] = []
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .resizable()
-                .frame(width: 50, height: 50)
-                .foregroundStyle(.tint)
-            Text("SousChef App")
+        NavigationView {
+            ReceiptScannerView(scannedItems: $scannedItems)
+                .navigationBarTitle("Scan Ingredients", displayMode: .inline)
         }
-        .padding()
     }
 }
+
 
 #Preview {
     ContentView()
