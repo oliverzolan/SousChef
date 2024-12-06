@@ -6,10 +6,6 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		05D318EC2CE195730047C8C3 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 05D318EB2CE195730047C8C3 /* FirebaseAuth */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXContainerItemProxy section */
 		E2481DA42CCD94C20086213B /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -33,22 +29,9 @@
 		E2481DAD2CCD94C20086213B /* SousChefUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SousChefUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		0537C2362CD0D3EC00DEE60E /* Exceptions for "SousChef" folder in "SousChef" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = E2481D922CCD94C00086213B /* SousChef */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		E2481D952CCD94C00086213B /* SousChef */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				0537C2362CD0D3EC00DEE60E /* Exceptions for "SousChef" folder in "SousChef" target */,
-			);
 			path = SousChef;
 			sourceTree = "<group>";
 		};
@@ -69,7 +52,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				05D318EC2CE195730047C8C3 /* FirebaseAuth in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -130,7 +112,6 @@
 			);
 			name = SousChef;
 			packageProductDependencies = (
-				05D318EB2CE195730047C8C3 /* FirebaseAuth */,
 			);
 			productName = SousChef;
 			productReference = E2481D932CCD94C00086213B /* SousChef.app */;
@@ -214,9 +195,6 @@
 			);
 			mainGroup = E2481D8A2CCD94C00086213B;
 			minimizedProjectReferenceProxies = 1;
-			packageReferences = (
-				05D318EA2CE195730047C8C3 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
-			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E2481D942CCD94C00086213B /* Products */;
 			projectDirPath = "";
@@ -418,11 +396,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"SousChef/Preview Content\"";
-				DEVELOPMENT_TEAM = JWWRMVGGLT;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = SousChef/Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "Scan receipts";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -449,11 +424,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"SousChef/Preview Content\"";
-				DEVELOPMENT_TEAM = JWWRMVGGLT;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = SousChef/Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "Scan receipts";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -580,25 +552,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		05D318EA2CE195730047C8C3 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 11.4.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		05D318EB2CE195730047C8C3 /* FirebaseAuth */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 05D318EA2CE195730047C8C3 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseAuth;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = E2481D8B2CCD94C00086213B /* Project object */;
 }
