@@ -1,8 +1,8 @@
 //
-//  LoginView.swift
+//  UserSession.swift
 //  SousChef
 //
-//  Created by Zachary Waiksnoris on 11/8/24.
+//  Created by Zachary Waiksnoris on 12/5/24.
 //
 
 import SwiftUI
@@ -12,11 +12,11 @@ struct LoginView: View {
     @State private var email: String = ""
     @State private var password: String = ""
     @State private var errorMessage: String?
-    @State private var isAuthenticated: Bool = false
-    @EnvironmentObject var userSession: UserSession // Access shared session for token management
+    @State private var navigateToHome: Bool = false // State for navigation
+    @EnvironmentObject var userSession: UserSession // Access shared session
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 AppColors.background
                     .edgesIgnoringSafeArea(.all)
@@ -28,8 +28,8 @@ struct LoginView: View {
                         .foregroundColor(Color.white)
                         .padding(.top, 40)
                     
+                    // Login form
                     VStack(spacing: 16) {
-                        // Email TextField
                         TextField("", text: $email)
                             .placeholder(when: email.isEmpty) {
                                 Text("Email").foregroundColor(Color.white.opacity(0.7))
@@ -38,7 +38,6 @@ struct LoginView: View {
                             .padding(.vertical, 10)
                             .overlay(Divider().background(AppColors.cardColor), alignment: .bottom)
                         
-                        // Password SecureField
                         SecureField("", text: $password)
                             .placeholder(when: password.isEmpty) {
                                 Text("Password").foregroundColor(Color.white.opacity(0.7))
@@ -74,11 +73,32 @@ struct LoginView: View {
                     .padding(.horizontal, 24)
                     .padding(.top, 20)
                     
+                    // Guest Login Button
+                    Button(action: {
+                        userSession.loginAsGuest()
+                        navigateToHome = true // Redirect to homepage as guest
+                    }) {
+                        Text("Continue as Guest")
+                            .fontWeight(.bold)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .foregroundColor(Color.white)
+                            .background(
+                                RoundedRectangle(cornerRadius: 30, style: .continuous)
+                                    .fill(AppColors.cardColor)
+                            )
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 10)
+                    
                     Spacer()
                 }
             }
-            .navigationDestination(isPresented: $isAuthenticated) {
-                profile_activity()
+            // Redirect to homepage_activity
+            .navigationDestination(isPresented: $navigateToHome) {
+                homepage_activity()
+                    .navigationBarBackButtonHidden(true)
+                    .environmentObject(userSession)
             }
         }
     }
@@ -88,23 +108,14 @@ struct LoginView: View {
             if let error = error {
                 errorMessage = error.localizedDescription
             } else if let result = result {
-                // Store token securely in Keychain
                 if let token = result.user.refreshToken {
                     KeychainHelper.shared.save(token, for: "authToken")
                     userSession.token = token // Update global session
-                    isAuthenticated = true
+                    navigateToHome = true // Trigger navigation to homepage
                 } else {
                     errorMessage = "Failed to retrieve token. Please try again."
                 }
             }
         }
-    }
-}
-
-struct LoginView_Previews: PreviewProvider {
-    static var previews: some View {
-        LoginView()
-            .environmentObject(UserSession()) // Provide a dummy session for previews
-            .previewDevice("iPhone 12")
     }
 }

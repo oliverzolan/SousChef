@@ -8,14 +8,20 @@
 import Foundation
 
 class UserSession: ObservableObject {
-    @Published var token: String? // Published to notify views of changes
+    @Published var token: String? // For authenticated users
+    @Published var isGuest: Bool = false // For guest users
 
     init() {
         self.token = KeychainHelper.shared.retrieve(for: "authToken")
     }
 
+    func loginAsGuest() {
+        isGuest = true
+    }
+
     func logout() {
         KeychainHelper.shared.delete(for: "authToken")
         self.token = nil
+        self.isGuest = false
     }
 }

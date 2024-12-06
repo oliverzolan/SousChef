@@ -1,3 +1,10 @@
+//
+//  UserSession.swift
+//  SousChef
+//
+//  Created by Zachary Waiksnoris on 12/5/24.
+//
+
 import Security
 import Foundation // Add this import
 

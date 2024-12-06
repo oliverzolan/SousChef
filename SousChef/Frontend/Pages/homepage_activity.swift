@@ -28,7 +28,7 @@ struct homepage_activity: View {
                                 .foregroundColor(.white)
                                 .padding(.leading, 20)
                             Spacer()
-                            NavigationLink(destination: profile_activity()) {
+                            NavigationLink(destination: profile_activity().navigationBarBackButtonHidden(true)) {
                                 Image(systemName: "person.circle")
                                     .font(.system(size: 50))
                                     .foregroundColor(.white)

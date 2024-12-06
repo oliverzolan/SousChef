@@ -23,7 +23,10 @@ struct profile_activity: View {
                         .foregroundColor(Color.white)
                     
                     // Navigation to Login View
-                    NavigationLink(destination: LoginView()) {
+                    NavigationLink(
+                        destination: LoginView()
+                            .navigationBarBackButtonHidden(true) // Hide the back button
+                    ) {
                         Text("Go to Login")
                             .fontWeight(.bold)
                             .frame(maxWidth: .infinity)
@@ -41,7 +44,10 @@ struct profile_activity: View {
                     .padding(.horizontal, 24)
                     
                     // Navigation to Create Account View
-                    NavigationLink(destination: CreateAccountView()) {
+                    NavigationLink(
+                        destination: CreateAccountView()
+                            .navigationBarBackButtonHidden(true) // Hide the back button
+                    ) {
                         Text("Create New Account")
                             .fontWeight(.bold)
                             .frame(maxWidth: .infinity)
@@ -61,6 +67,7 @@ struct profile_activity: View {
                     Spacer() // Push content to the middle
                 }
             }
+            .navigationBarBackButtonHidden(true) // Hide back button for this view
         }
     }
 }

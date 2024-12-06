@@ -1,3 +1,10 @@
+//
+//  recipe_activity.swift
+//  SousChef
+//
+//  Created by Zachary Waiksnoris on 11/19/24.
+//
+
 import SwiftUI
 
 struct pantry_activity: View {
