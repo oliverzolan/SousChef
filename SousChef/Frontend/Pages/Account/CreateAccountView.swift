@@ -22,6 +22,13 @@ struct CreateAccountView: View {
                     .edgesIgnoringSafeArea(.all)
                 
                 VStack(spacing: 30) {
+                    HStack {
+                            Spacer()
+                            HomeButton() // Add the home button here
+                            .padding(.trailing, 20)
+                            .padding(.top, 10)
+                                        }
+                    
                     Text("Create Account")
                         .font(.title)
                         .fontWeight(.medium)
