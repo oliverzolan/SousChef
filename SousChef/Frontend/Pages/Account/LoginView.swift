@@ -12,7 +12,8 @@ struct LoginView: View {
     @State private var email: String = ""
     @State private var password: String = ""
     @State private var errorMessage: String?
-    @State private var isAuthenticated: Bool = false // Use to control navigation
+    @State private var isAuthenticated: Bool = false
+    @EnvironmentObject var userSession: UserSession // Access shared session for token management
 
     var body: some View {
         NavigationView {
@@ -28,7 +29,7 @@ struct LoginView: View {
                         .padding(.top, 40)
                     
                     VStack(spacing: 16) {
-                        // Email TextField with AppColors.cardColor underline
+                        // Email TextField
                         TextField("", text: $email)
                             .placeholder(when: email.isEmpty) {
                                 Text("Email").foregroundColor(Color.white.opacity(0.7))
@@ -37,7 +38,7 @@ struct LoginView: View {
                             .padding(.vertical, 10)
                             .overlay(Divider().background(AppColors.cardColor), alignment: .bottom)
                         
-                        // Password SecureField with AppColors.cardColor underline
+                        // Password SecureField
                         SecureField("", text: $password)
                             .placeholder(when: password.isEmpty) {
                                 Text("Password").foregroundColor(Color.white.opacity(0.7))
@@ -54,7 +55,7 @@ struct LoginView: View {
                             .padding()
                     }
                     
-                    // Log In Button with Gradient Background
+                    // Log In Button
                     Button(action: logIn) {
                         Text("LOG IN")
                             .fontWeight(.bold)
@@ -86,16 +87,24 @@ struct LoginView: View {
         Auth.auth().signIn(withEmail: email, password: password) { result, error in
             if let error = error {
                 errorMessage = error.localizedDescription
-            } else {
-                isAuthenticated = true // Navigate to HomeView on successful login
+            } else if let result = result {
+                // Store token securely in Keychain
+                if let token = result.user.refreshToken {
+                    KeychainHelper.shared.save(token, for: "authToken")
+                    userSession.token = token // Update global session
+                    isAuthenticated = true
+                } else {
+                    errorMessage = "Failed to retrieve token. Please try again."
+                }
             }
         }
     }
 }
 
-struct LoginViewScreen: PreviewProvider {
+struct LoginView_Previews: PreviewProvider {
     static var previews: some View {
         LoginView()
+            .environmentObject(UserSession()) // Provide a dummy session for previews
             .previewDevice("iPhone 12")
     }
 }
