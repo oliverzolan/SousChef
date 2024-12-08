@@ -23,11 +23,11 @@ struct CreateAccountView: View {
                 
                 VStack(spacing: 30) {
                     HStack {
-                            Spacer()
-                            HomeButton() // Add the home button here
+                        Spacer()
+                        HomeButton() // Add the home button here
                             .padding(.trailing, 20)
                             .padding(.top, 10)
-                                        }
+                    }
                     
                     Text("Create Account")
                         .font(.title)
@@ -108,10 +108,54 @@ struct CreateAccountView: View {
         Auth.auth().createUser(withEmail: email, password: password) { result, error in
             if let error = error {
                 errorMessage = error.localizedDescription
-            } else {
-                isLoggedIn = true // Navigate to LoginView after signup
+            } else if let user = result?.user {
+                user.getIDToken { token, error in
+                    if let token = token {
+                        sendToServer(email: email, token: token)
+                    } else {
+                        errorMessage = "Failed to retrieve token."
+                    }
+                }
             }
         }
+    }
+    
+    private func sendToServer(email: String, token: String) {
+        guard let url = URL(string: "http://3.89.134.6:5000/users/create") else {
+            print("Invalid URL")
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.addValue(token, forHTTPHeaderField: "Authorization")
+
+        let body: [String: Any] = [
+            "email": email,
+            "fullName": fullName
+        ]
+
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("Error sending data to server: \(error)")
+                return
+            }
+
+            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
+                print("Successfully sent data to server.")
+                DispatchQueue.main.async {
+                    isLoggedIn = true // Navigate to another view
+                }
+            } else {
+                print("Server responded with error.")
+                if let data = data, let errorMessage = String(data: data, encoding: .utf8) {
+                    print("Error: \(errorMessage)")
+                }
+            }
+        }.resume()
     }
 }
 
@@ -135,4 +179,3 @@ struct CreateAccount: PreviewProvider {
             .previewDevice("iPhone 12")
     }
 }
-
