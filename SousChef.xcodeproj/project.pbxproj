@@ -24,13 +24,13 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		E2481D932CCD94C00086213B /* SousChef.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SousChef.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		E2481DA32CCD94C20086213B /* SousChefTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SousChefTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		E2481DAD2CCD94C20086213B /* SousChefUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SousChefUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E2745D042CD0CAA6003AF4B7 /* SousChef.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SousChef.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E2745D052CD0CAA6003AF4B7 /* SousChefTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SousChefTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E2745D062CD0CAA6003AF4B7 /* SousChefUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SousChefUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		0537C2362CD0D3EC00DEE60E /* Exceptions for "SousChef" folder in "SousChef" target */ = {
+		E2A862EE2CDDE49400CD5B84 /* Exceptions for "SousChef" folder in "SousChef" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -43,7 +43,7 @@
 		E2481D952CCD94C00086213B /* SousChef */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				0537C2362CD0D3EC00DEE60E /* Exceptions for "SousChef" folder in "SousChef" target */,
+				E2A862EE2CDDE49400CD5B84 /* Exceptions for "SousChef" folder in "SousChef" target */,
 			);
 			path = SousChef;
 			sourceTree = "<group>";
@@ -91,18 +91,11 @@
 				E2481D952CCD94C00086213B /* SousChef */,
 				E2481DA62CCD94C20086213B /* SousChefTests */,
 				E2481DB02CCD94C20086213B /* SousChefUITests */,
-				E2481D942CCD94C00086213B /* Products */,
+				E2481D952CCD94C00086213B /* SousChef */,
+				E2745D042CD0CAA6003AF4B7 /* SousChef.app */,
+				E2745D052CD0CAA6003AF4B7 /* SousChefTests.xctest */,
+				E2745D062CD0CAA6003AF4B7 /* SousChefUITests.xctest */,
 			);
-			sourceTree = "<group>";
-		};
-		E2481D942CCD94C00086213B /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				E2481D932CCD94C00086213B /* SousChef.app */,
-				E2481DA32CCD94C20086213B /* SousChefTests.xctest */,
-				E2481DAD2CCD94C20086213B /* SousChefUITests.xctest */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -127,7 +120,7 @@
 			packageProductDependencies = (
 			);
 			productName = SousChef;
-			productReference = E2481D932CCD94C00086213B /* SousChef.app */;
+			productReference = E2745D042CD0CAA6003AF4B7 /* SousChef.app */;
 			productType = "com.apple.product-type.application";
 		};
 		E2481DA22CCD94C20086213B /* SousChefTests */ = {
@@ -150,7 +143,7 @@
 			packageProductDependencies = (
 			);
 			productName = SousChefTests;
-			productReference = E2481DA32CCD94C20086213B /* SousChefTests.xctest */;
+			productReference = E2745D052CD0CAA6003AF4B7 /* SousChefTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 		E2481DAC2CCD94C20086213B /* SousChefUITests */ = {
@@ -173,7 +166,7 @@
 			packageProductDependencies = (
 			);
 			productName = SousChefUITests;
-			productReference = E2481DAD2CCD94C20086213B /* SousChefUITests.xctest */;
+			productReference = E2745D062CD0CAA6003AF4B7 /* SousChefUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -209,7 +202,7 @@
 			mainGroup = E2481D8A2CCD94C00086213B;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = E2481D942CCD94C00086213B /* Products */;
+			productRefGroup = E2481D8A2CCD94C00086213B;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -409,9 +402,11 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"SousChef/Preview Content\"";
+				DEVELOPMENT_TEAM = JWWRMVGGLT;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SousChef/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs access to the camera to recognize ingredients.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -438,9 +433,11 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"SousChef/Preview Content\"";
+				DEVELOPMENT_TEAM = JWWRMVGGLT;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SousChef/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs access to the camera to recognize ingredients.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
