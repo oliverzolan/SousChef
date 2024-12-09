@@ -134,7 +134,7 @@ struct CreateAccountView: View {
         request.addValue(token, forHTTPHeaderField: "Authorization") // Use Bearer format for token
         request.addValue(email, forHTTPHeaderField: "Email") // Add the email as a header
         
-        // No body is needed since the server expects data in the headers
+
         request.httpBody = nil
         print(token)
         print(email)
@@ -152,7 +152,7 @@ struct CreateAccountView: View {
                     isLoggedIn = true // Navigate to another view
                 }
             } else {
-                print("Server responded with error.")
+                print("Server responded with message.")
                 if let data = data, let errorMessage = String(data: data, encoding: .utf8) {
                     print("Error: \(errorMessage)")
                 }
