@@ -78,18 +78,18 @@ struct pantry_activity: View {
             isLoading = false
             return
         }
-        
+
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        
+
         guard let token = userSession.token else {
             errorMessage = "User is not authenticated"
             isLoading = false
             return
         }
         request.addValue(token, forHTTPHeaderField: "Authorization")
-        
+
         URLSession.shared.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
                 if let httpResponse = response as? HTTPURLResponse {
@@ -99,24 +99,27 @@ struct pantry_activity: View {
                         return
                     }
                 }
-                
+
                 self.isLoading = false
-                
+
                 if let error = error {
                     self.errorMessage = "Failed to load pantry items: \(error.localizedDescription)"
                     return
                 }
-                
+
                 guard let data = data else {
                     self.errorMessage = "No data received from server"
                     return
                 }
-                
+
                 do {
-                    let items = try JSONDecoder().decode([String].self, from: data)
-                    self.pantryItems = items
+                    let items = try JSONDecoder().decode([PantryItem].self, from: data)
+                    self.pantryItems = items.map { $0.ingredient_name }
                 } catch {
                     self.errorMessage = "Failed to decode server response: \(error.localizedDescription)"
+                    if let jsonString = String(data: data, encoding: .utf8) {
+                        print("Raw JSON causing error: \(jsonString)")
+                    }
                 }
             }
         }.resume()
