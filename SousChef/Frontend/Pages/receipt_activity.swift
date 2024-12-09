@@ -8,22 +8,11 @@
 import SwiftUI
 
 struct receipt_activity: View {
+    @State private var scannedItems : [String] = []
     var body: some View {
-        VStack {
-            Text("Welcome to Recipe Activity")
-                .font(.title)
-                .fontWeight(.bold)
-                .padding()
-
-            Text("This is the placeholder for your recipe content.")
-                .font(.body)
-                .foregroundColor(.gray)
-                .padding()
-
-            Spacer() // To push content to the top
+        ZStack{
+            ReceiptScannerView(scannedItems: $scannedItems)
         }
-        .navigationTitle("Recipes")
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

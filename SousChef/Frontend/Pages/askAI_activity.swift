@@ -23,3 +23,4 @@ struct askAI_activity: View {
         .navigationTitle("Ask AI")
     }
 }
+
