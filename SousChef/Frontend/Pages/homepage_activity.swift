@@ -28,7 +28,7 @@ struct homepage_activity: View {
                                 .foregroundColor(.white)
                                 .padding(.leading, 20)
                             Spacer()
-                            NavigationLink(destination: profile_activity()) {
+                            NavigationLink(destination: profile_activity().navigationBarBackButtonHidden(true)) {
                                 Image(systemName: "person.circle")
                                     .font(.system(size: 50))
                                     .foregroundColor(.white)
@@ -114,14 +114,16 @@ struct homepage_activity: View {
                     
                     HStack(spacing: 20) {
                         VStack {
-                            Image(systemName: "doc.text.viewfinder")
-                                .font(.system(size: 30))
-                                .padding(.bottom, 5)
-                                .foregroundColor(.white)
-                            Text("Scan Receipt")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                        }
+                            NavigationLink(destination: receipt_activity()) {
+                                
+                                Image(systemName: "doc.text.viewfinder")
+                                    .font(.system(size: 30))
+                                    .padding(.bottom, 5)
+                                    .foregroundColor(.white)
+                                Text("Scan Receipt")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                            }}
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(AppColors.cardColor)
@@ -157,22 +159,30 @@ struct homepage_activity: View {
                             Spacer()
                             //Pantry
                             VStack {
-                                Image(systemName: "cart")
-                                    .font(.system(size: 40))
+                                NavigationLink(destination: pantry_activity()) {
+                                    Image(systemName: "cart")
+                                        .font(.system(size: 40))
+                                }
+                                
                             }
                             Spacer()
                             //Camera
                             VStack {
-                                Image(systemName: "camera.fill")
-                                    .font(.system(size: 40))
-                                    .padding()
+                                NavigationLink(destination: camera_activity()){
+                                    Image(systemName: "camera.fill")
+                                        .font(.system(size: 40))
+                                        .padding()
+                                }
                             }
                             Spacer()
                             //Ask AI
                             VStack {
-                                Image(systemName: "questionmark.circle")
-                                    .font(.system(size: 40))
+                                NavigationLink(destination: askAI_activity()){
+                                    Image(systemName: "questionmark.circle")
+                                        .font(.system(size: 40))
+                                }
                             }
+                            
                             Spacer()
                         }
                         .foregroundColor(.white)
