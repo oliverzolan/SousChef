@@ -131,7 +131,7 @@ struct CreateAccountView: View {
         
         // Set the headers for email and token
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization") // Use Bearer format for token
+        request.addValue(token, forHTTPHeaderField: "Authorization") // Use Bearer format for token
         request.addValue(email, forHTTPHeaderField: "Email") // Add the email as a header
         
         // No body is needed since the server expects data in the headers
