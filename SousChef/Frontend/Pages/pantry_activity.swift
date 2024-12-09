@@ -13,7 +13,7 @@ struct pantry_activity: View {
     @State private var isLoading: Bool = true // State to show loading indicator
     @State private var errorMessage: String? = nil // Error message state
     @EnvironmentObject var userSession: UserSession // Access the user session
-
+    
     var body: some View {
         NavigationView {
             VStack {
@@ -21,7 +21,7 @@ struct pantry_activity: View {
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .padding()
-
+                
                 if isLoading {
                     ProgressView("Loading...") // Show a loading indicator
                         .padding()
@@ -48,8 +48,9 @@ struct pantry_activity: View {
                     }
                 }
 
+                
                 Spacer()
-
+                
                 // Plus Button
                 Button(action: {
                     isPopupVisible.toggle() // Toggle the popup visibility
@@ -70,49 +71,69 @@ struct pantry_activity: View {
             .animation(.easeInOut, value: isPopupVisible) // Smooth transition
         }
     }
-
-    // Function to fetch pantry items from AWS server using user token
+    
     private func fetchPantryItems() {
         guard let url = URL(string: "http://3.89.134.6:5000/pantry/user") else {
             errorMessage = "Invalid URL"
             isLoading = false
             return
         }
-
+        
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        // Use the token from the UserSession
-        if let token = userSession.token {
-            request.addValue(token, forHTTPHeaderField: "Authorization")
-        } else {
+        
+        guard let token = userSession.token else {
             errorMessage = "User is not authenticated"
             isLoading = false
             return
         }
-
+        request.addValue(token, forHTTPHeaderField: "Authorization")
+        
         URLSession.shared.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
-                isLoading = false // Stop loading indicator
-
+                if let httpResponse = response as? HTTPURLResponse {
+                    if httpResponse.statusCode == 401 {
+                        // Token expired, refresh it
+                        self.handleTokenExpiration()
+                        return
+                    }
+                }
+                
+                self.isLoading = false
+                
                 if let error = error {
-                    errorMessage = "Failed to load pantry items: \(error.localizedDescription)"
+                    self.errorMessage = "Failed to load pantry items: \(error.localizedDescription)"
                     return
                 }
-
+                
                 guard let data = data else {
-                    errorMessage = "No data received from server"
+                    self.errorMessage = "No data received from server"
                     return
                 }
-
+                
                 do {
-                    let items = try JSONDecoder().decode([String].self, from: data) // Decode the JSON response
-                    pantryItems = items // Update pantry items with server data
+                    let items = try JSONDecoder().decode([String].self, from: data)
+                    self.pantryItems = items
                 } catch {
-                    errorMessage = "Failed to decode server response: \(error.localizedDescription)"
+                    self.errorMessage = "Failed to decode server response: \(error.localizedDescription)"
                 }
             }
         }.resume()
+    }
+    
+    private func handleTokenExpiration() {
+        userSession.refreshToken { newToken in
+            guard let newToken = newToken else {
+                DispatchQueue.main.async {
+                    self.errorMessage = "Failed to refresh token. Please log in again."
+                    self.isLoading = false
+                }
+                return
+            }
+            
+            // Retry fetching pantry items with the new token
+            self.fetchPantryItems()
+        }
     }
 }
