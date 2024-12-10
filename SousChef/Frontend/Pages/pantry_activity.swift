@@ -73,50 +73,60 @@ struct pantry_activity: View {
     }
     
     private func fetchPantryItems() {
-        guard let url = URL(string: "http://3.89.134.6:5000/pantry/user") else {
+        guard let url = URL(string: "https://souschef.click/pantry/user") else {
             errorMessage = "Invalid URL"
             isLoading = false
             return
         }
-        
+
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        
+
+        // Retrieve token securely from Keychain
         guard let token = userSession.token else {
             errorMessage = "User is not authenticated"
             isLoading = false
             return
         }
         request.addValue(token, forHTTPHeaderField: "Authorization")
-        
+        print(token)
+
         URLSession.shared.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
+                self.isLoading = false
+
                 if let httpResponse = response as? HTTPURLResponse {
-                    if httpResponse.statusCode == 401 {
-                        // Token expired, refresh it
+                    switch httpResponse.statusCode {
+                    case 200:
+                        break // OK
+                    case 401:
                         self.handleTokenExpiration()
+                        return
+                    default:
+                        self.errorMessage = "Error: Server returned status code \(httpResponse.statusCode)"
                         return
                     }
                 }
-                
-                self.isLoading = false
-                
+
                 if let error = error {
                     self.errorMessage = "Failed to load pantry items: \(error.localizedDescription)"
                     return
                 }
-                
+
                 guard let data = data else {
                     self.errorMessage = "No data received from server"
                     return
                 }
-                
+
                 do {
-                    let items = try JSONDecoder().decode([String].self, from: data)
-                    self.pantryItems = items
+                    let items = try JSONDecoder().decode([PantryItem].self, from: data)
+                    self.pantryItems = items.map { $0.ingredient_name }
                 } catch {
                     self.errorMessage = "Failed to decode server response: \(error.localizedDescription)"
+                    if let jsonString = String(data: data, encoding: .utf8) {
+                        print("Raw JSON causing error: \(jsonString)")
+                    }
                 }
             }
         }.resume()
