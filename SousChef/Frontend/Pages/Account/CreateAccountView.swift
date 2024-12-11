@@ -12,6 +12,7 @@ struct CreateAccountView: View {
     @State private var email: String = ""
     @State private var fullName: String = ""
     @State private var password: String = ""
+    @State private var name: String = ""
     @State private var errorMessage: String?
     @State private var isLoggedIn: Bool = false // Navigation state
 
@@ -49,6 +50,14 @@ struct CreateAccountView: View {
                         TextField("", text: $fullName)
                             .placeholder(when: fullName.isEmpty) {
                                 Text("Username").foregroundColor(Color.white.opacity(0.7))
+                            }
+                            .foregroundColor(Color.white)
+                            .padding(.vertical, 10)
+                            .overlay(Divider().background(AppColors.cardColor), alignment: .bottom)
+                        
+                        TextField("", text: $name)
+                            .placeholder(when: name.isEmpty) {
+                                Text("Full Name").foregroundColor(Color.white.opacity(0.7))
                             }
                             .foregroundColor(Color.white)
                             .padding(.vertical, 10)

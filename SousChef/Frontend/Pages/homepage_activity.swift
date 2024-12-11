@@ -9,6 +9,9 @@ import SwiftUI
 
 struct homepage_activity: View {
     
+    @EnvironmentObject var userSession: UserSession // Access shared user session
+
+    
     var body: some View {
         NavigationView{
             GeometryReader { geometry in
@@ -22,7 +25,11 @@ struct homepage_activity: View {
                             .edgesIgnoringSafeArea(.top)
                         
                         HStack {
-                            Text("Welcome Chef \n Bennet")
+                            Text(
+                                    userSession.fullName?.isEmpty == false
+                                    ? "Welcome Chef \n\(userSession.fullName!)"
+                                    : "Welcome Chef" 
+                                )
                                 .font(.title2)
                                 .fontWeight(.medium)
                                 .foregroundColor(.white)
