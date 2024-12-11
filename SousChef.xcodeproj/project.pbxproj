@@ -7,12 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		E29F2A2B2D06878D00652726 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = E29F2A2A2D06878D00652726 /* FirebaseAnalytics */; };
-		E29F2A2D2D06878D00652726 /* FirebaseAnalyticsOnDeviceConversion in Frameworks */ = {isa = PBXBuildFile; productRef = E29F2A2C2D06878D00652726 /* FirebaseAnalyticsOnDeviceConversion */; };
-		E29F2A2F2D06878D00652726 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */ = {isa = PBXBuildFile; productRef = E29F2A2E2D06878D00652726 /* FirebaseAnalyticsWithoutAdIdSupport */; };
-		E29F2A312D06878D00652726 /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = E29F2A302D06878D00652726 /* FirebaseAppCheck */; };
-		E29F2A332D06878D00652726 /* FirebaseAppDistribution-Beta in Frameworks */ = {isa = PBXBuildFile; productRef = E29F2A322D06878D00652726 /* FirebaseAppDistribution-Beta */; };
-		E29F2A352D0688CA00652726 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = E29F2A342D0688CA00652726 /* FirebaseAuth */; };
+		05D318EC2CE195730047C8C3 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 05D318EB2CE195730047C8C3 /* FirebaseAuth */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -33,13 +28,13 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		E2745D042CD0CAA6003AF4B7 /* SousChef.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SousChef.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		E2745D052CD0CAA6003AF4B7 /* SousChefTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SousChefTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		E2745D062CD0CAA6003AF4B7 /* SousChefUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SousChefUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E2481D932CCD94C00086213B /* SousChef.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SousChef.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E2481DA32CCD94C20086213B /* SousChefTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SousChefTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E2481DAD2CCD94C20086213B /* SousChefUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SousChefUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		E2A862EE2CDDE49400CD5B84 /* Exceptions for "SousChef" folder in "SousChef" target */ = {
+		0537C2362CD0D3EC00DEE60E /* Exceptions for "SousChef" folder in "SousChef" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -52,7 +47,7 @@
 		E2481D952CCD94C00086213B /* SousChef */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				E2A862EE2CDDE49400CD5B84 /* Exceptions for "SousChef" folder in "SousChef" target */,
+				0537C2362CD0D3EC00DEE60E /* Exceptions for "SousChef" folder in "SousChef" target */,
 			);
 			path = SousChef;
 			sourceTree = "<group>";
@@ -74,12 +69,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E29F2A312D06878D00652726 /* FirebaseAppCheck in Frameworks */,
-				E29F2A352D0688CA00652726 /* FirebaseAuth in Frameworks */,
-				E29F2A2B2D06878D00652726 /* FirebaseAnalytics in Frameworks */,
-				E29F2A332D06878D00652726 /* FirebaseAppDistribution-Beta in Frameworks */,
-				E29F2A2F2D06878D00652726 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
-				E29F2A2D2D06878D00652726 /* FirebaseAnalyticsOnDeviceConversion in Frameworks */,
+				05D318EC2CE195730047C8C3 /* FirebaseAuth in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -103,13 +93,21 @@
 		E2481D8A2CCD94C00086213B = {
 			isa = PBXGroup;
 			children = (
+				E2481D952CCD94C00086213B /* SousChef */,
 				E2481DA62CCD94C20086213B /* SousChefTests */,
 				E2481DB02CCD94C20086213B /* SousChefUITests */,
-				E2481D952CCD94C00086213B /* SousChef */,
-				E2745D042CD0CAA6003AF4B7 /* SousChef.app */,
-				E2745D052CD0CAA6003AF4B7 /* SousChefTests.xctest */,
-				E2745D062CD0CAA6003AF4B7 /* SousChefUITests.xctest */,
+				E2481D942CCD94C00086213B /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		E2481D942CCD94C00086213B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E2481D932CCD94C00086213B /* SousChef.app */,
+				E2481DA32CCD94C20086213B /* SousChefTests.xctest */,
+				E2481DAD2CCD94C20086213B /* SousChefUITests.xctest */,
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -132,15 +130,10 @@
 			);
 			name = SousChef;
 			packageProductDependencies = (
-				E29F2A2A2D06878D00652726 /* FirebaseAnalytics */,
-				E29F2A2C2D06878D00652726 /* FirebaseAnalyticsOnDeviceConversion */,
-				E29F2A2E2D06878D00652726 /* FirebaseAnalyticsWithoutAdIdSupport */,
-				E29F2A302D06878D00652726 /* FirebaseAppCheck */,
-				E29F2A322D06878D00652726 /* FirebaseAppDistribution-Beta */,
-				E29F2A342D0688CA00652726 /* FirebaseAuth */,
+				05D318EB2CE195730047C8C3 /* FirebaseAuth */,
 			);
 			productName = SousChef;
-			productReference = E2745D042CD0CAA6003AF4B7 /* SousChef.app */;
+			productReference = E2481D932CCD94C00086213B /* SousChef.app */;
 			productType = "com.apple.product-type.application";
 		};
 		E2481DA22CCD94C20086213B /* SousChefTests */ = {
@@ -163,7 +156,7 @@
 			packageProductDependencies = (
 			);
 			productName = SousChefTests;
-			productReference = E2745D052CD0CAA6003AF4B7 /* SousChefTests.xctest */;
+			productReference = E2481DA32CCD94C20086213B /* SousChefTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 		E2481DAC2CCD94C20086213B /* SousChefUITests */ = {
@@ -186,7 +179,7 @@
 			packageProductDependencies = (
 			);
 			productName = SousChefUITests;
-			productReference = E2745D062CD0CAA6003AF4B7 /* SousChefUITests.xctest */;
+			productReference = E2481DAD2CCD94C20086213B /* SousChefUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -222,10 +215,10 @@
 			mainGroup = E2481D8A2CCD94C00086213B;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				E29F2A292D06878D00652726 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				05D318EA2CE195730047C8C3 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
-			productRefGroup = E2481D8A2CCD94C00086213B;
+			productRefGroup = E2481D942CCD94C00086213B /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -422,6 +415,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = SousChef/SousChef.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"SousChef/Preview Content\"";
@@ -429,7 +423,6 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SousChef/Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs access to the camera to recognize ingredients.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -453,6 +446,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = SousChef/SousChef.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"SousChef/Preview Content\"";
@@ -460,7 +454,6 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SousChef/Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs access to the camera to recognize ingredients.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -589,45 +582,20 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		E29F2A292D06878D00652726 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+		05D318EA2CE195730047C8C3 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 11.6.0;
+				minimumVersion = 11.4.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		E29F2A2A2D06878D00652726 /* FirebaseAnalytics */ = {
+		05D318EB2CE195730047C8C3 /* FirebaseAuth */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = E29F2A292D06878D00652726 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseAnalytics;
-		};
-		E29F2A2C2D06878D00652726 /* FirebaseAnalyticsOnDeviceConversion */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E29F2A292D06878D00652726 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseAnalyticsOnDeviceConversion;
-		};
-		E29F2A2E2D06878D00652726 /* FirebaseAnalyticsWithoutAdIdSupport */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E29F2A292D06878D00652726 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseAnalyticsWithoutAdIdSupport;
-		};
-		E29F2A302D06878D00652726 /* FirebaseAppCheck */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E29F2A292D06878D00652726 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseAppCheck;
-		};
-		E29F2A322D06878D00652726 /* FirebaseAppDistribution-Beta */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E29F2A292D06878D00652726 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = "FirebaseAppDistribution-Beta";
-		};
-		E29F2A342D0688CA00652726 /* FirebaseAuth */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E29F2A292D06878D00652726 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			package = 05D318EA2CE195730047C8C3 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseAuth;
 		};
 /* End XCSwiftPackageProductDependency section */
