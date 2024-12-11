@@ -32,7 +32,7 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
 
     lazy var yoloRequest: VNCoreMLRequest! = {
         do {
-            let model = try YOLOv11s().model
+            let model = try demo_ingredients().model
             guard let classes = model.modelDescription.classLabels as? [String] else {
                 fatalError("Failed to load class labels.")
             }
@@ -67,7 +67,6 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
         previewLayer.videoGravity = .resizeAspectFill
         view.layer.addSublayer(previewLayer)
 
-        // Add detection overlay
         detectionOverlay = UIView(frame: view.bounds)
         detectionOverlay.backgroundColor = .clear
         detectionOverlay.isUserInteractionEnabled = false
@@ -129,7 +128,7 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
             }
 
             var detections: [Detection] = []
-            let confidenceThreshold: Float = 0.5  // Adjust as needed
+            let confidenceThreshold: Float = 0.5  // Adjustable
 
             for result in results {
                 guard result.confidence >= confidenceThreshold else { continue }
@@ -214,11 +213,11 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
         case .portraitUpsideDown:
             connection.videoOrientation = .portraitUpsideDown
         case .landscapeLeft:
-            connection.videoOrientation = .landscapeRight  // Corrected for camera's view
+            connection.videoOrientation = .landscapeRight
         case .landscapeRight:
-            connection.videoOrientation = .landscapeLeft   // Corrected for camera's view
+            connection.videoOrientation = .landscapeLeft
         default:
-            connection.videoOrientation = .portrait        // Default to portrait
+            connection.videoOrientation = .portrait
         }
 
         print("Updated Video Orientation: \(connection.videoOrientation.rawValue)")

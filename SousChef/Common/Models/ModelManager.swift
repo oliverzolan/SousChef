@@ -15,7 +15,7 @@ class ModelManager {
 
     private lazy var yoloRequest: VNCoreMLRequest! = {
         do {
-            let model = try YOLOv11s().model
+            let model = try demo_ingredients().model
             guard let classes = model.modelDescription.classLabels as? [String] else {
                 fatalError("Failed to load class labels.")
             }
