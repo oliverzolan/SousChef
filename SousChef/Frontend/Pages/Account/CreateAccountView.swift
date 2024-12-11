@@ -14,7 +14,7 @@ struct CreateAccountView: View {
     @State private var password: String = ""
     @State private var errorMessage: String?
     @State private var isLoggedIn: Bool = false // Navigation state
-
+    
     var body: some View {
         NavigationView {
             ZStack {
@@ -125,32 +125,34 @@ struct CreateAccountView: View {
             print("Invalid URL")
             return
         }
-
+        
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
+        
+        // Set the headers for email and token
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue(token, forHTTPHeaderField: "Authorization")
+        request.addValue(token, forHTTPHeaderField: "Authorization") // Use Bearer format for token
+        request.addValue(email, forHTTPHeaderField: "Email") // Add the email as a header
+        
 
-        let body: [String: Any] = [
-            "email": email,
-            "fullName": fullName
-        ]
-
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-
+        request.httpBody = nil
+        print(token)
+        print(email)
+        
+        
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
                 print("Error sending data to server: \(error)")
                 return
             }
-
+            
             if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
                 print("Successfully sent data to server.")
                 DispatchQueue.main.async {
                     isLoggedIn = true // Navigate to another view
                 }
             } else {
-                print("Server responded with error.")
+                print("Server responded with message.")
                 if let data = data, let errorMessage = String(data: data, encoding: .utf8) {
                     print("Error: \(errorMessage)")
                 }
