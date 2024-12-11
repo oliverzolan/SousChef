@@ -58,7 +58,7 @@ class LiveReceiptScannerViewController: UIViewController, AVCaptureVideoDataOutp
         previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
         previewLayer.frame = view.bounds
         previewLayer.videoGravity = .resizeAspectFill
-        view.layer.addSublayer(previewLayer)
+        
 
         captureSession.startRunning()
     }
@@ -78,8 +78,11 @@ class LiveReceiptScannerViewController: UIViewController, AVCaptureVideoDataOutp
 
     private func setupOverlay() {
         // Configure the overlay view
-        overlayView.backgroundColor = UIColor.black.withAlphaComponent(0.6)
-        overlayView.layer.cornerRadius = 10
+        view.layer.addSublayer(previewLayer)
+        
+        overlayView.backgroundColor = AppColors.backgroundUIColor.withAlphaComponent(0.6)
+        overlayView.layer.cornerRadius = 20
+        overlayView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         overlayView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(overlayView)
 
@@ -93,34 +96,35 @@ class LiveReceiptScannerViewController: UIViewController, AVCaptureVideoDataOutp
         // Configure the "Done" button
         doneButton.setTitle("Done", for: .normal)
         doneButton.setTitleColor(.white, for: .normal)
-        doneButton.backgroundColor = UIColor.systemBlue
+        doneButton.backgroundColor = AppColors.navBarUIColor
         doneButton.layer.cornerRadius = 10
         doneButton.translatesAutoresizingMaskIntoConstraints = false
         doneButton.addTarget(self, action: #selector(doneButtonTapped), for: .touchUpInside)
         overlayView.addSubview(doneButton)
 
-
         // Layout the overlay view, table view, and done button
         NSLayoutConstraint.activate([
-            // Overlay view constraints
-            overlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            overlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            overlayView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10),
-            overlayView.heightAnchor.constraint(equalToConstant: 200),
+            overlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            overlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            overlayView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            overlayView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.30),
 
             // Items table view constraints (above the "Done" button)
-            itemsTableView.topAnchor.constraint(equalTo: overlayView.topAnchor, constant: 8),
-            itemsTableView.leadingAnchor.constraint(equalTo: overlayView.leadingAnchor, constant: 8),
-            itemsTableView.trailingAnchor.constraint(equalTo: overlayView.trailingAnchor, constant: -8),
-            itemsTableView.bottomAnchor.constraint(equalTo: doneButton.topAnchor, constant: -10),
+            itemsTableView.topAnchor.constraint(equalTo: overlayView.topAnchor, constant: 16),
+            itemsTableView.leadingAnchor.constraint(equalTo: overlayView.leadingAnchor, constant: 16),
+            itemsTableView.trailingAnchor.constraint(equalTo: overlayView.trailingAnchor, constant: -16),
+            itemsTableView.bottomAnchor.constraint(equalTo: doneButton.topAnchor, constant: -16),
 
-            // Done button constraints (at the bottom of the overlay)
-            doneButton.leadingAnchor.constraint(equalTo: overlayView.leadingAnchor, constant: 8),
-            doneButton.trailingAnchor.constraint(equalTo: overlayView.trailingAnchor, constant: -8),
-            doneButton.bottomAnchor.constraint(equalTo: overlayView.bottomAnchor, constant: -8),
+            // Done button constraints (above the absolute bottom of the screen)
+            doneButton.leadingAnchor.constraint(equalTo: overlayView.leadingAnchor, constant: 16),
+            doneButton.trailingAnchor.constraint(equalTo: overlayView.trailingAnchor, constant: -16),
+            doneButton.bottomAnchor.constraint(equalTo: overlayView.bottomAnchor, constant: -16), // Aligned directly above the full-screen bottom
             doneButton.heightAnchor.constraint(equalToConstant: 50)
         ])
     }
+
+
+
 
 
     @objc private func doneButtonTapped() {

@@ -202,7 +202,7 @@ struct homepage_activity: View {
 struct HomePage_Previews: PreviewProvider {
     static var previews: some View {
         homepage_activity()
-            .previewDevice("iPhone 12")
+            .previewDevice("iPhone 16 Pro")
     }
 }
 
