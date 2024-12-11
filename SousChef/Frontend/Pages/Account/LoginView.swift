@@ -114,14 +114,21 @@ struct LoginView: View {
         Auth.auth().signIn(withEmail: email, password: password) { result, error in
             if let error = error {
                 errorMessage = error.localizedDescription
-            } else if let result = result {
-                if let token = result.user.refreshToken {
-                    KeychainHelper.shared.save(token, for: "authToken")
-                    userSession.token = token // Update global session
-                    navigateToHome = true // Trigger navigation to homepage
-                } else {
-                    errorMessage = "Failed to retrieve token. Please try again."
+            } else if let user = result?.user {
+                // Force refresh the token to ensure it's valid
+                user.getIDTokenForcingRefresh(true) { idToken, error in
+                    if let error = error {
+                        errorMessage = "Failed to refresh token: \(error.localizedDescription)"
+                    } else if let idToken = idToken {
+                        KeychainHelper.shared.save(idToken, for: "authToken") // Save the token securely
+                        userSession.token = idToken // Update the global session
+                        navigateToHome = true // Trigger navigation to homepage
+                    } else {
+                        errorMessage = "Failed to retrieve a valid token. Please try again."
+                    }
                 }
+            } else {
+                errorMessage = "Failed to log in. Please try again."
             }
         }
     }

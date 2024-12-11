@@ -90,7 +90,6 @@ struct pantry_activity: View {
             return
         }
         request.addValue(token, forHTTPHeaderField: "Authorization")
-        print(token)
 
         URLSession.shared.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
