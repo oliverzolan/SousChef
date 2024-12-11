@@ -199,15 +199,15 @@ struct PantryPopupView: View {
                 return ["ingredient_id": ingredientID, "quantity": quantity]
             }
             
-            print(idToken)
-            print(selectedIngredients)
-            
             guard !selectedIngredients.isEmpty else {
                 self.errorMessage = "No ingredients selected"
                 return
             }
             
+            // Wrap the ingredients array in an object
             let payload: [String: Any] = ["ingredients": selectedIngredients]
+            
+
             
             var request = URLRequest(url: url)
             request.httpMethod = "POST"
