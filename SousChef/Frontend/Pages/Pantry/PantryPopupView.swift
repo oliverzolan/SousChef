@@ -137,6 +137,7 @@ struct PantryPopupView: View {
         request.httpMethod = "GET"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         
+        
         URLSession.shared.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
                 self.isLoading = false
@@ -180,61 +181,56 @@ struct PantryPopupView: View {
             errorMessage = "Invalid URL"
             return
         }
-        
+
         // Retrieve and refresh the Firebase token
         Auth.auth().currentUser?.getIDTokenForcingRefresh(true) { idToken, error in
             if let error = error {
                 self.errorMessage = "Failed to refresh token: \(error.localizedDescription)"
                 return
             }
-            
+
             guard let idToken = idToken else {
                 self.errorMessage = "Failed to retrieve Firebase token"
                 return
             }
-            
+
             // Prepare the payload
             let selectedIngredients = self.quantities.compactMap { (ingredientID, quantity) -> [String: Any]? in
                 guard quantity > 0 else { return nil }
                 return ["ingredient_id": ingredientID, "quantity": quantity]
             }
-            
+
             guard !selectedIngredients.isEmpty else {
                 self.errorMessage = "No ingredients selected"
                 return
             }
-            
-            // Wrap the ingredients array in an object
-            let payload: [String: Any] = ["ingredients": selectedIngredients]
-            
 
-            
+            let payload: [String: Any] = ["ingredients": selectedIngredients]
+
             var request = URLRequest(url: url)
             request.httpMethod = "POST"
             request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.addValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
-            
+            request.addValue(idToken, forHTTPHeaderField: "Authorization")
+
             do {
                 request.httpBody = try JSONSerialization.data(withJSONObject: payload, options: [])
             } catch {
                 self.errorMessage = "Failed to encode request payload: \(error.localizedDescription)"
                 return
             }
-            
-            // Send the POST request
+
             URLSession.shared.dataTask(with: request) { data, response, error in
                 DispatchQueue.main.async {
                     if let error = error {
                         self.errorMessage = "Failed to add ingredients: \(error.localizedDescription)"
                         return
                     }
-                    
+
                     guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 201 else {
                         self.errorMessage = "Failed to add ingredients: Invalid server response"
                         return
                     }
-                    
-                    // Successfully added ingredients
+
                     print("Ingredients successfully added to pantry")
                     self.isVisible = false
                 }

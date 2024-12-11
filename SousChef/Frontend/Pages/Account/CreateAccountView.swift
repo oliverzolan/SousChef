@@ -129,19 +129,9 @@ struct CreateAccountView: View {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        // Prepare JSON body
-        let requestBody: [String: Any] = [
-            "email": email,
-            "token": token
-        ]
-        
-        do {
-            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody, options: [])
-        } catch {
-            print("Error creating JSON body: \(error.localizedDescription)")
-            return
-        }
+        request.addValue(token, forHTTPHeaderField: "Authorization")
+        request.addValue(email, forHTTPHeaderField: "Email")
+
 
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
