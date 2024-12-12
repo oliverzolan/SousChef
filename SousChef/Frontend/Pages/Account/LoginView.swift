@@ -24,7 +24,7 @@ struct LoginView: View {
                 VStack(spacing: 30) {
                     HStack {
                             Spacer()
-                            HomeButton() // Add the home button here
+                            HomeButton() 
                             .padding(.trailing, 20)
                             .padding(.top, 10)
                                         }

@@ -55,7 +55,7 @@ struct pantry_activity: View {
                     }
 
 
-                    // Loading, Error, or Pantry Items List
+                    
                     if isLoading {
                         ProgressView("Loading...")
                             .padding()
@@ -84,7 +84,7 @@ struct pantry_activity: View {
 
                     Spacer()
 
-                    // Add Item Button
+                    // Add Ing.
                     Button(action: {
                         isPopupVisible.toggle()
                     }) {
@@ -100,7 +100,7 @@ struct pantry_activity: View {
                     }
                     .shadow(radius: 5)
 
-                    // Bottom Navigation Bar
+                    // Bottom Nav
                     ZStack {
                         RoundedRectangle(cornerRadius: 30, style: .continuous)
                             .fill(LinearGradient(gradient: Gradient(colors: [AppColors.gradientCardLight, AppColors.gradientCardDark]), startPoint: .topLeading, endPoint: .bottomTrailing))
@@ -117,7 +117,7 @@ struct pantry_activity: View {
                                 HStack(spacing: 20) {
                                     ForEach(["Vegetables", "Fruits", "Meats", "Grains", "Dairy", "Snacks"], id: \.self) { category in
                                         Button(action: {
-                                            // Perform filtering logic for the selected category
+                                            //when we want to filter
                                             
                                         }) {
                                             Text(category)

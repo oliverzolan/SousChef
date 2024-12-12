@@ -11,8 +11,7 @@ import Vision
 
 class LiveReceiptScannerViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate {
     var recognizedItems: [String] = []
-    var onItemsScanned: (([String]) -> Void)? // Closure to send scanned items back to SwiftUI
-
+    var onItemsScanned: (([String]) -> Void)? //need for sending back to UI for display
     private let doneButton = UIButton(type: .system)
     private let overlayView = UIView()
     private let itemsTableView = UITableView()
@@ -44,10 +43,11 @@ class LiveReceiptScannerViewController: UIViewController, AVCaptureVideoDataOutp
         setupOverlay()
     }
 
+    
     private func setupCamera() {
         guard let videoCaptureDevice = AVCaptureDevice.default(for: .video),
               let videoInput = try? AVCaptureDeviceInput(device: videoCaptureDevice) else {
-            fatalError("No video camera available")
+            fatalError("no camera")
         }
         captureSession.addInput(videoInput)
 
@@ -67,7 +67,7 @@ class LiveReceiptScannerViewController: UIViewController, AVCaptureVideoDataOutp
         textDetectionRequest = VNRecognizeTextRequest { [weak self] request, error in
             guard let self = self else { return }
             if let error = error {
-                print("Text recognition error: \(error)")
+                print("Cant recognize: \(error)")
                 return
             }
             self.handleTextRecognitionResults(request.results)
@@ -76,8 +76,8 @@ class LiveReceiptScannerViewController: UIViewController, AVCaptureVideoDataOutp
         textDetectionRequest.usesLanguageCorrection = true
     }
 
+    //bottom view need to be connected (ignore edges)
     private func setupOverlay() {
-        // Configure the overlay view
         view.layer.addSublayer(previewLayer)
         
         overlayView.backgroundColor = AppColors.backgroundUIColor.withAlphaComponent(0.6)
@@ -85,15 +85,12 @@ class LiveReceiptScannerViewController: UIViewController, AVCaptureVideoDataOutp
         overlayView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         overlayView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(overlayView)
-
-        // Configure the table view for displaying recognized items
         itemsTableView.backgroundColor = .clear
         itemsTableView.separatorStyle = .none
         itemsTableView.dataSource = self
         itemsTableView.translatesAutoresizingMaskIntoConstraints = false
         overlayView.addSubview(itemsTableView)
-
-        // Configure the "Done" button
+        //DOne button
         doneButton.setTitle("Done", for: .normal)
         doneButton.setTitleColor(.white, for: .normal)
         doneButton.backgroundColor = AppColors.navBarUIColor
@@ -101,24 +98,22 @@ class LiveReceiptScannerViewController: UIViewController, AVCaptureVideoDataOutp
         doneButton.translatesAutoresizingMaskIntoConstraints = false
         doneButton.addTarget(self, action: #selector(doneButtonTapped), for: .touchUpInside)
         overlayView.addSubview(doneButton)
-
-        // Layout the overlay view, table view, and done button
+        //overlay
         NSLayoutConstraint.activate([
             overlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             overlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             overlayView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             overlayView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.30),
 
-            // Items table view constraints (above the "Done" button)
+            //anchor above done button
             itemsTableView.topAnchor.constraint(equalTo: overlayView.topAnchor, constant: 16),
             itemsTableView.leadingAnchor.constraint(equalTo: overlayView.leadingAnchor, constant: 16),
             itemsTableView.trailingAnchor.constraint(equalTo: overlayView.trailingAnchor, constant: -16),
             itemsTableView.bottomAnchor.constraint(equalTo: doneButton.topAnchor, constant: -16),
 
-            // Done button constraints (above the absolute bottom of the screen)
             doneButton.leadingAnchor.constraint(equalTo: overlayView.leadingAnchor, constant: 16),
             doneButton.trailingAnchor.constraint(equalTo: overlayView.trailingAnchor, constant: -16),
-            doneButton.bottomAnchor.constraint(equalTo: overlayView.bottomAnchor, constant: -16), // Aligned directly above the full-screen bottom
+            doneButton.bottomAnchor.constraint(equalTo: overlayView.bottomAnchor, constant: -16),
             doneButton.heightAnchor.constraint(equalToConstant: 50)
         ])
     }
@@ -128,20 +123,15 @@ class LiveReceiptScannerViewController: UIViewController, AVCaptureVideoDataOutp
 
 
     @objc private func doneButtonTapped() {
-        print("Done button tapped!") // Debugging
-
-        // Ensure the `onItemsScanned` closure is called
+        print("Done button tapped!") //test
         onItemsScanned?(recognizedItems)
-
-        // Navigate to the ScannedIngredientsViewController
+        //nav to scnaned
         let summaryViewController = ScannedIngredientsViewController()
         summaryViewController.scannedItems = recognizedItems
 
         if let navigationController = navigationController {
-            // Push the new view controller if inside a UINavigationController
             navigationController.pushViewController(summaryViewController, animated: true)
         } else {
-            // Present the view controller modally
             present(summaryViewController, animated: true, completion: nil)
         }
     }
@@ -172,8 +162,8 @@ class LiveReceiptScannerViewController: UIViewController, AVCaptureVideoDataOutp
         }
 
         DispatchQueue.main.async {
-            self.itemsTableView.reloadData() // Update the table view
-            self.onItemsScanned?(self.recognizedItems) // Notify SwiftUI about updates
+            self.itemsTableView.reloadData() //update
+            self.onItemsScanned?(self.recognizedItems)
         }
     }
 
@@ -186,7 +176,6 @@ extension LiveReceiptScannerViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return recognizedItems.count
     }
-
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
         cell.textLabel?.text = recognizedItems[indexPath.row]

@@ -2,18 +2,16 @@ import Foundation
 import FirebaseAuth
 
 class UserSession: ObservableObject {
-    @Published var token: String? // For authenticated users
-    @Published var isGuest: Bool = false // For guest users
-    @Published var fullName: String? // For storing the user's full name
+    @Published var token: String?
+    @Published var isGuest: Bool = false
+    @Published var fullName: String?
 
     private var authListener: AuthStateDidChangeListenerHandle?
 
     init() {
-        // Retrieve token and name from Keychain on initialization
         self.token = KeychainHelper.shared.retrieve(for: "authToken")
         self.fullName = KeychainHelper.shared.retrieve(for: "userFullName")
 
-        // Add Firebase auth state listener to handle token refresh automatically
         authListener = Auth.auth().addStateDidChangeListener { [weak self] auth, user in
             guard let self = self, let user = user else {
                 self?.token = nil
@@ -30,7 +28,6 @@ class UserSession: ObservableObject {
                     self.token = idToken
                     KeychainHelper.shared.save(idToken, for: "authToken")
 
-                    // Optionally fetch and store the full name if available in user profile
                     if let displayName = user.displayName {
                         self.fullName = displayName
                         KeychainHelper.shared.save(displayName, for: "userFullName")

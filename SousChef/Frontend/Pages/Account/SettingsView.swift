@@ -1,20 +1,19 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @EnvironmentObject var userSession: UserSession // Access shared user session
-    @State private var newName: String = "" // Temporary name for the input field
-    @State private var showSuccessMessage: Bool = false // Flag to show success message
+    @EnvironmentObject var userSession: UserSession
+    @State private var newName: String = ""
+    @State private var showSuccessMessage: Bool = false
 
     var body: some View {
         VStack(spacing: 20) {
             Text("Settings")
                 .font(.largeTitle)
                 .fontWeight(.bold)
-                .padding()
+                .padding(.top, 50)
 
             Spacer()
 
-            // User Profile Name Update
             VStack(alignment: .leading, spacing: 10) {
                 Text("Update Your Name")
                     .font(.headline)
@@ -49,9 +48,9 @@ struct SettingsView: View {
                 .padding(.top, 10)
 
                 if showSuccessMessage {
-                    Text("Name updated successfully!")
+                    Text("Update check")
                         .font(.subheadline)
-                        .foregroundColor(.green)
+                        .foregroundColor(.white)
                         .padding(.top, 10)
                 }
             }
@@ -71,7 +70,7 @@ struct SettingsView: View {
 struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
         SettingsView()
-            .environmentObject(UserSession()) // Provide a default UserSession object
+            .environmentObject(UserSession())
             .previewDevice("iPhone 12")
     }
 }

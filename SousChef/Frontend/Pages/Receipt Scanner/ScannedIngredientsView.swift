@@ -11,6 +11,8 @@ import SwiftUI
 class ScannedIngredientsViewController: UIViewController {
     var scannedItems: [String] = ["Apple", "Banana", "Carrot"] // Dummy data for debugging
 
+    //screen for page after receipt scanner to show the ingridients that are scanned
+    //we need to filter this and eventually connect with AWSs
     private let tableView = UITableView()
     private let titleView = UIView()
     private let titleLabel = UILabel()
@@ -46,6 +48,7 @@ class ScannedIngredientsViewController: UIViewController {
         ])
     }
 
+    //Allows to be viewed in coumns
     private func setupTableView() {
         tableView.dataSource = self
         tableView.separatorStyle = .none
@@ -70,7 +73,6 @@ extension ScannedIngredientsViewController: UITableViewDataSource {
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
-        
         let containerView = UIView()
         containerView.layer.cornerRadius = 10
         containerView.layer.shadowColor = UIColor.black.cgColor
@@ -78,23 +80,19 @@ extension ScannedIngredientsViewController: UITableViewDataSource {
         containerView.layer.shadowOffset = CGSize(width: 0, height: 2)
         containerView.layer.shadowRadius = 4
         containerView.backgroundColor = UIColor(named: "CardBackground") ?? .white
-        
         cell.contentView.addSubview(containerView)
         containerView.translatesAutoresizingMaskIntoConstraints = false
-        
         let label = UILabel()
         label.text = scannedItems[indexPath.row]
         label.font = UIFont.systemFont(ofSize: 18, weight: .medium)
         label.textColor = UIColor(named: "CardText") ?? .darkGray
         label.translatesAutoresizingMaskIntoConstraints = false
         containerView.addSubview(label)
-        
         NSLayoutConstraint.activate([
             containerView.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: 8),
             containerView.leadingAnchor.constraint(equalTo: cell.contentView.leadingAnchor, constant: 8),
             containerView.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -8),
             containerView.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -8),
-            
             label.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
             label.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16)
         ])
@@ -110,13 +108,12 @@ struct ScannedIngredientsPreview: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ uiViewController: ScannedIngredientsViewController, context: Context) {
-        // No updates needed for this simple preview
     }
 }
 
 struct ScannedIngredientsViewController_Previews: PreviewProvider {
     static var previews: some View {
         ScannedIngredientsPreview()
-            .previewDevice("iPhone 14") // Specify a device for preview
+            .previewDevice("iPhone 14")
     }
 }
