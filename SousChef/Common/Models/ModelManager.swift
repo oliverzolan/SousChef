@@ -15,7 +15,7 @@ class ModelManager {
 
     private lazy var yoloRequest: VNCoreMLRequest! = {
         do {
-            let model = try demo_ingredients().model
+            let model = try hundredepoc().model
             guard let classes = model.modelDescription.classLabels as? [String] else {
                 fatalError("Failed to load class labels.")
             }
@@ -44,8 +44,7 @@ class ModelManager {
                                         width: result.boundingBox.width,
                                         height: result.boundingBox.height)
                 let box = VNImageRectForNormalizedRect(flippedBox, Int(videoSize.width), Int(videoSize.height))
-                if let label = result.labels.first?.identifier,
-                   let colorIndex = classes.firstIndex(of: label) {
+                if let label = result.labels.first?.identifier {
                     let color = UIColor(red: CGFloat.random(in: 0...1),
                                         green: CGFloat.random(in: 0...1),
                                         blue: CGFloat.random(in: 0...1),

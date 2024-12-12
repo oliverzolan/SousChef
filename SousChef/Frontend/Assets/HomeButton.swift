@@ -14,7 +14,7 @@ struct HomeButton: View {
                 .navigationBarBackButtonHidden(true) // Hide back button
         ) {
             Image(systemName: "house.fill")
-                .font(.system(size: 40))
+                .font(.system(size: 25))
                 .foregroundColor(.white)
                 .padding()
                 .background(Circle().fill(AppColors.cardColor))

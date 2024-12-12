@@ -9,6 +9,9 @@ import SwiftUI
 
 struct homepage_activity: View {
     
+    @EnvironmentObject var userSession: UserSession // Access shared user session
+
+    
     var body: some View {
         NavigationView{
             GeometryReader { geometry in
@@ -22,7 +25,11 @@ struct homepage_activity: View {
                             .edgesIgnoringSafeArea(.top)
                         
                         HStack {
-                            Text("Welcome Chef \n Bennet")
+                            Text(
+                                    userSession.fullName?.isEmpty == false
+                                    ? "Welcome Chef \n\(userSession.fullName!)"
+                                    : "Welcome Chef" 
+                                )
                                 .font(.title2)
                                 .fontWeight(.medium)
                                 .foregroundColor(.white)
@@ -113,9 +120,8 @@ struct homepage_activity: View {
                     
                     
                     HStack(spacing: 20) {
-                        VStack {
-                            NavigationLink(destination: receipt_activity()) {
-                                
+                        NavigationLink(destination: receipt_activity()){
+                            VStack {
                                 Image(systemName: "doc.text.viewfinder")
                                     .font(.system(size: 30))
                                     .padding(.bottom, 5)
@@ -123,12 +129,14 @@ struct homepage_activity: View {
                                 Text("Scan Receipt")
                                     .font(.headline)
                                     .foregroundColor(.white)
-                            }}
+                            }
+                        }
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(AppColors.cardColor)
                         .cornerRadius(20)
                         
+                        // Shopping List Button
                         VStack {
                             Image(systemName: "cart")
                                 .font(.system(size: 30))
@@ -144,8 +152,9 @@ struct homepage_activity: View {
                         .cornerRadius(20)
                     }
                     .padding(.horizontal)
-                    
+
                     Spacer()
+
                     
                     ZStack {
                         // Background for the bottom navigation
@@ -159,7 +168,8 @@ struct homepage_activity: View {
                             Spacer()
                             //Pantry
                             VStack {
-                                NavigationLink(destination: pantry_activity()) {
+                                NavigationLink(destination: pantry_activity()
+                                    .navigationBarBackButtonHidden(true)) {
                                     Image(systemName: "cart")
                                         .font(.system(size: 40))
                                 }
@@ -168,7 +178,9 @@ struct homepage_activity: View {
                             Spacer()
                             //Camera
                             VStack {
-                                NavigationLink(destination: scanIngridients_activity()){
+                                NavigationLink(destination: scanIngridients_activity()
+                                    //.navigationBarBackButtonHidden(true)
+                                ){
                                     Image(systemName: "camera.fill")
                                         .font(.system(size: 40))
                                         .padding()

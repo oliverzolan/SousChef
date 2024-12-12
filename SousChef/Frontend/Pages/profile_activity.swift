@@ -17,23 +17,37 @@ struct profile_activity: View {
                 VStack(spacing: 30) {
                     
                     HStack {
-                            Spacer()
-                            HomeButton() // Add the home button here
-                            .padding(.trailing, 20)
-                            .padding(.top, 10)
-                                        }
                     
-                    Spacer() // Push content to the middle
+                        HomeButton()
+                            .frame(width: 20, height: 20)
+                            .padding(.leading, 40)
+                            .padding(.top, 10)
+                        
+                        Spacer()
+
+                        NavigationLink(destination: SettingsView()) {
+                            Image(systemName: "gearshape.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Circle().fill(AppColors.cardColor))
+                        }
+                        .padding(.trailing, 20)
+                        .padding(.top, 10)
+                    }
+                    
+                    Spacer()
                     
                     Text("User Login Page")
                         .font(.title)
                         .fontWeight(.medium)
                         .foregroundColor(Color.white)
                     
-                    // Navigation to Login View
+                    //to login
                     NavigationLink(
                         destination: LoginView()
-                            .navigationBarBackButtonHidden(true) // Hide the back button
+                            // use this to hide apple automatic back button
+                            .navigationBarBackButtonHidden(true)
                     ) {
                         Text("Go to Login")
                             .fontWeight(.bold)

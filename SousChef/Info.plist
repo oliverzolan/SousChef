@@ -16,10 +16,6 @@
 		</dict>
 	</dict>
 	<key>UIAppFonts</key>
-	<array>
-		<string>Assets/Carientz.ttf</string>
-		<string>Assets/Kombin.ttf</string>
-		<string>Assets/Edigo.ttf</string>
-	</array>
+	<array/>
 </dict>
 </plist>

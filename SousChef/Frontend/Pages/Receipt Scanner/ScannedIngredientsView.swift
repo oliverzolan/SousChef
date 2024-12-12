@@ -18,7 +18,6 @@ class ScannedIngredientsViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor(named: "Background") ?? .systemBackground
-        title = "Scanned Ingredients"
         setupTitleView()
         setupTableView()
     }

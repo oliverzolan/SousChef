@@ -12,15 +12,16 @@ struct CreateAccountView: View {
     @State private var email: String = ""
     @State private var fullName: String = ""
     @State private var password: String = ""
+    @State private var name: String = ""
     @State private var errorMessage: String?
     @State private var isLoggedIn: Bool = false // Navigation state
-    
+
     var body: some View {
         NavigationView {
             ZStack {
                 AppColors.background
                     .edgesIgnoringSafeArea(.all)
-                
+
                 VStack(spacing: 30) {
                     HStack {
                         Spacer()
@@ -28,13 +29,13 @@ struct CreateAccountView: View {
                             .padding(.trailing, 20)
                             .padding(.top, 10)
                     }
-                    
+
                     Text("Create Account")
                         .font(.title)
                         .fontWeight(.medium)
                         .foregroundColor(Color.white)
                         .padding(.top, 40)
-                    
+
                     VStack(spacing: 16) {
                         // Email TextField with AppColors.cardColor underline
                         TextField("", text: $email)
@@ -44,7 +45,7 @@ struct CreateAccountView: View {
                             .foregroundColor(Color.white)
                             .padding(.vertical, 10)
                             .overlay(Divider().background(AppColors.cardColor), alignment: .bottom)
-                        
+
                         // Full Name TextField with AppColors.cardColor underline
                         TextField("", text: $fullName)
                             .placeholder(when: fullName.isEmpty) {
@@ -54,6 +55,14 @@ struct CreateAccountView: View {
                             .padding(.vertical, 10)
                             .overlay(Divider().background(AppColors.cardColor), alignment: .bottom)
                         
+                        TextField("", text: $name)
+                            .placeholder(when: name.isEmpty) {
+                                Text("Full Name").foregroundColor(Color.white.opacity(0.7))
+                            }
+                            .foregroundColor(Color.white)
+                            .padding(.vertical, 10)
+                            .overlay(Divider().background(AppColors.cardColor), alignment: .bottom)
+
                         // Password SecureField with AppColors.cardColor underline
                         SecureField("", text: $password)
                             .placeholder(when: password.isEmpty) {
@@ -64,13 +73,13 @@ struct CreateAccountView: View {
                             .overlay(Divider().background(AppColors.cardColor), alignment: .bottom)
                     }
                     .padding(.horizontal, 24)
-                    
+
                     if let errorMessage = errorMessage {
                         Text(errorMessage)
                             .foregroundColor(Color.red)
                             .padding()
                     }
-                    
+
                     // Create Button with Gradient Background
                     Button(action: signUp) {
                         Text("CREATE")
@@ -89,9 +98,9 @@ struct CreateAccountView: View {
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 20)
-                    
+
                     Spacer()
-                    
+
                     // Login Link
                     NavigationLink(destination: LoginView()) {
                         Text("LOGIN")
@@ -103,7 +112,7 @@ struct CreateAccountView: View {
             }
         }
     }
-    
+
     private func signUp() {
         Auth.auth().createUser(withEmail: email, password: password) { result, error in
             if let error = error {
@@ -119,40 +128,33 @@ struct CreateAccountView: View {
             }
         }
     }
-    
+
     private func sendToServer(email: String, token: String) {
-        guard let url = URL(string: "http://3.89.134.6:5000/users/create") else {
+        guard let url = URL(string: "https://souschef.click/users/create") else {
             print("Invalid URL")
             return
         }
-        
+
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        
-        // Set the headers for email and token
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue(token, forHTTPHeaderField: "Authorization") // Use Bearer format for token
-        request.addValue(email, forHTTPHeaderField: "Email") // Add the email as a header
-        
+        request.addValue(token, forHTTPHeaderField: "Authorization")
+        request.addValue(email, forHTTPHeaderField: "Email")
 
-        request.httpBody = nil
-        print(token)
-        print(email)
-        
-        
+
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
-                print("Error sending data to server: \(error)")
+                print("Error sending data to server: \(error.localizedDescription)")
                 return
             }
-            
+
             if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
                 print("Successfully sent data to server.")
                 DispatchQueue.main.async {
                     isLoggedIn = true // Navigate to another view
                 }
             } else {
-                print("Server responded with message.")
+                print("Server responded with an error.")
                 if let data = data, let errorMessage = String(data: data, encoding: .utf8) {
                     print("Error: \(errorMessage)")
                 }
@@ -160,7 +162,6 @@ struct CreateAccountView: View {
         }.resume()
     }
 }
-
 // Custom placeholder view modifier
 extension View {
     func placeholder<Content: View>(

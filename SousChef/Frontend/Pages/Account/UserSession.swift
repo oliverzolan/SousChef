@@ -1,27 +1,23 @@
-//
-//  UserSession.swift
-//  SousChef
-//
-//  Created by Zachary Waiksnoris on 12/5/24.
-//
-
 import Foundation
 import FirebaseAuth
 
 class UserSession: ObservableObject {
     @Published var token: String? // For authenticated users
     @Published var isGuest: Bool = false // For guest users
+    @Published var fullName: String? // For storing the user's full name
 
     private var authListener: AuthStateDidChangeListenerHandle?
 
     init() {
-        // Retrieve token from Keychain on initialization
+        // Retrieve token and name from Keychain on initialization
         self.token = KeychainHelper.shared.retrieve(for: "authToken")
-        
+        self.fullName = KeychainHelper.shared.retrieve(for: "userFullName")
+
         // Add Firebase auth state listener to handle token refresh automatically
         authListener = Auth.auth().addStateDidChangeListener { [weak self] auth, user in
             guard let self = self, let user = user else {
                 self?.token = nil
+                self?.fullName = nil
                 return
             }
 
@@ -29,22 +25,37 @@ class UserSession: ObservableObject {
                 if let error = error {
                     print("Error refreshing token: \(error.localizedDescription)")
                     self.token = nil
+                    self.fullName = nil
                 } else if let idToken = idToken {
                     self.token = idToken
                     KeychainHelper.shared.save(idToken, for: "authToken")
+
+                    // Optionally fetch and store the full name if available in user profile
+                    if let displayName = user.displayName {
+                        self.fullName = displayName
+                        KeychainHelper.shared.save(displayName, for: "userFullName")
+                    }
                 }
             }
         }
     }
 
+    func updateFullName(_ name: String) {
+        self.fullName = name
+        KeychainHelper.shared.save(name, for: "userFullName")
+    }
+
     func loginAsGuest() {
         isGuest = true
+        fullName = "Guest"
     }
 
     func logout() {
-        // Delete token from Keychain and reset state
+        // Delete token and name from Keychain and reset state
         KeychainHelper.shared.delete(for: "authToken")
+        KeychainHelper.shared.delete(for: "userFullName")
         self.token = nil
+        self.fullName = nil
         self.isGuest = false
     }
 
@@ -64,6 +75,12 @@ class UserSession: ObservableObject {
                 self?.token = idToken
                 KeychainHelper.shared.save(idToken, for: "authToken")
                 completion(idToken)
+
+                // Update full name if available
+                if let displayName = user.displayName {
+                    self?.fullName = displayName
+                    KeychainHelper.shared.save(displayName, for: "userFullName")
+                }
             }
         }
     }

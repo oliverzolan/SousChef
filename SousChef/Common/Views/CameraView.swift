@@ -13,6 +13,5 @@ struct CameraView: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ uiViewController: CameraViewController, context: Context) {
-        // No updates needed
     }
 }

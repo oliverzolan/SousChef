@@ -27,12 +27,11 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
         }
         return colorSet
     }()
-    let ciContext = CIContext()
     var classes: [String] = []
 
-    lazy var yoloRequest: VNCoreMLRequest! = {
+    lazy var modelRequest: VNCoreMLRequest! = {
         do {
-            let model = try demo_ingredients().model
+            let model = try hundredepoc().model
             guard let classes = model.modelDescription.classLabels as? [String] else {
                 fatalError("Failed to load class labels.")
             }
@@ -49,8 +48,6 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
         super.viewDidLoad()
         setupCamera()
 
-        // Log observer addition
-        print("Adding orientation change observer.")
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleDeviceOrientationChange),
@@ -105,7 +102,6 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
 
             if videoSize == .zero {
                 videoSize = CGSize(width: CVPixelBufferGetWidth(pixelBuffer), height: CVPixelBufferGetHeight(pixelBuffer))
-                print("Video size set: \(videoSize)")
             }
 
             detectObjects(pixelBuffer: pixelBuffer)
@@ -113,22 +109,16 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
     }
 
     func detectObjects(pixelBuffer: CVPixelBuffer) {
-        let startTime = CFAbsoluteTimeGetCurrent()
-        defer {
-            let elapsedTime = CFAbsoluteTimeGetCurrent() - startTime
-            print("Detect Objects Execution Time: \(elapsedTime) seconds")
-        }
-
         do {
             let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer)
-            try handler.perform([yoloRequest])
-            guard let results = yoloRequest.results as? [VNRecognizedObjectObservation] else {
+            try handler.perform([modelRequest])
+            guard let results = modelRequest.results as? [VNRecognizedObjectObservation] else {
                 print("No results from detection.")
                 return
             }
 
             var detections: [Detection] = []
-            let confidenceThreshold: Float = 0.5  // Adjustable
+            let confidenceThreshold: Float = 0.72
 
             for result in results {
                 guard result.confidence >= confidenceThreshold else { continue }
@@ -140,35 +130,31 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
                     height: result.boundingBox.height
                 )
 
-                let overlaySize = detectionOverlay.bounds.size
-                let box = CGRect(
-                    x: flippedBox.origin.x * overlaySize.width,
-                    y: flippedBox.origin.y * overlaySize.height,
-                    width: flippedBox.width * overlaySize.width,
-                    height: flippedBox.height * overlaySize.height
-                )
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    let overlaySize = self.detectionOverlay.bounds.size
+                    let box = CGRect(
+                        x: flippedBox.origin.x * overlaySize.width,
+                        y: flippedBox.origin.y * overlaySize.height,
+                        width: flippedBox.width * overlaySize.width,
+                        height: flippedBox.height * overlaySize.height
+                    )
 
-                if let label = result.labels.first?.identifier,
-                   let colorIndex = classes.firstIndex(of: label) {
-                    let detection = Detection(box: box, confidence: result.confidence, label: label, color: colors[colorIndex])
-                    detections.append(detection)
+                    if let label = result.labels.first?.identifier,
+                       let colorIndex = self.classes.firstIndex(of: label) {
+                        let detection = Detection(box: box, confidence: result.confidence, label: label, color: self.colors[colorIndex])
+                        detections.append(detection)
+                    }
+
+                    self.drawDetections(detections)
                 }
             }
-
-            drawDetections(detections)
         } catch {
             print("Error during detection: \(error)")
         }
     }
 
-
     func drawDetections(_ detections: [Detection]) {
-        let startTime = CFAbsoluteTimeGetCurrent()
-        defer {
-            let elapsedTime = CFAbsoluteTimeGetCurrent() - startTime
-            print("Draw Detections Execution Time: \(elapsedTime) seconds")
-        }
-
         DispatchQueue.main.async {
             self.detectionOverlay.layer.sublayers?.removeAll()
             for detection in detections {
@@ -179,7 +165,7 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
 
                 let textLayer = CATextLayer()
                 textLayer.string = "\(detection.label ?? "Unknown") \(Int(detection.confidence * 100))%"
-                textLayer.fontSize = 12
+                textLayer.fontSize = 18
                 textLayer.foregroundColor = detection.color.cgColor
                 textLayer.backgroundColor = UIColor.black.withAlphaComponent(0.5).cgColor
                 textLayer.alignmentMode = .center
@@ -197,16 +183,13 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
     }
 
     @objc func handleDeviceOrientationChange() {
-        print("Device orientation change detected.")
-
         guard let connection = videoOutput.connection(with: .video) else {
             print("No video connection found.")
             return
         }
 
         let deviceOrientation = UIDevice.current.orientation
-        print("Device Orientation: \(deviceOrientation.rawValue)")
-
+        
         switch deviceOrientation {
         case .portrait:
             connection.videoOrientation = .portrait
@@ -219,7 +202,5 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
         default:
             connection.videoOrientation = .portrait
         }
-
-        print("Updated Video Orientation: \(connection.videoOrientation.rawValue)")
     }
 }
