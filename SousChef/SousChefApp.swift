@@ -11,10 +11,19 @@ import Firebase
 @main
 struct SousChefApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @StateObject private var userSession = UserSession() // Initialize UserSession
 
     var body: some Scene {
         WindowGroup {
-            homepage_activity()
+            if userSession.isGuest || userSession.token != nil {
+                // Navigate to the homepage if authenticated or in guest mode
+                homepage_activity()
+                    .environmentObject(userSession) // Inject UserSession into the environment
+            } else {
+                // Show login options, including guest login
+                LoginView()
+                    .environmentObject(userSession) // Inject UserSession into the environment
+            }
         }
     }
 }
