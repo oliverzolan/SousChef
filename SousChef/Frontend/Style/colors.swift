@@ -32,7 +32,7 @@ extension UIColor {
 
 struct AppColors {
     // Main colors
-    static let background = Color(hex: "#1F222A")
+    static let background = Color(hex: "#FFFFFF")
     static let cardColor = Color(hex: "#637186")
     static let navBar = Color(hex: "#284757")
 
@@ -48,6 +48,16 @@ struct AppColors {
     static var gradientCardLightUIColor: UIColor { UIColor(gradientCardLight) }
     static var gradientCardDarkUIColor: UIColor { UIColor(gradientCardDark) }
     static var gradientSearchBarUIColor: UIColor { UIColor(gradientSearchBar) }
+    
+    // New Main Colors
+    static let primary1 = Color(hex: "#36622B")
+    static let primary2 = Color(hex: "#729D39")
+    static let primary3 = Color(hex: "#C6E377")
+    static let secondary1 = Color(hex: "#FFAAAA")
+    static let secondary2 = Color(hex: "#FF7777")
+    static let secondary3 = Color(hex: "#FF5C5C")
+    static let shade = Color(hex: "#DCE0DA")
+    
+    
 }
-
 
