@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct askAI_activity: View {
+struct AskAIPage: View {
     var body: some View {
         ZStack {
             VStack {

@@ -10,7 +10,7 @@ import SwiftUI
 struct HomeButton: View {
     var body: some View {
         NavigationLink(
-            destination: homepage_activity()
+            destination: HomePage()
                 .navigationBarBackButtonHidden(true) // Hide back button
         ) {
             Image(systemName: "house.fill")

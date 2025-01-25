@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct scanIngridients_activity: View {
+struct ScanIngredientPage: View {
     var body: some View {
         ZStack{
             CameraView()

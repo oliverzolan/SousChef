@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct receipt_activity: View {
+struct ReceiptPage: View {
     @State private var scannedItems : [String] = []
     var body: some View {
         ZStack{
@@ -18,6 +18,6 @@ struct receipt_activity: View {
 
 struct receipt_activity_Previews: PreviewProvider {
     static var previews: some View {
-        receipt_activity()
+        ReceiptPage()
     }
 }

@@ -103,7 +103,7 @@ struct LoginView: View {
             }
             // Redirect to homepage_activity
             .navigationDestination(isPresented: $navigateToHome) {
-                homepage_activity()
+                HomePage()
                     .navigationBarBackButtonHidden(true)
                     .environmentObject(userSession)
             }

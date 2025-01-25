@@ -17,7 +17,7 @@ struct SousChefApp: App {
         WindowGroup {
             if userSession.isGuest || userSession.token != nil {
                 // Navigate to the homepage if authenticated or in guest mode
-                homepage_activity()
+                HomePage()
                     .environmentObject(userSession) // Inject UserSession into the environment
             } else {
                 // Show login options, including guest login

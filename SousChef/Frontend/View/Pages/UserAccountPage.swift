@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct profile_activity: View {
+struct ProfilePage: View {
     var body: some View {
         NavigationView {
             ZStack {
@@ -96,7 +96,7 @@ struct profile_activity: View {
 
 struct profile_activity_Previews: PreviewProvider {
     static var previews: some View {
-        profile_activity()
+        ProfilePage()
             .previewDevice("iPhone 12")
     }
 }
