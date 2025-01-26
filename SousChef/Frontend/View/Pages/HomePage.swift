@@ -35,7 +35,7 @@ struct HomePage: View {
                                 .foregroundColor(.white)
                                 .padding(.leading, 20)
                             Spacer()
-                            NavigationLink(destination: ProfilePage().navigationBarBackButtonHidden(true)) {
+                            NavigationLink(destination: LoginPage().navigationBarBackButtonHidden(true)) {
                                 Image(systemName: "person.circle")
                                     .font(.system(size: 50))
                                     .foregroundColor(.white)

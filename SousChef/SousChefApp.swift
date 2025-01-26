@@ -17,12 +17,10 @@ struct SousChefApp: App {
         WindowGroup {
             if userSession.isGuest || userSession.token != nil {
                 // Navigate to the homepage if authenticated or in guest mode
-                HomePage()
-                    .environmentObject(userSession) // Inject UserSession into the environment
+                LoginPage().environmentObject(userSession) // Inject UserSession into the environment
             } else {
                 // Show login options, including guest login
-                LoginView()
-                    .environmentObject(userSession) // Inject UserSession into the environment
+                LoginView().environmentObject(userSession) // Inject UserSession into the environment
             }
         }
     }
