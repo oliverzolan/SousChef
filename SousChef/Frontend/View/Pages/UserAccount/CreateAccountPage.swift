@@ -19,13 +19,13 @@ struct CreateAccountView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                AppColors.background
-                    .edgesIgnoringSafeArea(.all)
+                Color.white
+                    .edgesIgnoringSafeArea(.all) // Ensures full background coverage
 
                 VStack(spacing: 30) {
                     HStack {
                         Spacer()
-                        HomeButton() // Add the home button here
+                        HomeButton()
                             .padding(.trailing, 20)
                             .padding(.top, 10)
                     }
@@ -33,50 +33,43 @@ struct CreateAccountView: View {
                     Text("Create Account")
                         .font(.title)
                         .fontWeight(.medium)
-                        .foregroundColor(Color.white)
+                        .foregroundColor(.black) // Ensures visibility on white background
                         .padding(.top, 40)
 
                     VStack(spacing: 16) {
-                        // Email TextField with AppColors.cardColor underline
-                        TextField("", text: $email)
-                            .placeholder(when: email.isEmpty) {
-                                Text("Email").foregroundColor(Color.white.opacity(0.7))
-                            }
-                            .foregroundColor(Color.white)
+                        // Email TextField with bottom divider
+                        TextField("Email", text: $email)
+                            .textFieldStyle(PlainTextFieldStyle())
+                            .foregroundColor(.black)
                             .padding(.vertical, 10)
-                            .overlay(Divider().background(AppColors.cardColor), alignment: .bottom)
+                            .overlay(Divider().background(Color.gray), alignment: .bottom)
 
-                        // Full Name TextField with AppColors.cardColor underline
-                        TextField("", text: $fullName)
-                            .placeholder(when: fullName.isEmpty) {
-                                Text("Username").foregroundColor(Color.white.opacity(0.7))
-                            }
-                            .foregroundColor(Color.white)
+                        // Username TextField
+                        TextField("Username", text: $fullName)
+                            .textFieldStyle(PlainTextFieldStyle())
+                            .foregroundColor(.black)
                             .padding(.vertical, 10)
-                            .overlay(Divider().background(AppColors.cardColor), alignment: .bottom)
+                            .overlay(Divider().background(Color.gray), alignment: .bottom)
                         
-                        TextField("", text: $name)
-                            .placeholder(when: name.isEmpty) {
-                                Text("Full Name").foregroundColor(Color.white.opacity(0.7))
-                            }
-                            .foregroundColor(Color.white)
+                        // Full Name TextField
+                        TextField("Full Name", text: $name)
+                            .textFieldStyle(PlainTextFieldStyle())
+                            .foregroundColor(.black)
                             .padding(.vertical, 10)
-                            .overlay(Divider().background(AppColors.cardColor), alignment: .bottom)
+                            .overlay(Divider().background(Color.gray), alignment: .bottom)
 
-                        // Password SecureField with AppColors.cardColor underline
-                        SecureField("", text: $password)
-                            .placeholder(when: password.isEmpty) {
-                                Text("Password").foregroundColor(Color.white.opacity(0.7))
-                            }
-                            .foregroundColor(Color.white)
+                        // Password SecureField
+                        SecureField("Password", text: $password)
+                            .textFieldStyle(PlainTextFieldStyle())
+                            .foregroundColor(.black)
                             .padding(.vertical, 10)
-                            .overlay(Divider().background(AppColors.cardColor), alignment: .bottom)
+                            .overlay(Divider().background(Color.gray), alignment: .bottom)
                     }
                     .padding(.horizontal, 24)
 
                     if let errorMessage = errorMessage {
                         Text(errorMessage)
-                            .foregroundColor(Color.red)
+                            .foregroundColor(.red)
                             .padding()
                     }
 
@@ -86,11 +79,11 @@ struct CreateAccountView: View {
                             .fontWeight(.bold)
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .foregroundColor(Color.white)
+                            .foregroundColor(.white)
                             .background(
-                                RoundedRectangle(cornerRadius: 30, style: .continuous)
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
                                     .fill(LinearGradient(
-                                        gradient: Gradient(colors: [AppColors.gradientCardLight, AppColors.gradientCardDark]),
+                                        gradient: Gradient(colors: [AppColors.primary1, AppColors.primary2]),
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     ))
@@ -105,7 +98,7 @@ struct CreateAccountView: View {
                     NavigationLink(destination: LoginView()) {
                         Text("LOGIN")
                             .font(.subheadline)
-                            .foregroundColor(Color.white.opacity(0.7))
+                            .foregroundColor(.black.opacity(0.7)) // Adjusted for white background
                     }
                     .padding(.bottom, 40)
                 }
@@ -141,7 +134,6 @@ struct CreateAccountView: View {
         request.addValue(token, forHTTPHeaderField: "Authorization")
         request.addValue(email, forHTTPHeaderField: "Email")
 
-
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
                 print("Error sending data to server: \(error.localizedDescription)")
@@ -151,7 +143,7 @@ struct CreateAccountView: View {
             if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
                 print("Successfully sent data to server.")
                 DispatchQueue.main.async {
-                    isLoggedIn = true // Navigate to another view
+                    isLoggedIn = true
                 }
             } else {
                 print("Server responded with an error.")
@@ -160,19 +152,6 @@ struct CreateAccountView: View {
                 }
             }
         }.resume()
-    }
-}
-// Custom placeholder view modifier
-extension View {
-    func placeholder<Content: View>(
-        when shouldShow: Bool,
-        alignment: Alignment = .leading,
-        @ViewBuilder placeholder: () -> Content) -> some View {
-        
-        ZStack(alignment: alignment) {
-            placeholder().opacity(shouldShow ? 1 : 0)
-            self
-        }
     }
 }
 

@@ -2,11 +2,12 @@
 //  SousChefApp.swift
 //  SousChef
 //
-//  Created by Oliver Zolan, Sutter Reynolds on 10/26/24.
+//  Created by ZeroWave on 10/26/24.
 //
 
 import SwiftUI
 import Firebase
+import GoogleSignIn
 
 @main
 struct SousChefApp: App {
@@ -15,21 +16,38 @@ struct SousChefApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if userSession.isGuest || userSession.token != nil {
-                // Navigate to the homepage if authenticated or in guest mode
-                LoginPage().environmentObject(userSession) // Inject UserSession into the environment
+            if let _ = userSession.token, !userSession.isGuest {
+                // Navigate to the homepage if authenticated
+                HomePage().environmentObject(userSession)
             } else {
-                // Show login options, including guest login
-                LoginView().environmentObject(userSession) // Inject UserSession into the environment
+                // Show login options
+                LoginPage().environmentObject(userSession)
             }
         }
     }
 }
 
 class AppDelegate: NSObject, UIApplicationDelegate {
-    func application(_ application: UIApplication,
-                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+    ) -> Bool {
         FirebaseApp.configure()
+
+        // Ensure GIDClientID is set for Google Sign-In
+        if let clientID = FirebaseApp.app()?.options.clientID {
+            GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
+        }
+
         return true
+    }
+
+    // Handles Google Sign-In callback
+    func application(
+        _ app: UIApplication,
+        open url: URL,
+        options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+    ) -> Bool {
+        return GIDSignIn.sharedInstance.handle(url)
     }
 }
