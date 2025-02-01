@@ -159,5 +159,6 @@ struct CreateAccount: PreviewProvider {
     static var previews: some View {
         CreateAccountView()
             .previewDevice("iPhone 12")
+        
     }
 }
