@@ -1,0 +1,17 @@
+GoogleService-Info.plist
+
+# Xcode user-specific files
+foo.xcodeproj/project.xcworkspace/xcuserdata/
+foo.xcodeproj/xcuserdata/
+
+# Older Xcode user-specific files
+foo.xcodeproj/*.pbxuser
+foo.xcodeproj/*.mode1v3
+
+# Xcode build files
+build/
+DerivedData/
+
+# Other Xcode related files
+*.xcuserstate
+*.xcworkspacedata
