@@ -11,13 +11,13 @@ import AuthenticationServices
 struct LoginView: View {
     @StateObject private var viewModel = LoginViewController()
     @EnvironmentObject var userSession: UserSession
-
+    
     var body: some View {
         NavigationStack {
             ZStack {
                 AppColors.background
                     .edgesIgnoringSafeArea(.all)
-
+                
                 VStack(spacing: 20) {
                     HStack {
                         Text("Welcome Back! 👋")
@@ -26,9 +26,9 @@ struct LoginView: View {
                             .foregroundColor(Color.black)
                             .padding(.vertical, 100)
                     }
-
+                    
                     Spacer()
-
+                    
                     // Input Fields
                     VStack(spacing: 16) {
                         CustomTextField(label: "Email", placeholder: "Enter your email", text: $viewModel.email)
@@ -47,135 +47,118 @@ struct LoginView: View {
                                 )
                         }
                         .padding(.horizontal, 24)
-
+                        
                         // Links Section
                         VStack(spacing: 8) {
                             HStack {
                                 Text("Don't have an account?")
                                     .foregroundColor(.black)
-
+                                
                                 Button(action: viewModel.navigateToSignUp) {
                                     Text("Sign up")
                                         .foregroundColor(.blue)
                                         .fontWeight(.bold)
                                 }
                             }
-
+                            
                             Button(action: viewModel.navigateToForgotPassword) {
                                 Text("Forgot Password?")
                                     .foregroundColor(.blue)
                                     .fontWeight(.bold)
                             }
                         }
-
-                        // Separation Line
-                        Divider()
-                            .background(Color.gray)
-                            .padding(.horizontal, 24)
-                    }
-                    .padding(.horizontal, 24)
-
-                    if let errorMessage = viewModel.errorMessage {
-                        Text(errorMessage)
-                            .foregroundColor(.red)
-                            .padding()
-                    }
-
-                    // Google Sign-In Button
-                    Button(action: viewModel.signInWithGoogle) {
+                        
+                        // 📌 Separation Line between Sign-Up & Social Login with "Or With"
                         HStack {
-                            Image(systemName: "globe")
-                                .foregroundColor(.white)
-                            Text("Sign in with Google")
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
+                            Divider()
+                                .frame(maxWidth: .infinity, maxHeight: 1)
+                                .background(Color.gray.opacity(0.5))
+                            
+                            Text("Or With")
+                                .font(.headline)
+                                .foregroundColor(.gray)
+                                .padding(.horizontal, 10)
+                            
+                            Divider()
+                                .frame(maxWidth: .infinity, maxHeight: 1)
+                                .background(Color.gray.opacity(0.5))
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(RoundedRectangle(cornerRadius: 10).foregroundColor(.blue))
-                    }
-                    .padding(.horizontal, 24)
-
-                    // Apple Sign-In Button
-                    SignInWithAppleButton(
-                        onRequest: viewModel.handleAppleRequest,
-                        onCompletion: viewModel.handleAppleCompletion
-                    )
-                    .frame(height: 50)
-                    .padding(.horizontal, 24)
-
-                    // Guest Login Button
-                    Button(action: {
-                        userSession.loginAsGuest()
-                        viewModel.navigateToHome = true
-                    }) {
-                        Text("Continue as Guest")
-                            .fontWeight(.bold)
+                        .frame(height: 20)
+                        .padding(.horizontal, 40)
+                        
+                        
+                        if let errorMessage = viewModel.errorMessage {
+                            Text(errorMessage)
+                                .foregroundColor(.red)
+                                .padding()
+                        }
+                        
+                        // Google Sign-In Button
+                        Button(action: viewModel.signInWithGoogle) {
+                            HStack {
+                                Image("google-logo")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 24, height: 24)
+                                
+                                Text("Sign in with Google")
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.black)
+                            }
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .foregroundColor(.black)
-                            .background(
-                                RoundedRectangle(cornerRadius: 30).fill(.white)
+                            .background(Color.clear) // ✅ Transparent background
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color.black, lineWidth: 1) // ✅ Black border with 2px thickness
                             )
+                        }
+                        .padding(.horizontal, 24)
+                        // Apple Sign-In Button
+                        SignInWithAppleButton(
+                            onRequest: viewModel.handleAppleRequest,
+                            onCompletion: viewModel.handleAppleCompletion
+                        )
+                        .frame(height: 50)
+                        .padding(.horizontal, 24)
+                        
+                        // Guest Login Button
+                        Button(action: {
+                            userSession.loginAsGuest()
+                            viewModel.navigateToHome = true
+                        }) {
+                            Text("Continue as Guest")
+                                .fontWeight(.bold)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .foregroundColor(.black)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 30).fill(.white)
+                                )
+                        }
+                        .padding(.horizontal, 24)
+                        .padding(.top, 10)
+                        
+                        Spacer()
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.top, 10)
-
-                    Spacer()
+                }
+                .navigationDestination(isPresented: $viewModel.navigateToHome) {
+                    HomePage()
+                        .navigationBarBackButtonHidden(true)
+                        .environmentObject(userSession)
                 }
             }
-            .navigationDestination(isPresented: $viewModel.navigateToHome) {
-                HomePage()
-                    .navigationBarBackButtonHidden(true)
-                    .environmentObject(userSession)
-            }
         }
     }
-}
+    
 
-// Custom Input Fields
-struct CustomTextField: View {
-    let label: String
-    let placeholder: String
-    @Binding var text: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(label)
-                .font(.headline)
-                .foregroundColor(.black)
-            TextField(placeholder, text: $text)
-                .padding()
-                .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
-                .foregroundColor(.black)
-                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.gray, lineWidth: 1))
+    
+    
+    struct LoginView_Previews: PreviewProvider {
+        static var previews: some View {
+            LoginView()
+                .previewDevice(PreviewDevice(rawValue: "iPhone 12"))
+                .environmentObject(UserSession()) // Ensure it has a UserSession instance
         }
-    }
-}
-
-struct CustomSecureField: View {
-    let label: String
-    let placeholder: String
-    @Binding var text: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(label)
-                .font(.headline)
-                .foregroundColor(.black)
-            SecureField(placeholder, text: $text)
-                .padding()
-                .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
-                .foregroundColor(.black)
-                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.gray, lineWidth: 1))
-        }
-    }
-}
-
-struct LoginView_Previews: PreviewProvider {
-    static var previews: some View {
-        LoginView()
-            .previewDevice(PreviewDevice(rawValue: "iPhone 12"))
-            .environmentObject(UserSession()) // Ensure it has a UserSession instance
     }
 }

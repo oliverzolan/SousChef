@@ -425,7 +425,7 @@
 				CODE_SIGN_ENTITLEMENTS = SousChef/SousChef.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"SousChef/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "SousChef/Preview\\ Content";
 				DEVELOPMENT_TEAM = 5SL369W883;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -456,7 +456,7 @@
 				CODE_SIGN_ENTITLEMENTS = SousChef/SousChef.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"SousChef/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "SousChef/Preview\\ Content";
 				DEVELOPMENT_TEAM = 5SL369W883;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;

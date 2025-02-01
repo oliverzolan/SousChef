@@ -6,159 +6,121 @@
 //
 
 import SwiftUI
-import FirebaseAuth
+import AuthenticationServices
+
 
 struct CreateAccountView: View {
-    @State private var email: String = ""
-    @State private var fullName: String = ""
-    @State private var password: String = ""
-    @State private var name: String = ""
-    @State private var errorMessage: String?
-    @State private var isLoggedIn: Bool = false // Navigation state
+    @StateObject private var viewModel = CreateAccountViewController()
 
     var body: some View {
         NavigationView {
             ZStack {
-                Color.white
-                    .edgesIgnoringSafeArea(.all) // Ensures full background coverage
+                Color.white.edgesIgnoringSafeArea(.all) // Background
 
                 VStack(spacing: 30) {
-                    HStack {
-                        Spacer()
-                        HomeButton()
-                            .padding(.trailing, 20)
-                            .padding(.top, 10)
-                    }
-
+                    // Header
                     Text("Create Account")
                         .font(.title)
                         .fontWeight(.medium)
-                        .foregroundColor(.black) // Ensures visibility on white background
+                        .foregroundColor(.black)
                         .padding(.top, 40)
 
+                    // Input Fields
                     VStack(spacing: 16) {
-                        // Email TextField with bottom divider
-                        TextField("Email", text: $email)
-                            .textFieldStyle(PlainTextFieldStyle())
-                            .foregroundColor(.black)
-                            .padding(.vertical, 10)
-                            .overlay(Divider().background(Color.gray), alignment: .bottom)
-
-                        // Username TextField
-                        TextField("Username", text: $fullName)
-                            .textFieldStyle(PlainTextFieldStyle())
-                            .foregroundColor(.black)
-                            .padding(.vertical, 10)
-                            .overlay(Divider().background(Color.gray), alignment: .bottom)
-                        
-                        // Full Name TextField
-                        TextField("Full Name", text: $name)
-                            .textFieldStyle(PlainTextFieldStyle())
-                            .foregroundColor(.black)
-                            .padding(.vertical, 10)
-                            .overlay(Divider().background(Color.gray), alignment: .bottom)
-
-                        // Password SecureField
-                        SecureField("Password", text: $password)
-                            .textFieldStyle(PlainTextFieldStyle())
-                            .foregroundColor(.black)
-                            .padding(.vertical, 10)
-                            .overlay(Divider().background(Color.gray), alignment: .bottom)
+                        CustomTextField(label: "Display Name", placeholder: "Enter your display name", text: $viewModel.displayName)
+                        CustomTextField(label: "Email", placeholder: "Enter your email", text: $viewModel.email)
+                        CustomTextField(label: "Full Name", placeholder: "Enter your full name", text: $viewModel.fullName)
+                        CustomSecureField(label: "Password", placeholder: "Enter your password", text: $viewModel.password)
                     }
                     .padding(.horizontal, 24)
 
-                    if let errorMessage = errorMessage {
+                    // Error Message
+                    if let errorMessage = viewModel.errorMessage {
                         Text(errorMessage)
                             .foregroundColor(.red)
                             .padding()
                     }
 
-                    // Create Button with Gradient Background
-                    Button(action: signUp) {
-                        Text("CREATE")
+                    // Sign-Up Button
+                    Button(action: viewModel.signUp) {
+                        Text("Sign up")
                             .fontWeight(.bold)
                             .frame(maxWidth: .infinity)
                             .padding()
                             .foregroundColor(.white)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .fill(LinearGradient(
-                                        gradient: Gradient(colors: [AppColors.primary1, AppColors.primary2]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ))
-                            )
+                            .background(RoundedRectangle(cornerRadius: 10).fill(AppColors.primary2))
                     }
                     .padding(.horizontal, 24)
-                    .padding(.top, 20)
 
-                    Spacer()
+                    // 📌 Separation Line between Sign-Up & Social Login with "Or With"
+                    HStack {
+                        Divider()
+                            .frame(maxWidth: .infinity, maxHeight: 1)
+                            .background(Color.gray.opacity(0.5))
+                        
+                        Text("Or With")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                            .padding(.horizontal, 10)
+                        
+                        Divider()
+                            .frame(maxWidth: .infinity, maxHeight: 1)
+                            .background(Color.gray.opacity(0.5))
+                    }
+                    .frame(height: 20)
+                    .padding(.horizontal, 40)
+
+                    // Social Login Buttons (Apple & Google)
+                    VStack(spacing: 10) {
+                        SignInWithAppleButton(
+                            onRequest: viewModel.handleAppleRequest,
+                            onCompletion: viewModel.handleAppleCompletion
+                        )
+                        .frame(height: 50)
+                        .padding(.horizontal, 24)
+
+                        Button(action: viewModel.signUpWithGoogle) {
+                            HStack {
+                                Image("google-logo")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 24, height: 24)
+                                Text("Sign in with Google")
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.black)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.clear) // ✅ Transparent background
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color.black, lineWidth: 1) // ✅ Black border
+                            )
+                        }
+                        .padding(.horizontal, 24)
+                    }
 
                     // Login Link
                     NavigationLink(destination: LoginView()) {
                         Text("LOGIN")
                             .font(.subheadline)
-                            .foregroundColor(.black.opacity(0.7)) // Adjusted for white background
+                            .foregroundColor(.black.opacity(0.7))
                     }
                     .padding(.bottom, 40)
+
+                    Spacer()
                 }
+                .padding(.horizontal, 24)
             }
         }
-    }
-
-    private func signUp() {
-        Auth.auth().createUser(withEmail: email, password: password) { result, error in
-            if let error = error {
-                errorMessage = error.localizedDescription
-            } else if let user = result?.user {
-                user.getIDToken { token, error in
-                    if let token = token {
-                        sendToServer(email: email, token: token)
-                    } else {
-                        errorMessage = "Failed to retrieve token."
-                    }
-                }
-            }
-        }
-    }
-
-    private func sendToServer(email: String, token: String) {
-        guard let url = URL(string: "https://souschef.click/users/create") else {
-            print("Invalid URL")
-            return
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue(token, forHTTPHeaderField: "Authorization")
-        request.addValue(email, forHTTPHeaderField: "Email")
-
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            if let error = error {
-                print("Error sending data to server: \(error.localizedDescription)")
-                return
-            }
-
-            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
-                print("Successfully sent data to server.")
-                DispatchQueue.main.async {
-                    isLoggedIn = true
-                }
-            } else {
-                print("Server responded with an error.")
-                if let data = data, let errorMessage = String(data: data, encoding: .utf8) {
-                    print("Error: \(errorMessage)")
-                }
-            }
-        }.resume()
     }
 }
 
-struct CreateAccount: PreviewProvider {
+// ✅ Preview
+struct CreateAccountView_Previews: PreviewProvider {
     static var previews: some View {
         CreateAccountView()
-            .previewDevice("iPhone 12")
-        
+            .previewDevice(PreviewDevice(rawValue: "iPhone 12"))
+            .environmentObject(UserSession()) // Ensuring UserSession is provided
     }
 }
