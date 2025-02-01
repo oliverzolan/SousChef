@@ -29,33 +29,88 @@ struct LoginView: View {
 
                 VStack(spacing: 20) {
                     HStack {
-                        Spacer()
-                        HomeButton()
-                            .padding(.trailing, 20)
-                            .padding(.top, 10)
+                      Text("Welcome Back! 👋")
+                            .font(.title)
+                            .fontWeight(.medium)
+                            .foregroundColor(Color.black)
+                            .padding(.vertical, 100)
                     }
 
                     Spacer()
 
-                    Text("Log In")
-                        .font(.title)
-                        .fontWeight(.medium)
-                        .foregroundColor(.white)
-                        .padding(.top, 40)
+                
 
-                    // Login form
                     VStack(spacing: 16) {
-                        TextField("Email", text: $email)
-                            .textFieldStyle(PlainTextFieldStyle())
-                            .foregroundColor(.white)
-                            .padding(.vertical, 10)
-                            .overlay(Divider().background(AppColors.cardColor), alignment: .bottom)
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Email")
+                                .font(.headline)
+                                .foregroundColor(.black)
 
-                        SecureField("Password", text: $password)
-                            .textFieldStyle(PlainTextFieldStyle())
-                            .foregroundColor(.white)
-                            .padding(.vertical, 10)
-                            .overlay(Divider().background(AppColors.cardColor), alignment: .bottom)
+                            TextField("Enter your email", text: $email)
+                                .padding()
+                                .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
+                                .foregroundColor(.black)
+                                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.gray, lineWidth: 1))
+                        }
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Password")
+                                .font(.headline)
+                                .foregroundColor(.black)
+
+                            SecureField("Enter your password", text: $password)
+                                .padding()
+                                .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
+                                .foregroundColor(.black)
+                                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.gray, lineWidth: 1))
+                        }
+                        // Log In Button
+                        Button(action: logIn) {
+                            Text("Sign In")
+                                .fontWeight(.bold)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .foregroundColor(.white)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .fill(LinearGradient(
+                                            gradient: Gradient(colors: [AppColors.primary2]),
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        ))
+                                )
+                        }
+                        .padding(.horizontal, 24)
+
+                        // Links Section
+                        VStack(spacing: 8) {
+                            HStack {
+                                Text("Don't have an account?")
+                                    .foregroundColor(.black)
+                                
+                                Button(action: {
+                                    // Navigate to Sign Up page
+                                }) {
+                                    Text("Sign up")
+                                        .foregroundColor(.blue)
+                                        .fontWeight(.bold)
+                                }
+                            }
+
+                            Button(action: {
+                                // Navigate to Forgot Password page
+                            }) {
+                                Text("Forgot Password?")
+                                    .foregroundColor(.blue)
+                                    .fontWeight(.bold)
+                            }
+                        }
+                        
+                        // Separation Line
+                        Divider()
+                            .background(Color.gray)
+                            .padding(.horizontal, 24)
                     }
                     .padding(.horizontal, 24)
 
@@ -65,23 +120,7 @@ struct LoginView: View {
                             .padding()
                     }
 
-                    // Log In Button
-                    Button(action: logIn) {
-                        Text("LOG IN")
-                            .fontWeight(.bold)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .foregroundColor(.white)
-                            .background(
-                                RoundedRectangle(cornerRadius: 30, style: .continuous)
-                                    .fill(LinearGradient(
-                                        gradient: Gradient(colors: [AppColors.primary1]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ))
-                            )
-                    }
-                    .padding(.horizontal, 24)
+                    
 
                     // Google Sign-In Button
                     Button(action: signInWithGoogle) {
@@ -133,10 +172,10 @@ struct LoginView: View {
                             .fontWeight(.bold)
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .foregroundColor(.white)
+                            .foregroundColor(.black)
                             .background(
                                 RoundedRectangle(cornerRadius: 30, style: .continuous)
-                                    .fill(AppColors.primary2)
+                                    .fill(.white)
                             )
                     }
                     .padding(.horizontal, 24)
@@ -268,5 +307,14 @@ struct LoginView: View {
                 }
             }
         }
+    }
+}
+
+
+struct LoginView_Previews: PreviewProvider {
+    static var previews: some View {
+        LoginView()
+            .previewDevice(PreviewDevice(rawValue: "iPhone 12"))
+            .environmentObject(UserSession()) // Ensure it has a UserSession if required
     }
 }
