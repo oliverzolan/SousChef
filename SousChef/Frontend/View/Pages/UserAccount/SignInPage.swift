@@ -6,20 +6,11 @@
 //
 
 import SwiftUI
-import FirebaseAuth
-import GoogleSignIn
 import AuthenticationServices
-import CryptoKit
-
 
 struct LoginView: View {
-    @State private var email: String = ""
-    @State private var password: String = ""
-    @State private var errorMessage: String?
-    @State private var navigateToHome: Bool = false
+    @StateObject private var viewModel = LoginViewController()
     @EnvironmentObject var userSession: UserSession
-    @StateObject private var appleAuth = AppleAuthViewModel() // Apple Sign-In ViewModel
-    @State private var currentNonce: String?
 
     var body: some View {
         NavigationStack {
@@ -29,7 +20,7 @@ struct LoginView: View {
 
                 VStack(spacing: 20) {
                     HStack {
-                      Text("Welcome Back! 👋")
+                        Text("Welcome Back! 👋")
                             .font(.title)
                             .fontWeight(.medium)
                             .foregroundColor(Color.black)
@@ -38,47 +29,21 @@ struct LoginView: View {
 
                     Spacer()
 
-                
-
+                    // Input Fields
                     VStack(spacing: 16) {
+                        CustomTextField(label: "Email", placeholder: "Enter your email", text: $viewModel.email)
+                        CustomSecureField(label: "Password", placeholder: "Enter your password", text: $viewModel.password)
                         
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Email")
-                                .font(.headline)
-                                .foregroundColor(.black)
-
-                            TextField("Enter your email", text: $email)
-                                .padding()
-                                .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
-                                .foregroundColor(.black)
-                                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.gray, lineWidth: 1))
-                        }
-
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Password")
-                                .font(.headline)
-                                .foregroundColor(.black)
-
-                            SecureField("Enter your password", text: $password)
-                                .padding()
-                                .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
-                                .foregroundColor(.black)
-                                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.gray, lineWidth: 1))
-                        }
                         // Log In Button
-                        Button(action: logIn) {
+                        Button(action: viewModel.logIn) {
                             Text("Sign In")
                                 .fontWeight(.bold)
                                 .frame(maxWidth: .infinity)
                                 .padding()
                                 .foregroundColor(.white)
                                 .background(
-                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                        .fill(LinearGradient(
-                                            gradient: Gradient(colors: [AppColors.primary2]),
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ))
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(AppColors.primary2)
                                 )
                         }
                         .padding(.horizontal, 24)
@@ -88,25 +53,21 @@ struct LoginView: View {
                             HStack {
                                 Text("Don't have an account?")
                                     .foregroundColor(.black)
-                                
-                                Button(action: {
-                                    // Navigate to Sign Up page
-                                }) {
+
+                                Button(action: viewModel.navigateToSignUp) {
                                     Text("Sign up")
                                         .foregroundColor(.blue)
                                         .fontWeight(.bold)
                                 }
                             }
 
-                            Button(action: {
-                                // Navigate to Forgot Password page
-                            }) {
+                            Button(action: viewModel.navigateToForgotPassword) {
                                 Text("Forgot Password?")
                                     .foregroundColor(.blue)
                                     .fontWeight(.bold)
                             }
                         }
-                        
+
                         // Separation Line
                         Divider()
                             .background(Color.gray)
@@ -114,16 +75,14 @@ struct LoginView: View {
                     }
                     .padding(.horizontal, 24)
 
-                    if let errorMessage = errorMessage {
+                    if let errorMessage = viewModel.errorMessage {
                         Text(errorMessage)
                             .foregroundColor(.red)
                             .padding()
                     }
 
-                    
-
                     // Google Sign-In Button
-                    Button(action: signInWithGoogle) {
+                    Button(action: viewModel.signInWithGoogle) {
                         HStack {
                             Image(systemName: "globe")
                                 .foregroundColor(.white)
@@ -139,26 +98,8 @@ struct LoginView: View {
 
                     // Apple Sign-In Button
                     SignInWithAppleButton(
-                        onRequest: { request in
-                            let nonce = generateNonce()  // Generate a nonce
-                            currentNonce = nonce          // Store it in state
-                            request.requestedScopes = [.fullName, .email]
-                            request.nonce = sha256(nonce) // Hash the nonce for security
-                        },
-                        onCompletion: { result in
-                            switch result {
-                            case .success(let authorization):
-                                if let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential {
-                                    if let nonce = currentNonce {  // Ensure nonce is available
-                                        handleAppleSignIn(credential: appleIDCredential, nonce: nonce)
-                                    } else {
-                                        print("❌ Error: Missing nonce during Apple Sign-In")
-                                    }
-                                }
-                            case .failure(let error):
-                                print("Apple Sign-In failed: \(error.localizedDescription)")
-                            }
-                        }
+                        onRequest: viewModel.handleAppleRequest,
+                        onCompletion: viewModel.handleAppleCompletion
                     )
                     .frame(height: 50)
                     .padding(.horizontal, 24)
@@ -166,7 +107,7 @@ struct LoginView: View {
                     // Guest Login Button
                     Button(action: {
                         userSession.loginAsGuest()
-                        navigateToHome = true
+                        viewModel.navigateToHome = true
                     }) {
                         Text("Continue as Guest")
                             .fontWeight(.bold)
@@ -174,8 +115,7 @@ struct LoginView: View {
                             .padding()
                             .foregroundColor(.black)
                             .background(
-                                RoundedRectangle(cornerRadius: 30, style: .continuous)
-                                    .fill(.white)
+                                RoundedRectangle(cornerRadius: 30).fill(.white)
                             )
                     }
                     .padding(.horizontal, 24)
@@ -184,137 +124,58 @@ struct LoginView: View {
                     Spacer()
                 }
             }
-            .navigationDestination(isPresented: $navigateToHome) {
+            .navigationDestination(isPresented: $viewModel.navigateToHome) {
                 HomePage()
                     .navigationBarBackButtonHidden(true)
                     .environmentObject(userSession)
             }
         }
     }
+}
 
-    private func logIn() {
-        Auth.auth().signIn(withEmail: email, password: password) { result, error in
-            if let error = error {
-                errorMessage = error.localizedDescription
-            } else {
-                DispatchQueue.main.async {
-                    userSession.token = Auth.auth().currentUser?.uid
-                    navigateToHome = true
-                }
-            }
-        }
-    }
-    
-    private func handleAppleSignIn(credential: ASAuthorizationAppleIDCredential, nonce: String) {
-        guard let identityToken = credential.identityToken,
-              let tokenString = String(data: identityToken, encoding: .utf8) else {
-            print("❌ Error: Failed to retrieve identity token")
-            return
-        }
+// Custom Input Fields
+struct CustomTextField: View {
+    let label: String
+    let placeholder: String
+    @Binding var text: String
 
-        let firebaseCredential = OAuthProvider.credential(withProviderID: "apple.com", idToken: tokenString, rawNonce: nonce)
-
-        Auth.auth().signIn(with: firebaseCredential) { authResult, error in
-            if let error = error {
-                print("🔥 Firebase Sign-In with Apple failed: \(error.localizedDescription)")
-                return
-            }
-
-            guard let user = authResult?.user else {
-                print("⚠️ Apple Sign-In succeeded but no user data was returned.")
-                return
-            }
-
-            print("✅ Successfully signed in with Apple! User ID: \(user.uid)")
-
-            // Optionally, update user display name
-            if let fullName = credential.fullName {
-                let changeRequest = user.createProfileChangeRequest()
-                changeRequest.displayName = "\(fullName.givenName ?? "") \(fullName.familyName ?? "")".trimmingCharacters(in: .whitespaces)
-                changeRequest.commitChanges { error in
-                    if let error = error {
-                        print("⚠️ Failed to update display name: \(error.localizedDescription)")
-                    }
-                }
-            }
-        }
-    }
-
-    /// Generates a secure random nonce for Apple Sign-In authentication.
-    func generateNonce(length: Int = 32) -> String {
-        let charset: [Character] = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
-        var result = String()
-        var remainingLength = length
-
-        while remainingLength > 0 {
-            var randomBytes = [UInt8](repeating: 0, count: 16)
-            let status = SecRandomCopyBytes(kSecRandomDefault, randomBytes.count, &randomBytes)
-
-            if status == errSecSuccess {
-                randomBytes.forEach { byte in
-                    if remainingLength == 0 {
-                        return
-                    }
-                    if byte < charset.count {
-                        result.append(charset[Int(byte)])
-                        remainingLength -= 1
-                    }
-                }
-            } else {
-                fatalError("❌ Unable to generate secure nonce")
-            }
-        }
-
-        return result
-    }
-
-    /// Hashes a string using SHA256 for Apple Sign-In security.
-    func sha256(_ input: String) -> String {
-        let inputData = Data(input.utf8)
-        let hashedData = SHA256.hash(data: inputData)
-        return hashedData.map { String(format: "%02x", $0) }.joined()
-    }
-
-    private func signInWithGoogle() {
-        guard let rootViewController = UIApplication.shared.windows.first?.rootViewController else {
-            self.errorMessage = "Unable to get root view controller."
-            return
-        }
-
-        GIDSignIn.sharedInstance.signIn(withPresenting: rootViewController) { result, error in
-            if let error = error {
-                self.errorMessage = error.localizedDescription
-                return
-            }
-
-            guard let authentication = result?.user,
-                  let idToken = authentication.idToken?.tokenString else {
-                self.errorMessage = "Google authentication failed."
-                return
-            }
-
-            let credential = GoogleAuthProvider.credential(withIDToken: idToken, accessToken: authentication.accessToken.tokenString)
-
-            Auth.auth().signIn(with: credential) { authResult, error in
-                if let error = error {
-                    self.errorMessage = error.localizedDescription
-                    return
-                }
-
-                DispatchQueue.main.async {
-                    userSession.token = Auth.auth().currentUser?.uid
-                    navigateToHome = true
-                }
-            }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.headline)
+                .foregroundColor(.black)
+            TextField(placeholder, text: $text)
+                .padding()
+                .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
+                .foregroundColor(.black)
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.gray, lineWidth: 1))
         }
     }
 }
 
+struct CustomSecureField: View {
+    let label: String
+    let placeholder: String
+    @Binding var text: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.headline)
+                .foregroundColor(.black)
+            SecureField(placeholder, text: $text)
+                .padding()
+                .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
+                .foregroundColor(.black)
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.gray, lineWidth: 1))
+        }
+    }
+}
 
 struct LoginView_Previews: PreviewProvider {
     static var previews: some View {
         LoginView()
             .previewDevice(PreviewDevice(rawValue: "iPhone 12"))
-            .environmentObject(UserSession()) // Ensure it has a UserSession if required
+            .environmentObject(UserSession()) // Ensure it has a UserSession instance
     }
 }
