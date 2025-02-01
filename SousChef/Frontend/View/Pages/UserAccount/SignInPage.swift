@@ -31,8 +31,8 @@ struct LoginView: View {
                     
                     // Input Fields
                     VStack(spacing: 16) {
-                        CustomTextField(label: "Email", placeholder: "Enter your email", text: $viewModel.email)
-                        CustomSecureField(label: "Password", placeholder: "Enter your password", text: $viewModel.password)
+                        CustomTextField(label: "Email", placeholder: "Enter your email", text: $viewModel.email).padding(.horizontal, 24)
+                        CustomSecureField(label: "Password", placeholder: "Enter your password", text: $viewModel.password).padding(.horizontal, 24)
                         
                         // Log In Button
                         Button(action: viewModel.logIn) {
@@ -151,9 +151,10 @@ struct LoginView: View {
         }
     }
     
+    
+    
+}
 
-    
-    
     struct LoginView_Previews: PreviewProvider {
         static var previews: some View {
             LoginView()
@@ -161,4 +162,4 @@ struct LoginView: View {
                 .environmentObject(UserSession()) // Ensure it has a UserSession instance
         }
     }
-}
+
