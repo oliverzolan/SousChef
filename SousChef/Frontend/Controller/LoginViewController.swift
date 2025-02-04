@@ -112,9 +112,6 @@ class LoginViewController: ObservableObject {
         return hashedData.map { String(format: "%02x", $0) }.joined()
     }
 
-    func navigateToSignUp() {
-        // Handle navigation to sign-up page
-    }
 
     func navigateToForgotPassword() {
         // Handle navigation to forgot password page

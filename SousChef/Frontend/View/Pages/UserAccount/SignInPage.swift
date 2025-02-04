@@ -48,25 +48,29 @@ struct LoginView: View {
                         }
                         .padding(.horizontal, 24)
                         
-                        // Links Section
+                        // Navigation to Create Account View
                         VStack(spacing: 8) {
-                            HStack {
-                                Text("Don't have an account?")
-                                    .foregroundColor(.black)
-                                
-                                Button(action: viewModel.navigateToSignUp) {
+                            NavigationLink(
+                                destination: CreateAccountView()
+                                    .navigationBarBackButtonHidden(true)
+                            ) {
+                                HStack {
+                                    Text("Don't have an account?")
+                                        .foregroundColor(.black)
+
                                     Text("Sign up")
                                         .foregroundColor(.blue)
                                         .fontWeight(.bold)
                                 }
                             }
-                            
+
                             Button(action: viewModel.navigateToForgotPassword) {
                                 Text("Forgot Password?")
                                     .foregroundColor(.blue)
                                     .fontWeight(.bold)
                             }
                         }
+                            
                         
                         // 📌 Separation Line between Sign-Up & Social Login with "Or With"
                         HStack {
