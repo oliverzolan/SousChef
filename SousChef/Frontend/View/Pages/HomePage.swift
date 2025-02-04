@@ -1,22 +1,17 @@
-//
-//  homepage_activity.swift
-//  SousChef
-//
-//  Created by Bennet Rau on 10/28/24.
-//
-
 import SwiftUI
 
 struct HomePage: View {
     
     @EnvironmentObject var userSession: UserSession // Access shared user session
 
-    
     var body: some View {
-        NavigationView{
+        NavigationView {
             GeometryReader { geometry in
                 VStack(spacing: 20) {
-                    // Top Greeting Section with Safe Area Boundaries
+                    
+
+                    
+                    // 🔹 Greeting Section
                     ZStack {
                         
                         RoundedRectangle(cornerRadius: 30, style: .continuous)
@@ -28,22 +23,25 @@ struct HomePage: View {
                             Text(
                                     userSession.fullName?.isEmpty == false
                                     ? "Welcome Chef \n\(userSession.fullName!)"
-                                    : "Welcome Chef" 
+                                    : "Welcome Chef"
                                 )
                                 .font(.title2)
                                 .fontWeight(.medium)
                                 .foregroundColor(.white)
                                 .padding(.leading, 20)
                             Spacer()
+
+                            // Profile Button
                             NavigationLink(destination: ProfilePage().navigationBarBackButtonHidden(true)) {
                                 Image(systemName: "person.circle")
-                                    .font(.system(size: 50))
+                                    .font(.system(size: 40))
                                     .foregroundColor(.white)
                                     .padding(.trailing, 20)
                             }
                         }
                     }
-                    
+
+                    // 🔹 Search Bar
                     HStack {
                         Image(systemName: "line.horizontal.3")
                             .padding(.leading, 8)
@@ -52,7 +50,6 @@ struct HomePage: View {
                             .frame(height: 50)
                         Image(systemName: "magnifyingglass")
                             .padding(.trailing, 8)
-                        
                     }
                     .background(
                         LinearGradient(
@@ -61,11 +58,11 @@ struct HomePage: View {
                             endPoint: .trailing
                         )
                     )
-                    
                     .cornerRadius(20)
                     .padding(.horizontal)
-                    
-                    ScrollView(.horizontal, showsIndicators: false){
+
+                    // 🔹 Category ScrollView
+                    ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 15) {
                             ForEach(["Mexican", "BBQ", "Chinese", "Italian", "Indian", "Korean"], id: \.self) { category in
                                 Text(category)
@@ -78,49 +75,48 @@ struct HomePage: View {
                         .padding(.horizontal)
                         .foregroundColor(.white)
                     }
+
                     Spacer()
-                    
+
+                    // 🔹 Recipe Card Section
                     HStack(spacing: 20) {
                         ZStack {
-                            // Background box with recipe content
                             VStack(alignment: .leading, spacing: 10) {
-                                Spacer() // Adds space at the top
+                                Spacer()
                                 Text("Recipes")
                                     .font(.headline)
                                     .padding(.bottom, 10)
                                     .foregroundColor(.white)
-                                
-                                // Future space for recipe content goes here
+
                                 Text("Recipe content goes here")
                                     .font(.subheadline)
                                     .foregroundColor(.gray)
-                                
+
                                 Spacer()
                             }
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(AppColors.cardColor)
                             .cornerRadius(20)
-                            
-                            // Star icon positioned at the top-right corner within the box
+
                             VStack {
                                 HStack {
                                     Spacer()
                                     Image(systemName: "star.fill")
                                         .font(.system(size: 20))
                                         .padding(10)
-                                        .foregroundColor(.yellow) // Optional color for the star
+                                        .foregroundColor(.yellow)
                                 }
                                 Spacer()
                             }
-                            .cornerRadius(20) // Ensures corners match
+                            .cornerRadius(20)
                         }
-                        .padding(.horizontal) // Outer padding if needed
+                        .padding(.horizontal)
                     }
-                    
-                    
+
+                    // 🔹 Scan & Shopping List Buttons
                     HStack(spacing: 20) {
-                        NavigationLink(destination: ReceiptPage()){
+                        NavigationLink(destination: ReceiptPage()) {
                             VStack {
                                 Image(systemName: "doc.text.viewfinder")
                                     .font(.system(size: 30))
@@ -135,8 +131,7 @@ struct HomePage: View {
                         .padding()
                         .background(AppColors.cardColor)
                         .cornerRadius(20)
-                        
-                        // Shopping List Button
+
                         VStack {
                             Image(systemName: "cart")
                                 .font(.system(size: 30))
@@ -153,55 +148,15 @@ struct HomePage: View {
                     }
                     .padding(.horizontal)
 
+                   
+                    
+                    
+                    CustomNavigationBar()
+                        .frame(maxWidth: .infinity)
+                        .edgesIgnoringSafeArea(.bottom)
+                    
                     Spacer()
 
-                    
-                    ZStack {
-                        // Background for the bottom navigation
-                        RoundedRectangle(cornerRadius: 30, style: .continuous)
-                            .fill(LinearGradient(gradient: Gradient(colors: [AppColors.gradientCardLight, AppColors.gradientCardDark]), startPoint: .topLeading, endPoint: .bottomTrailing))
-                            .frame(height: 100)
-                            .ignoresSafeArea(edges: .bottom)
-                        
-                        // Bottom navigation buttons
-                        HStack {
-                            Spacer()
-                            //Pantry
-                            VStack {
-                                NavigationLink(destination: PantryPage()
-                                    .navigationBarBackButtonHidden(true)) {
-                                    Image(systemName: "cart")
-                                        .font(.system(size: 40))
-                                }
-                                
-                            }
-                            Spacer()
-                            //Camera
-                            VStack {
-                                NavigationLink(destination: ScanIngredientPage()
-                                    //.navigationBarBackButtonHidden(true)
-                                ){
-                                    Image(systemName: "camera.fill")
-                                        .font(.system(size: 40))
-                                        .padding()
-                                }
-                            }
-                            Spacer()
-                            //Ask AI
-                            VStack {
-                                NavigationLink(destination: AskAIPage()){
-                                    Image(systemName: "questionmark.circle")
-                                        .font(.system(size: 40))
-                                }
-                            }
-                            
-                            Spacer()
-                        }
-                        .foregroundColor(.white)
-                        .padding(.bottom, 10)
-                    }
-                    .frame(width: geometry.size.width)
-                    .edgesIgnoringSafeArea(.all)
                 }
                 .frame(width: geometry.size.width)
                 .background(AppColors.background)
