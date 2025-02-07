@@ -156,7 +156,6 @@ struct HomePage: View {
                         .edgesIgnoringSafeArea(.bottom)
                     
                     Spacer()
-
                 }
                 .frame(width: geometry.size.width)
                 .background(AppColors.background)
