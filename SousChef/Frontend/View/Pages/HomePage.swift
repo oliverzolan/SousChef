@@ -168,11 +168,12 @@ struct HomePage: View {
                             Spacer()
                             //Pantry
                             VStack {
-                                NavigationLink(destination: PantryPage()
+                                NavigationLink(destination: PantryPage(userSession: userSession)
                                     .navigationBarBackButtonHidden(true)) {
                                     Image(systemName: "cart")
                                         .font(.system(size: 40))
                                 }
+
                                 
                             }
                             Spacer()
