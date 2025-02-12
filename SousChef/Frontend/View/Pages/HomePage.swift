@@ -10,212 +10,210 @@ import SwiftUI
 struct HomePage: View {
     
     @EnvironmentObject var userSession: UserSession // Access shared user session
+    @State private var searchText = ""
+    @State private var selectedCategory: String? = nil // Track selected category
 
-    
+    let categories = ["Mexican", "French", "Italian", "American", "Greek", "Chinese", "Indian", "Middle Eastern", "Thai"]
+
     var body: some View {
-        NavigationView{
-            GeometryReader { geometry in
-                VStack(spacing: 20) {
-                    // Top Greeting Section with Safe Area Boundaries
-                    ZStack {
-                        
-                        RoundedRectangle(cornerRadius: 30, style: .continuous)
-                            .fill(LinearGradient(gradient: Gradient(colors: [AppColors.gradientCardLight, AppColors.gradientCardDark]), startPoint: .topLeading, endPoint: .bottomTrailing))
-                            .frame(height: 180)
-                            .edgesIgnoringSafeArea(.top)
-                        
-                        HStack {
-                            Text(
-                                    userSession.fullName?.isEmpty == false
-                                    ? "Welcome Chef \n\(userSession.fullName!)"
-                                    : "Welcome Chef" 
+        NavigationView {
+            VStack {
+                // Header
+                Spacer().frame(height: 70)
+                HStack {
+                    Text("Chef John Paul Gaultier")
+                        .font(.custom("Inter-Bold", size: 24))
+                    Spacer()
+                    HStack(spacing: 16) {
+                        //Notification Bell
+                        Button(action: {
+                            //implement action
+                        }) {
+                            Image(systemName: "bell")
+                                .foregroundColor(.black)
+                                .overlay(
+                                    Circle()
+                                        .fill(Color.red)
+                                        .frame(width: 10, height: 10)
+                                        .offset(x: 6, y: -6)
                                 )
-                                .font(.title2)
-                                .fontWeight(.medium)
-                                .foregroundColor(.white)
-                                .padding(.leading, 20)
-                            Spacer()
-                            NavigationLink(destination: ProfilePage().navigationBarBackButtonHidden(true)) {
-                                Image(systemName: "person.circle")
-                                    .font(.system(size: 50))
-                                    .foregroundColor(.white)
-                                    .padding(.trailing, 20)
-                            }
+                        }
+                        //3 Lines
+                        Button(action: {
+                        }) {
+                            Image(systemName: "line.horizontal.3")
+                                .foregroundColor(.black)
                         }
                     }
-                    
-                    HStack {
-                        Image(systemName: "line.horizontal.3")
-                            .padding(.leading, 8)
-                        TextField("Search Recipes . . .", text: .constant(""))
-                            .padding(.leading, 5)
-                            .frame(height: 50)
-                        Image(systemName: "magnifyingglass")
-                            .padding(.trailing, 8)
-                        
-                    }
-                    .background(
-                        LinearGradient(
-                            gradient: Gradient(colors: [Color.white.opacity(0.9), AppColors.gradientSearchBar]),
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    
-                    .cornerRadius(20)
-                    .padding(.horizontal)
-                    
-                    ScrollView(.horizontal, showsIndicators: false){
-                        HStack(spacing: 15) {
-                            ForEach(["Mexican", "BBQ", "Chinese", "Italian", "Indian", "Korean"], id: \.self) { category in
-                                Text(category)
-                                    .padding(.horizontal, 20)
-                                    .padding(.vertical, 8)
-                                    .background(AppColors.cardColor)
-                                    .cornerRadius(20)
-                            }
-                        }
-                        .padding(.horizontal)
-                        .foregroundColor(.white)
-                    }
-                    Spacer()
-                    
-                    HStack(spacing: 20) {
-                        ZStack {
-                            // Background box with recipe content
-                            VStack(alignment: .leading, spacing: 10) {
-                                Spacer() // Adds space at the top
-                                Text("Recipes")
-                                    .font(.headline)
-                                    .padding(.bottom, 10)
-                                    .foregroundColor(.white)
-                                
-                                // Future space for recipe content goes here
-                                Text("Recipe content goes here")
-                                    .font(.subheadline)
-                                    .foregroundColor(.gray)
-                                
-                                Spacer()
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(AppColors.cardColor)
-                            .cornerRadius(20)
-                            
-                            // Star icon positioned at the top-right corner within the box
-                            VStack {
-                                HStack {
-                                    Spacer()
-                                    Image(systemName: "star.fill")
-                                        .font(.system(size: 20))
-                                        .padding(10)
-                                        .foregroundColor(.yellow) // Optional color for the star
-                                }
-                                Spacer()
-                            }
-                            .cornerRadius(20) // Ensures corners match
-                        }
-                        .padding(.horizontal) // Outer padding if needed
-                    }
-                    
-                    
-                    HStack(spacing: 20) {
-                        NavigationLink(destination: ReceiptPage()){
-                            VStack {
-                                Image(systemName: "doc.text.viewfinder")
-                                    .font(.system(size: 30))
-                                    .padding(.bottom, 5)
-                                    .foregroundColor(.white)
-                                Text("Scan Receipt")
-                                    .font(.headline)
-                                    .foregroundColor(.white)
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(AppColors.cardColor)
-                        .cornerRadius(20)
-                        
-                        // Shopping List Button
-                        VStack {
-                            Image(systemName: "cart")
-                                .font(.system(size: 30))
-                                .padding(.bottom, 5)
-                                .foregroundColor(.white)
-                            Text("Shopping List")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(AppColors.cardColor)
-                        .cornerRadius(20)
-                    }
-                    .padding(.horizontal)
-
-                    Spacer()
-
-                    
-                    ZStack {
-                        // Background for the bottom navigation
-                        RoundedRectangle(cornerRadius: 30, style: .continuous)
-                            .fill(LinearGradient(gradient: Gradient(colors: [AppColors.gradientCardLight, AppColors.gradientCardDark]), startPoint: .topLeading, endPoint: .bottomTrailing))
-                            .frame(height: 100)
-                            .ignoresSafeArea(edges: .bottom)
-                        
-                        // Bottom navigation buttons
-                        HStack {
-                            Spacer()
-                            //Pantry
-                            VStack {
-                                NavigationLink(destination: PantryPage()
-                                    .navigationBarBackButtonHidden(true)) {
-                                    Image(systemName: "cart")
-                                        .font(.system(size: 40))
-                                }
-                                
-                            }
-                            Spacer()
-                            //Camera
-                            VStack {
-                                NavigationLink(destination: ScanIngredientPage()
-                                    //.navigationBarBackButtonHidden(true)
-                                ){
-                                    Image(systemName: "camera.fill")
-                                        .font(.system(size: 40))
-                                        .padding()
-                                }
-                            }
-                            Spacer()
-                            //Ask AI
-                            VStack {
-                                NavigationLink(destination: AskAIPage()){
-                                    Image(systemName: "questionmark.circle")
-                                        .font(.system(size: 40))
-                                }
-                            }
-                            
-                            Spacer()
-                        }
-                        .foregroundColor(.white)
-                        .padding(.bottom, 10)
-                    }
-                    .frame(width: geometry.size.width)
-                    .edgesIgnoringSafeArea(.all)
                 }
-                .frame(width: geometry.size.width)
-                .background(AppColors.background)
-                .edgesIgnoringSafeArea(.all)
+                .padding(.horizontal)
+
+                // Search Bar
+                TextField("Search", text: $searchText)
+                    .padding(10)
+                    .background(Color(.systemGray6))
+                    .cornerRadius(10)
+                    .padding(.horizontal)
+
+                // Cuisine Categories
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(categories, id: \.self) { category in
+                            Button(action: {
+                                selectedCategory = (selectedCategory == category) ? nil : category
+                            }) {
+                                Text(category)
+                                    .font(.custom("Inter-Bold", size: 15))
+                                    .foregroundColor(selectedCategory == category ? .white : .black)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 4)
+                                    .background(selectedCategory == category ? AppColors.secondary3 : AppColors.lightGray)                                     .cornerRadius(20)
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+
+                // Featured Recipe Card
+                FeaturedRecipeView()
+
+                // Featured Recipes Grid
+                SectionHeader(title: "Featured Recipes")
+                RecipeGrid()
+
+                // Seasonal Recipes Grid
+                SectionHeader(title: "Seasonal Recipes")
+                RecipeGrid()
+
+                // Scan Buttons
+                
+                Spacer() // Pushes content to the top
             }
         }
     }
 }
 
-struct HomePage_Previews: PreviewProvider {
-    static var previews: some View {
-        HomePage()
-            .previewDevice("iPhone 16 Pro")
+struct CuisineCategory: View {
+    var name: String
+    var isSelected: Bool
+
+    var body: some View {
+        Text(name)
+            .font(.headline)
+            .foregroundColor(isSelected ? .white : .black)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(isSelected ? AppColors.secondary3 : AppColors.lightGray)
+            .cornerRadius(20)
+    }
+}
+
+struct FeaturedRecipeView: View {
+    var body: some View {
+        ZStack(alignment: .bottomTrailing) {
+            Image("shrimp_jambalaya") // Change to IMAGE
+                .resizable()
+                .scaledToFit()
+                .cornerRadius(10)
+            VStack(alignment: .leading) {
+                Text("Shrimp Jambalaya")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                Text("Lorem ipsum dolor sit amet, consectetur adipiscing elit...")
+                    .font(.caption)
+                    .foregroundColor(.white)
+            }
+            .padding()
+            .background(Color.black.opacity(0.5))
+            .cornerRadius(10)
+            .frame(maxWidth: .infinity, maxHeight: .infinity) // Allows it to grow
+        }
+        .padding(.horizontal)
     }
 }
 
 
+struct SectionHeader: View {
+    var title: String
+    
+    var body: some View {
+        HStack {
+            Text(title)
+                .font(.title3)
+                .fontWeight(.bold)
+            Spacer()
+        }
+        .padding(.horizontal)
+    }
+}
+
+struct RecipeGrid: View {
+    var body: some View {
+        HStack() {
+            //Tall Left Button
+            RoundedColorButton(title: "Button 1", color: .gray, width: 150, height: 160)
+
+            VStack(spacing: 10) {
+                //Top right button
+                RoundedColorButton(title: "Button 2", color: .gray, width: 200, height: 75)
+
+                HStack(spacing: 10) {
+                    //Bottom Two buttons same size
+                    RoundedColorButton(title: "Button 3", color: .gray, width: 100, height: 75)
+                    RoundedColorButton(title: "Button 4", color: .gray, width: 100, height: 75)
+                }
+            }
+        }
+        .padding()
+    }
+}
+
+struct RoundedColorButton: View {
+    var title: String
+    var color: Color
+    var width: CGFloat
+    var height: CGFloat
+
+    var body: some View {
+        Button(action: {
+            print("Tapped \(title)")
+        }) {
+            Text(title)
+                .font(.headline)
+                .foregroundColor(.white)
+                .frame(width: width, height: height)
+                .background(color)
+                .clipShape(RoundedRectangle(cornerRadius: 15))
+                .shadow(color: Color.black.opacity(0.35), radius: 5, x: 0, y: 5)
+        }
+    }
+}
+
+
+
+
+struct ScanButton: View {
+    var title: String
+    
+    var body: some View {
+        Button(action: {
+            // Scan action
+        }) {
+            Text(title)
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color.gray)
+                .cornerRadius(10)
+        }
+    }
+}
+
+// MARK: - SwiftUI Preview for Canvas Mode
+struct HomePage_Previews: PreviewProvider {
+    static var previews: some View {
+        HomePage()
+            .environmentObject(UserSession()) // Ensure the user session is injected
+    }
+}
