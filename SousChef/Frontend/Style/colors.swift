@@ -57,6 +57,7 @@ struct AppColors {
     static let secondary2 = Color(hex: "#FF7777")
     static let secondary3 = Color(hex: "#FF5C5C")
     static let shade = Color(hex: "#DCE0DA")
+    static let lightGray = Color(hex: "#DCE0DA")
     
     
 }
