@@ -7,11 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		05D318EC2CE195730047C8C3 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 05D318EB2CE195730047C8C3 /* FirebaseAuth */; };
+		05D318EC2CE195730047C8C3 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
 		3090A6682D52CE7A00BD631C /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 3090A6672D52CE7A00BD631C /* FirebaseStorage */; };
 		3090A66A2D52CECE00BD631C /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 3090A6692D52CECE00BD631C /* FirebaseFirestore */; };
 		30C0FDC02D4C1D150085BF96 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 30C0FDBF2D4C1D150085BF96 /* GoogleSignIn */; };
 		30C0FDC22D4C1D150085BF96 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 30C0FDC12D4C1D150085BF96 /* GoogleSignInSwift */; };
+		E2E85E2F2D56A8CF0025BF75 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = E2E85E2E2D56A8CF0025BF75 /* FirebaseAuth */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -74,8 +75,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				30C0FDC22D4C1D150085BF96 /* GoogleSignInSwift in Frameworks */,
+				E2E85E2F2D56A8CF0025BF75 /* FirebaseAuth in Frameworks */,
 				3090A6682D52CE7A00BD631C /* FirebaseStorage in Frameworks */,
-				05D318EC2CE195730047C8C3 /* FirebaseAuth in Frameworks */,
+				05D318EC2CE195730047C8C3 /* (null) in Frameworks */,
 				3090A66A2D52CECE00BD631C /* FirebaseFirestore in Frameworks */,
 				30C0FDC02D4C1D150085BF96 /* GoogleSignIn in Frameworks */,
 			);
@@ -104,6 +106,7 @@
 				E2481D952CCD94C00086213B /* SousChef */,
 				E2481DA62CCD94C20086213B /* SousChefTests */,
 				E2481DB02CCD94C20086213B /* SousChefUITests */,
+				E273FC672D56A16E00E7E5EC /* Frameworks */,
 				E2481D942CCD94C00086213B /* Products */,
 			);
 			sourceTree = "<group>";
@@ -116,6 +119,13 @@
 				E2481DAD2CCD94C20086213B /* SousChefUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		E273FC672D56A16E00E7E5EC /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -138,11 +148,11 @@
 			);
 			name = SousChef;
 			packageProductDependencies = (
-				05D318EB2CE195730047C8C3 /* FirebaseAuth */,
 				30C0FDBF2D4C1D150085BF96 /* GoogleSignIn */,
 				30C0FDC12D4C1D150085BF96 /* GoogleSignInSwift */,
 				3090A6672D52CE7A00BD631C /* FirebaseStorage */,
 				3090A6692D52CECE00BD631C /* FirebaseFirestore */,
+				E2E85E2E2D56A8CF0025BF75 /* FirebaseAuth */,
 			);
 			productName = SousChef;
 			productReference = E2481D932CCD94C00086213B /* SousChef.app */;
@@ -432,25 +442,32 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "SousChef/Preview\\ Content";
-				DEVELOPMENT_TEAM = 5SL369W883;
+				DEVELOPMENT_TEAM = JWWRMVGGLT;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SousChef/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Sous Chef";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.food-and-drink";
+				INFOPLIST_KEY_NSCameraUsageDescription = "We use the camera to allow you to scan ingredients and receipts.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = Zerowave.SousChef;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Zerowave.SousChef;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -463,25 +480,32 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "SousChef/Preview\\ Content";
-				DEVELOPMENT_TEAM = 5SL369W883;
+				DEVELOPMENT_TEAM = JWWRMVGGLT;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SousChef/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Sous Chef";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.food-and-drink";
+				INFOPLIST_KEY_NSCameraUsageDescription = "We use the camera to allow you to scan ingredients and receipts.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = Zerowave.SousChef;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Zerowave.SousChef;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -614,7 +638,27 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		05D318EB2CE195730047C8C3 /* FirebaseAuth */ = {
+		3090A6672D52CE7A00BD631C /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 05D318EA2CE195730047C8C3 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
+		};
+		3090A6692D52CECE00BD631C /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 05D318EA2CE195730047C8C3 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		30C0FDBF2D4C1D150085BF96 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 30C0FDBE2D4C1D150085BF96 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		30C0FDC12D4C1D150085BF96 /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 30C0FDBE2D4C1D150085BF96 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
+		};
+		E2E85E2E2D56A8CF0025BF75 /* FirebaseAuth */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 05D318EA2CE195730047C8C3 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseAuth;

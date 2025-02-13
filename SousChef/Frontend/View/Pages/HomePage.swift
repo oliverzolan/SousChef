@@ -1,10 +1,3 @@
-//
-//  homepage_activity.swift
-//  SousChef
-//
-//  Created by Bennet Rau on 10/28/24.
-//
-
 import SwiftUI
 
 struct HomePage: View {
