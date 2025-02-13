@@ -16,16 +16,29 @@ struct SousChefApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if let _ = userSession.token, !userSession.isGuest {
-                // Navigate to the homepage if authenticated
-                HomePage().environmentObject(userSession)
-            } else {
-                // Show login options
+            NavigationView {
                 LoginPage().environmentObject(userSession)
             }
         }
     }
 }
+
+//struct SousChefApp: App {
+//    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+//    @StateObject private var userSession = UserSession() // Initialize UserSession
+//
+//    var body: some Scene {
+//        WindowGroup {
+//            if let _ = userSession.token, !userSession.isGuest {
+//                // Navigate to the homepage if authenticated
+//                HomePage().environmentObject(userSession)
+//            } else {
+//                // Show login options
+//                LoginPage().environmentObject(userSession)
+//            }
+//        }
+//    }
+//}
 
 class AppDelegate: NSObject, UIApplicationDelegate {
     func application(

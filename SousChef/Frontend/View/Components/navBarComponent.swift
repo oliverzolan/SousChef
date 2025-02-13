@@ -65,7 +65,7 @@ struct CustomNavigationBar: View {
 
                 Spacer()
 
-                NavigationLink(destination: ProfilePage()) {
+                NavigationLink(destination: ChatbotPage(userSession: userSession)) {
                     VStack {
                         Image("chef_hat_icon")
                             .font(.system(size: 28))
@@ -79,6 +79,8 @@ struct CustomNavigationBar: View {
                 Spacer()
             }
             //.padding(.bottom, 10)
+            .ignoresSafeArea(.keyboard)
         }
+        
     }
 }

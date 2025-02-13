@@ -15,15 +15,13 @@ struct CreateAccountView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color.white.edgesIgnoringSafeArea(.all) // Background
-
                 VStack(spacing: 30) {
                     // Header
                     Text("Create Account")
                         .font(.title)
                         .fontWeight(.medium)
                         .foregroundColor(.black)
-                        .padding(.top, 40)
+                        .padding(.top, 70)
 
                     // Input Fields
                     VStack(spacing: 16) {

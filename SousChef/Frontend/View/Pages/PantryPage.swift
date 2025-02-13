@@ -11,15 +11,15 @@ struct PantryPage: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 10) {
-                HeaderComponent(title: "Pantry", onBack: { })
+                HeaderComponent(title: "Pantry")
                 SearchComponent(searchText: .constant(""))
                     .frame(maxWidth: .infinity, maxHeight: 55)
 
-                if let errorMessage = pantryController.errorMessage {
-                    Text("Error: \(errorMessage)")
-                        .foregroundColor(.red)
-                        .padding()
-                }
+//                if let errorMessage = pantryController.errorMessage {
+//                    Text("Error: \(errorMessage)")
+//                        .foregroundColor(.red)
+//                        .padding()
+//                }
 
                 if pantryController.isLoading {
                     ProgressView("Loading...")
@@ -76,6 +76,7 @@ struct PantryPage: View {
                 pantryController.fetchPantryItems()
             }
         }
+        .navigationBarBackButtonHidden(true)
     }
 
     private func fetchCategoryItems(_ category: String) {

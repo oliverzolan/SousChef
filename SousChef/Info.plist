@@ -2,67 +2,50 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <!-- Allow HTTP requests to specific domains (for testing) -->
-    <key>NSAppTransportSecurity</key>
-    <dict>
-        <key>NSAllowsArbitraryLoads</key>
-        <true/> <!-- Set to false for production security -->
-        <key>NSExceptionDomains</key>
-        <dict>
-            <key>3.89.134.6</key>
-            <dict>
-                <key>NSIncludesSubdomains</key>
-                <true/>
-                <key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
-                <true/>
-            </dict>
-        </dict>
-    </dict>
-
-    <!-- Firebase Configuration -->
-    <key>GIDClientID</key>
-    <string>806561590795-opugl0l6a4vs7g4lshhjt2d05quafvfo.apps.googleusercontent.com</string>
-
-    <!-- Required for Google Sign-In -->
-    <key>CFBundleURLTypes</key>
-    <array>
-        <dict>
-            <key>CFBundleURLSchemes</key>
-            <array>
-                <string>com.googleusercontent.apps.806561590795-tn40bd2il73r9jpktfj4j23qmug4e6r3</string>
-            </array>
-        </dict>
-        <dict>
-            <key>CFBundleURLSchemes</key>
-            <array>
-                <string>YOUR_REVERSED_CLIENT_ID</string> <!-- Found in GoogleService-Info.plist -->
-            </array>
-        </dict>
-    </array>
-
-    <!-- Required for Google Sign-In Authentication -->
-    <key>LSApplicationQueriesSchemes</key>
-    <array>
-        <string>google</string>
-        <string>googlechrome</string>
-    </array>
-
-    <!-- Required for Apple Sign-In -->
-    <key>NSAppleIDUsageDescription</key>
-    <string>This app uses Sign in with Apple to authenticate users securely.</string>
-
-    <!-- Required for Firebase -->
-    <key>FirebaseAppDelegateProxyEnabled</key>
-    <true/>
-
-    <!-- OpenAI API Key -->
-    <key>OpenAIKey</key>
-    <string>$(OpenAIKey)</string>
-
-    <!-- Fonts (If needed) -->
-    <key>UIAppFonts</key>
-    <array>
-        <!-- Add font file names if using custom fonts -->
-    </array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.806561590795-tn40bd2il73r9jpktfj4j23qmug4e6r3</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>YOUR_REVERSED_CLIENT_ID</string>
+			</array>
+		</dict>
+	</array>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<true/>
+	<key>GIDClientID</key>
+	<string>806561590795-opugl0l6a4vs7g4lshhjt2d05quafvfo.apps.googleusercontent.com</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>google</string>
+		<string>googlechrome</string>
+	</array>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>3.89.134.6</key>
+			<dict>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+				<key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+		</dict>
+	</dict>
+	<key>NSAppleIDUsageDescription</key>
+	<string>This app uses Sign in with Apple to authenticate users securely.</string>
+	<key>OpenAIKey</key>
+	<string>$(OpenAIKey)</string>
+	<key>UIAppFonts</key>
+	<array/>
 </dict>
 </plist>

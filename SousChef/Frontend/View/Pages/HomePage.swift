@@ -60,7 +60,8 @@ struct HomePage: View {
                                     .foregroundColor(selectedCategory == category ? .white : .black)
                                     .padding(.horizontal, 16)
                                     .padding(.vertical, 4)
-                                    .background(selectedCategory == category ? AppColors.secondary3 : AppColors.lightGray)                                     .cornerRadius(20)
+                                    .background(selectedCategory == category ? AppColors.secondary3 : AppColors.lightGray)
+                                    .cornerRadius(20)
                             }
                         }
                     }
@@ -81,8 +82,10 @@ struct HomePage: View {
                 // Scan Buttons
                 
                 Spacer() // Pushes content to the top
+                CustomNavigationBar()
             }
         }
+        .navigationBarBackButtonHidden(true)
     }
 }
 

@@ -12,7 +12,7 @@ struct ChatbotPage: View {
 
     var body: some View {
         VStack {
-            HeaderComponent(title: "Assistant", onBack: { })
+            HeaderComponent(title: "Chatbot")
 
             // Chat log
             ScrollView {
@@ -83,8 +83,7 @@ struct ChatbotPage: View {
             
             CustomNavigationBar()
         }
-        .navigationTitle("Chatbot")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
     }
 }
 
