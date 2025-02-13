@@ -6,7 +6,7 @@ struct CustomNavigationBar: View {
     var body: some View {
         ZStack {
             Rectangle()
-                .fill(Color.white)
+                .fill(Color(UIColor.secondarySystemBackground))
                 .frame(height: 80)
                 .ignoresSafeArea(edges: .bottom)
             
@@ -78,7 +78,7 @@ struct CustomNavigationBar: View {
 
                 Spacer()
             }
-            .padding(.bottom, 10)
+            //.padding(.bottom, 10)
         }
     }
 }

@@ -55,6 +55,10 @@
     <key>FirebaseAppDelegateProxyEnabled</key>
     <true/>
 
+    <!-- OpenAI API Key -->
+    <key>OpenAIKey</key>
+    <string>$(OpenAIKey)</string>
+
     <!-- Fonts (If needed) -->
     <key>UIAppFonts</key>
     <array>
