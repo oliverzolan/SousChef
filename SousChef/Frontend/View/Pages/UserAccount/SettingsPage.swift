@@ -1,76 +1,56 @@
 import SwiftUI
+import Firebase
 
 struct SettingsView: View {
-    @EnvironmentObject var userSession: UserSession
-    @State private var newName: String = ""
-    @State private var showSuccessMessage: Bool = false
+    @StateObject private var viewModel = SettingsViewModel()
 
     var body: some View {
-        VStack(spacing: 20) {
-            Text("Settings")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .padding(.top, 50)
+        NavigationView {
+            ZStack {
+                Color.white.edgesIgnoringSafeArea(.all)
 
-            Spacer()
+                VStack(spacing: 30) {
+                    // Header
+                    Text("Settings")
+                        .font(.title)
+                        .fontWeight(.medium)
+                        .foregroundColor(.black)
+                        .padding(.top, 40)
 
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Update Your Name")
-                    .font(.headline)
-                    .foregroundColor(.white)
+                    // Input Fields
+                    VStack(spacing: 16) {
+                        CustomTextField(label: "Display Name", placeholder: "Enter your display name", text: $viewModel.displayName)
+                        CustomTextField(label: "Email", placeholder: "Enter your email", text: $viewModel.email)
+                        CustomTextField(label: "Full Name", placeholder: "Enter your full name", text: $viewModel.fullName)
+                        CustomSecureField(label: "New Password", placeholder: "Enter new password (optional)", text: $viewModel.newPassword)
+                    }
+                    .padding(.horizontal, 24)
 
-                TextField("Enter your name", text: $newName)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding(.horizontal)
-                    .background(Color.white)
-                    .cornerRadius(10)
+                    // Error Message
+                    if let errorMessage = viewModel.errorMessage {
+                        Text(errorMessage)
+                            .foregroundColor(.red)
+                            .padding()
+                    }
 
-                Button(action: {
-                    userSession.fullName = newName
-                    showSuccessMessage = true
-                    dismissKeyboard() 
-                }) {
-                    Text("Save")
-                        .fontWeight(.bold)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .foregroundColor(.white)
-                        .background(
-                            RoundedRectangle(cornerRadius: 30, style: .continuous)
-                                .fill(LinearGradient(
-                                    gradient: Gradient(colors: [AppColors.gradientCardLight, AppColors.gradientCardDark]),
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ))
-                        )
+                    // Save Button
+                    Button(action: viewModel.updateUserInfo) {
+                        Text("Save Changes")
+                            .fontWeight(.bold)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .foregroundColor(.white)
+                            .background(RoundedRectangle(cornerRadius: 10).fill(AppColors.primary2))
+                    }
+                    .padding(.horizontal, 24)
+
+                    Spacer()
                 }
                 .padding(.horizontal, 24)
-                .padding(.top, 10)
-
-                if showSuccessMessage {
-                    Text("Update check")
-                        .font(.subheadline)
-                        .foregroundColor(.white)
-                        .padding(.top, 10)
-                }
             }
-            .padding(.horizontal)
-
-            Spacer()
         }
-        .background(AppColors.background)
-        .edgesIgnoringSafeArea(.all)
-    }
-
-    private func dismissKeyboard() {
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-    }
-}
-
-struct SettingsView_Previews: PreviewProvider {
-    static var previews: some View {
-        SettingsView()
-            .environmentObject(UserSession())
-            .previewDevice("iPhone 12")
+        .onAppear {
+            viewModel.loadUserData()
+        }
     }
 }

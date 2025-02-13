@@ -6,179 +6,121 @@
 //
 
 import SwiftUI
-import FirebaseAuth
+import AuthenticationServices
+
 
 struct CreateAccountView: View {
-    @State private var email: String = ""
-    @State private var fullName: String = ""
-    @State private var password: String = ""
-    @State private var name: String = ""
-    @State private var errorMessage: String?
-    @State private var isLoggedIn: Bool = false // Navigation state
+    @StateObject private var viewModel = CreateAccountViewController()
 
     var body: some View {
         NavigationView {
             ZStack {
-                AppColors.background
-                    .edgesIgnoringSafeArea(.all)
+                Color.white.edgesIgnoringSafeArea(.all) // Background
 
                 VStack(spacing: 30) {
-                    HStack {
-                        Spacer()
-                        HomeButton() // Add the home button here
-                            .padding(.trailing, 20)
-                            .padding(.top, 10)
-                    }
-
+                    // Header
                     Text("Create Account")
                         .font(.title)
                         .fontWeight(.medium)
-                        .foregroundColor(Color.white)
+                        .foregroundColor(.black)
                         .padding(.top, 40)
 
+                    // Input Fields
                     VStack(spacing: 16) {
-                        // Email TextField with AppColors.cardColor underline
-                        TextField("", text: $email)
-                            .placeholder(when: email.isEmpty) {
-                                Text("Email").foregroundColor(Color.white.opacity(0.7))
-                            }
-                            .foregroundColor(Color.white)
-                            .padding(.vertical, 10)
-                            .overlay(Divider().background(AppColors.cardColor), alignment: .bottom)
-
-                        // Full Name TextField with AppColors.cardColor underline
-                        TextField("", text: $fullName)
-                            .placeholder(when: fullName.isEmpty) {
-                                Text("Username").foregroundColor(Color.white.opacity(0.7))
-                            }
-                            .foregroundColor(Color.white)
-                            .padding(.vertical, 10)
-                            .overlay(Divider().background(AppColors.cardColor), alignment: .bottom)
-                        
-                        TextField("", text: $name)
-                            .placeholder(when: name.isEmpty) {
-                                Text("Full Name").foregroundColor(Color.white.opacity(0.7))
-                            }
-                            .foregroundColor(Color.white)
-                            .padding(.vertical, 10)
-                            .overlay(Divider().background(AppColors.cardColor), alignment: .bottom)
-
-                        // Password SecureField with AppColors.cardColor underline
-                        SecureField("", text: $password)
-                            .placeholder(when: password.isEmpty) {
-                                Text("Password").foregroundColor(Color.white.opacity(0.7))
-                            }
-                            .foregroundColor(Color.white)
-                            .padding(.vertical, 10)
-                            .overlay(Divider().background(AppColors.cardColor), alignment: .bottom)
+                        CustomTextField(label: "Display Name", placeholder: "Enter your display name", text: $viewModel.displayName)
+                        CustomTextField(label: "Email", placeholder: "Enter your email", text: $viewModel.email)
+                        CustomTextField(label: "Full Name", placeholder: "Enter your full name", text: $viewModel.fullName)
+                        CustomSecureField(label: "Password", placeholder: "Enter your password", text: $viewModel.password)
                     }
                     .padding(.horizontal, 24)
 
-                    if let errorMessage = errorMessage {
+                    // Error Message
+                    if let errorMessage = viewModel.errorMessage {
                         Text(errorMessage)
-                            .foregroundColor(Color.red)
+                            .foregroundColor(.red)
                             .padding()
                     }
 
-                    // Create Button with Gradient Background
-                    Button(action: signUp) {
-                        Text("CREATE")
+                    // Sign-Up Button
+                    Button(action: viewModel.signUp) {
+                        Text("Sign up")
                             .fontWeight(.bold)
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .foregroundColor(Color.white)
-                            .background(
-                                RoundedRectangle(cornerRadius: 30, style: .continuous)
-                                    .fill(LinearGradient(
-                                        gradient: Gradient(colors: [AppColors.gradientCardLight, AppColors.gradientCardDark]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ))
-                            )
+                            .foregroundColor(.white)
+                            .background(RoundedRectangle(cornerRadius: 10).fill(AppColors.primary2))
                     }
                     .padding(.horizontal, 24)
-                    .padding(.top, 20)
 
-                    Spacer()
+                    // 📌 Separation Line between Sign-Up & Social Login with "Or With"
+                    HStack {
+                        Divider()
+                            .frame(maxWidth: .infinity, maxHeight: 1)
+                            .background(Color.gray.opacity(0.5))
+                        
+                        Text("Or With")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                            .padding(.horizontal, 10)
+                        
+                        Divider()
+                            .frame(maxWidth: .infinity, maxHeight: 1)
+                            .background(Color.gray.opacity(0.5))
+                    }
+                    .frame(height: 20)
+                    .padding(.horizontal, 40)
+
+                    // Social Login Buttons (Apple & Google)
+                    VStack(spacing: 10) {
+                        SignInWithAppleButton(
+                            onRequest: viewModel.handleAppleRequest,
+                            onCompletion: viewModel.handleAppleCompletion
+                        )
+                        .frame(height: 50)
+                        .padding(.horizontal, 24)
+
+                        Button(action: viewModel.signUpWithGoogle) {
+                            HStack {
+                                Image("google-logo")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 24, height: 24)
+                                Text("Sign in with Google")
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.black)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.clear) // ✅ Transparent background
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color.black, lineWidth: 1) // ✅ Black border
+                            )
+                        }
+                        .padding(.horizontal, 24)
+                    }
 
                     // Login Link
                     NavigationLink(destination: LoginView()) {
                         Text("LOGIN")
                             .font(.subheadline)
-                            .foregroundColor(Color.white.opacity(0.7))
+                            .foregroundColor(.black.opacity(0.7))
                     }
                     .padding(.bottom, 40)
+
+                    Spacer()
                 }
+                .padding(.horizontal, 24)
             }
-        }
-    }
-
-    private func signUp() {
-        Auth.auth().createUser(withEmail: email, password: password) { result, error in
-            if let error = error {
-                errorMessage = error.localizedDescription
-            } else if let user = result?.user {
-                user.getIDToken { token, error in
-                    if let token = token {
-                        sendToServer(email: email, token: token)
-                    } else {
-                        errorMessage = "Failed to retrieve token."
-                    }
-                }
-            }
-        }
-    }
-
-    private func sendToServer(email: String, token: String) {
-        guard let url = URL(string: "https://souschef.click/users/create") else {
-            print("Invalid URL")
-            return
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue(token, forHTTPHeaderField: "Authorization")
-        request.addValue(email, forHTTPHeaderField: "Email")
-
-
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            if let error = error {
-                print("Error sending data to server: \(error.localizedDescription)")
-                return
-            }
-
-            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
-                print("Successfully sent data to server.")
-                DispatchQueue.main.async {
-                    isLoggedIn = true // Navigate to another view
-                }
-            } else {
-                print("Server responded with an error.")
-                if let data = data, let errorMessage = String(data: data, encoding: .utf8) {
-                    print("Error: \(errorMessage)")
-                }
-            }
-        }.resume()
-    }
-}
-// Custom placeholder view modifier
-extension View {
-    func placeholder<Content: View>(
-        when shouldShow: Bool,
-        alignment: Alignment = .leading,
-        @ViewBuilder placeholder: () -> Content) -> some View {
-        
-        ZStack(alignment: alignment) {
-            placeholder().opacity(shouldShow ? 1 : 0)
-            self
         }
     }
 }
 
-struct CreateAccount: PreviewProvider {
+// ✅ Preview
+struct CreateAccountView_Previews: PreviewProvider {
     static var previews: some View {
         CreateAccountView()
-            .previewDevice("iPhone 12")
+            .previewDevice(PreviewDevice(rawValue: "iPhone 12"))
+            .environmentObject(UserSession()) // Ensuring UserSession is provided
     }
 }

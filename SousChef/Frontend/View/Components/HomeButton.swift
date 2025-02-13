@@ -17,7 +17,7 @@ struct HomeButton: View {
                 .font(.system(size: 25))
                 .foregroundColor(.white)
                 .padding()
-                .background(Circle().fill(AppColors.cardColor))
+                .background(Circle().fill(AppColors.secondary2))
                 .shadow(radius: 5)
         }
     }
