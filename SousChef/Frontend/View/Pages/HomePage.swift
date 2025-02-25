@@ -72,12 +72,10 @@ struct HomePage: View {
                 FeaturedRecipeView()
 
                 // Featured Recipes Grid
-                SectionHeader(title: "Featured Recipes")
-                RecipeGrid()
+                RecipeGrid(title: "Featured")
 
                 // Seasonal Recipes Grid
-                SectionHeader(title: "Seasonal Recipes")
-                RecipeGrid()
+                RecipeGrid(title: "Seasonal")
 
                 // Scan Buttons
                 
@@ -125,63 +123,6 @@ struct FeaturedRecipeView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity) // Allows it to grow
         }
         .padding(.horizontal)
-    }
-}
-
-
-struct SectionHeader: View {
-    var title: String
-    
-    var body: some View {
-        HStack {
-            Text(title)
-                .font(.title3)
-                .fontWeight(.bold)
-            Spacer()
-        }
-        .padding(.horizontal)
-    }
-}
-
-struct RecipeGrid: View {
-    var body: some View {
-        HStack() {
-            //Tall Left Button
-            RoundedColorButton(title: "Button 1", color: .gray, width: 150, height: 160)
-
-            VStack(spacing: 10) {
-                //Top right button
-                RoundedColorButton(title: "Button 2", color: .gray, width: 200, height: 75)
-
-                HStack(spacing: 10) {
-                    //Bottom Two buttons same size
-                    RoundedColorButton(title: "Button 3", color: .gray, width: 100, height: 75)
-                    RoundedColorButton(title: "Button 4", color: .gray, width: 100, height: 75)
-                }
-            }
-        }
-        .padding()
-    }
-}
-
-struct RoundedColorButton: View {
-    var title: String
-    var color: Color
-    var width: CGFloat
-    var height: CGFloat
-
-    var body: some View {
-        Button(action: {
-            print("Tapped \(title)")
-        }) {
-            Text(title)
-                .font(.headline)
-                .foregroundColor(.white)
-                .frame(width: width, height: height)
-                .background(color)
-                .clipShape(RoundedRectangle(cornerRadius: 15))
-                .shadow(color: Color.black.opacity(0.35), radius: 5, x: 0, y: 5)
-        }
     }
 }
 
