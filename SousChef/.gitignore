@@ -15,3 +15,6 @@ DerivedData/
 # Other Xcode related files
 *.xcuserstate
 *.xcworkspacedata
+
+# Enviromental Variables
+.env
