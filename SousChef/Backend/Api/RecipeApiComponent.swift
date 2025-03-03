@@ -26,11 +26,11 @@ class RecipeAPI {
 
 
     init(searchInput: String? = nil, cuisineType: CuisineType? = nil, mealType: MealType? = nil, diet: Diet? = nil, health: Health? = nil, calorieNum: Int? = nil) {
-        self.appId = ProcessInfo.processInfo.environment["RECIPEAPI_BASEURL"] ?? "YOUR_APP_ID"
-        self.appKey = ProcessInfo.processInfo.environment["RECIPEAPI_KEY"] ?? "YOUR_APP_KEY"
-        self.baseURL = ProcessInfo.processInfo.environment["RECIPEAPI_ID"] ?? "https://api.edamam.com"
-        self.type = ProcessInfo.processInfo.environment["RECIPEAPI_TYPE"] ?? "public"
-        self.user = ProcessInfo.processInfo.environment["RECIPEAPI_USER"] ?? "user"
+        self.appId = "5732a059"
+        self.appKey = "58090f7f2c16659ae520bd0f3a7f51d2"
+        self.baseURL = "https://api.edamam.com"
+        self.type = "public"
+        self.user = "SousChef2950"
         
         self.searchInput = searchInput
         self.cuisineType = cuisineType
@@ -85,7 +85,7 @@ class RecipeAPI {
                 completion(.failure(error))
                 return
             }
-
+            
             guard let data = data else {
                 completion(.failure(NSError(domain: "No Data", code: 0, userInfo: nil)))
                 return
@@ -93,7 +93,9 @@ class RecipeAPI {
 
             do {
                 let decodedResponse = try JSONDecoder().decode(RecipeResponse.self, from: data)
+                print(decodedResponse)
                 let recipes = decodedResponse.hits.map { $0.recipe }
+    
                 completion(.success(recipes))
             } catch {
                 completion(.failure(error))

@@ -5,6 +5,8 @@
 //  Created by Garry Gomes on 2/25/25.
 //
 
+import Foundation
+
 // Response Structure
 struct RecipeResponse: Decodable {
     let hits: [Hit]
@@ -15,51 +17,25 @@ struct Hit: Decodable {
 }
 
 struct RecipeModel: Decodable {
+    let uri: String
     let label: String
     let image: String
     let url: String
-    let ingredientLines: [RecipeIngredient]
-    let totalNutrients: Nutrients
-}
-
-struct Nutrients: Decodable {
-    let energy: Nutrient?
-    let fat: Nutrient?
-    let saturatedFat: Nutrient?
-    let transFat: Nutrient?
-    let carbs: Nutrient?
-    let fiber: Nutrient?
-    let sugar: Nutrient?
-    let protein: Nutrient?
-    let cholesterol: Nutrient?
-    let sodium: Nutrient?
-    let calcium: Nutrient?
-    let potassium: Nutrient?
-    let iron: Nutrient?
-    let vitaminD: Nutrient?
-
-    private enum CodingKeys: String, CodingKey {
-        case energy = "ENERC_KCAL"
-        case fat = "FAT"
-        case saturatedFat = "FASAT"
-        case transFat = "FATRN"
-        case carbs = "CHOCDF"
-        case fiber = "FIBTG"
-        case sugar = "SUGAR"
-        case protein = "PROCNT"
-        case cholesterol = "CHOLE"
-        case sodium = "NA"
-        case calcium = "CA"
-        case potassium = "K"
-        case iron = "FE"
-        case vitaminD = "VITD"
-    }
-}
-
-struct Nutrient: Decodable {
-    let label: String
-    let quantity: Double
-    let unit: String
+    let source: String
+    let shareAs: String
+    let yield: Double?
+    let dietLabels: [String]
+    let healthLabels: [String]
+    let cautions: [String]
+    let ingredientLines: [String]
+    let ingredients: [RecipeIngredient]
+    let calories: Double
+    let totalWeight: Double
+    let totalTime: Double
+    let cuisineType: [String]?
+    let mealType: [String]?
+    let dishType: [String]?
+    let totalNutrients: [String: Nutrients]
 }
 
 struct RecipeIngredient: Decodable {
@@ -68,11 +44,18 @@ struct RecipeIngredient: Decodable {
     let measure: String?
     let food: String
     let weight: Double
-    let foodCategory: String
-    let foodId: String
+    let foodCategory: String?
+    let foodId: String?
+    let image: String?
 }
 
-//Query Structure
+struct Nutrients: Decodable {
+    let label: String
+    let quantity: Double
+    let unit: String
+}
+
+// Query Structure
 enum CuisineType: String, CaseIterable {
     case american, asian, british, caribbean, centralEurope = "central europe", chinese, easternEurope = "eastern europe"
     case french, indian, italian, japanese, kosher, mediterranean, mexican, middleEastern = "middle eastern"

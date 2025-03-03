@@ -2,138 +2,135 @@ import SwiftUI
 
 struct HomePage: View {
     
-    @EnvironmentObject var userSession: UserSession // Access shared user session
+    @EnvironmentObject var userSession: UserSession
     @State private var searchText = ""
-    @State private var selectedCategory: String? = nil // Track selected category
+    @State private var selectedCategory: String? = nil
+    @State private var recipes: [RecipeModel] = []
+    @State private var isLoading = false
+    @State private var errorMessage: String?
 
     let categories = ["Mexican", "French", "Italian", "American", "Greek", "Chinese", "Indian", "Middle Eastern", "Thai"]
 
     var body: some View {
-        ScrollView {
-            VStack() {
-                HStack {
-                    Text("Chef John Paul Gaultier")
-                        .font(.custom("Inter-Bold", size: 24))
-                    Spacer()
-                    HStack(spacing: 16) {
-                        Button(action: {
-                        }) {
-                            Image(systemName: "bell")
-                                .foregroundColor(.black)
-                                .overlay(
-                                    Circle()
-                                        .fill(Color.red)
-                                        .frame(width: 10, height: 10)
-                                        .offset(x: 6, y: -6)
-                                )
-                        }
-                        Button(action: {
-                        }) {
-                            Image(systemName: "line.horizontal.3")
-                                .foregroundColor(.black)
-                        }
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
+                    header
+
+                    searchBar
+
+                    categoryScroll
+
+                    if isLoading {
+                        ProgressView()
+                            .padding()
+                    } else if let errorMessage = errorMessage {
+                        Text(errorMessage)
+                            .foregroundColor(.red)
+                            .padding()
+                    } else if !recipes.isEmpty {
+                        recipeGrid
+                    } else {
+                        Text("Search for recipes to get started!")
+                            .foregroundColor(.gray)
+                            .padding()
                     }
                 }
-                .padding(.horizontal)
-                
-                TextField("Search", text: $searchText)
-                    .padding(10)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(10)
-                    .padding(.horizontal)
-
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(categories, id: \.self) { category in
-                            Button(action: {
-                                selectedCategory = (selectedCategory == category) ? nil : category
-                            }) {
-                                Text(category)
-                                    .font(.custom("Inter-Bold", size: 15))
-                                    .foregroundColor(selectedCategory == category ? .white : .black)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 4)
-                                    .background(selectedCategory == category ? AppColors.secondary3 : AppColors.lightGray)
-                                    .cornerRadius(20)
-                            }
-                        }
-                    }
-                    .padding(.horizontal)
-                }
-
-                FeaturedRecipeView()
-
-                RecipeGrid(title: "Featured")
-
-                RecipeGrid(title: "Seasonal")
-
-                RecipeGrid(title: "Chicken")
             }
+            .onChange(of: searchText) { newValue in
+                fetchRecipes()
+            }
+            .padding(.top)
         }
     }
-}
 
-
-struct CuisineCategory: View {
-    var name: String
-    var isSelected: Bool
-
-    var body: some View {
-        Text(name)
-            .font(.headline)
-            .foregroundColor(isSelected ? .white : .black)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(isSelected ? AppColors.secondary3 : AppColors.lightGray)
-            .cornerRadius(20)
-    }
-}
-
-struct FeaturedRecipeView: View {
-    var body: some View {
-        ZStack(alignment: .bottomTrailing) {
-            VStack(alignment: .leading) {
-                Text("Shrimp Jambalaya")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                Text("Lorem ipsum dolor sit amet, consectetur adipiscing elit...")
-                    .font(.caption)
-                    .foregroundColor(.white)
+    var header: some View {
+        HStack {
+            Text("Chef John Paul Gaultier")
+                .font(.custom("Inter-Bold", size: 24))
+            Spacer()
+            HStack(spacing: 16) {
+                Button(action: {}) {
+                    Image(systemName: "bell")
+                        .foregroundColor(.black)
+                        .overlay(
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 10, height: 10)
+                                .offset(x: 6, y: -6)
+                        )
+                }
+                Button(action: {}) {
+                    Image(systemName: "line.horizontal.3")
+                        .foregroundColor(.black)
+                }
             }
-            .padding()
-            .background(Color.black.opacity(0.5))
-            .cornerRadius(10)
-            .frame(maxWidth: .infinity, maxHeight: .infinity) // Allows it to grow
         }
         .padding(.horizontal)
     }
-}
 
+    var searchBar: some View {
+        TextField("Search", text: $searchText)
+            .padding(10)
+            .background(Color(.systemGray6))
+            .cornerRadius(10)
+            .padding(.horizontal)
+    }
 
-
-
-struct ScanButton: View {
-    var title: String
-    
-    var body: some View {
-        Button(action: {
-            // Scan action
-        }) {
-            Text(title)
-                .font(.headline)
-                .foregroundColor(.white)
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.gray)
-                .cornerRadius(10)
+    var categoryScroll: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 12) {
+                ForEach(categories, id: \.self) { category in
+                    Button(action: {
+                        selectedCategory = (selectedCategory == category) ? nil : category
+                        searchText = category
+                        fetchRecipes()
+                    }) {
+                        Text(category)
+                            .font(.custom("Inter-Bold", size: 15))
+                            .foregroundColor(selectedCategory == category ? .white : .black)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 4)
+                            .background(selectedCategory == category ? AppColors.secondary3 : AppColors.lightGray)
+                            .cornerRadius(20)
+                    }
+                }
+            }
+            .padding(.horizontal)
         }
     }
-}
 
-// MARK: - SwiftUI Preview for Canvas Mode
-struct HomePage_Previews: PreviewProvider {
-    static var previews: some View {
-        HomePage()
-            .environmentObject(UserSession()) // Ensure the user session is injected
+    var recipeGrid: some View {
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+            ForEach(recipes, id: \.label) { recipe in
+                NavigationLink(destination: RecipeDetailView(recipe: recipe)) {
+                    RecipeBoxView(recipe: recipe)
+                }
+            }
+        }
+        .padding(.horizontal)
+    }
+
+    func fetchRecipes() {
+        guard !searchText.isEmpty else {
+            recipes = []
+            return
+        }
+        
+        isLoading = true
+        errorMessage = nil
+        
+        let api = RecipeAPI(searchInput: searchText)
+        api.searchRecipes(query: searchText) { result in
+            DispatchQueue.main.async {
+                isLoading = false
+                switch result {
+                case .success(let recipes):
+                    self.recipes = recipes
+                case .failure(let error):
+                    self.errorMessage = error.localizedDescription
+                }
+            }
+        }
     }
 }
