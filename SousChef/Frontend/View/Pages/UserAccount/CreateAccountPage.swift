@@ -50,7 +50,7 @@ struct CreateAccountView: View {
                     }
                     .padding(.horizontal, 24)
 
-                    // 📌 Separation Line between Sign-Up & Social Login with "Or With"
+                    
                     HStack {
                         Divider()
                             .frame(maxWidth: .infinity, maxHeight: 1)
@@ -89,10 +89,10 @@ struct CreateAccountView: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.clear) // ✅ Transparent background
+                            .background(Color.clear)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 10)
-                                    .stroke(Color.black, lineWidth: 1) // ✅ Black border
+                                    .stroke(Color.black, lineWidth: 1)
                             )
                         }
                         .padding(.horizontal, 24)
@@ -114,11 +114,11 @@ struct CreateAccountView: View {
     }
 }
 
-// ✅ Preview
+
 struct CreateAccountView_Previews: PreviewProvider {
     static var previews: some View {
         CreateAccountView()
             .previewDevice(PreviewDevice(rawValue: "iPhone 12"))
-            .environmentObject(UserSession()) // Ensuring UserSession is provided
+            .environmentObject(UserSession()) 
     }
 }

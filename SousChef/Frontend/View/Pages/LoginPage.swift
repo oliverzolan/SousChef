@@ -56,10 +56,10 @@ struct LoginPage: View {
                         }
                         .padding(.horizontal, 24)
                         
-                        Spacer() // Push content to the middle
+                        Spacer() 
                     }
                 }
-                .navigationBarBackButtonHidden(true) // Hide back button for this view
+                .navigationBarBackButtonHidden(true)
             }
         }
     }

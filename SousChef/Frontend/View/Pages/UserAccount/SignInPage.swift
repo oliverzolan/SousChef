@@ -64,7 +64,10 @@ struct LoginView: View {
                                 }
                             }
 
-                            Button(action: viewModel.navigateToForgotPassword) {
+                            NavigationLink(
+                                destination: ForgotPasswordView()
+                                    .navigationBarBackButtonHidden(false)
+                            ) {
                                 Text("Forgot Password?")
                                     .foregroundColor(.blue)
                                     .fontWeight(.bold)
@@ -72,7 +75,6 @@ struct LoginView: View {
                         }
                             
                         
-                        // 📌 Separation Line between Sign-Up & Social Login with "Or With"
                         HStack {
                             Divider()
                                 .frame(maxWidth: .infinity, maxHeight: 1)
@@ -111,10 +113,10 @@ struct LoginView: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.clear) // ✅ Transparent background
+                            .background(Color.clear)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 10)
-                                    .stroke(Color.black, lineWidth: 1) // ✅ Black border with 2px thickness
+                                    .stroke(Color.black, lineWidth: 1) 
                             )
                         }
                         .padding(.horizontal, 24)
@@ -163,7 +165,7 @@ struct LoginView: View {
         static var previews: some View {
             LoginView()
                 .previewDevice(PreviewDevice(rawValue: "iPhone 12"))
-                .environmentObject(UserSession()) // Ensure it has a UserSession instance
+                .environmentObject(UserSession()) 
         }
     }
 
