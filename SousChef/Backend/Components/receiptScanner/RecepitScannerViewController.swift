@@ -167,7 +167,7 @@ class LiveReceiptScannerViewController: UIViewController, AVCaptureVideoDataOutp
         }
     }
 
-    private func normalizeText(_ text: String) -> String {
+    func normalizeText(_ text: String) -> String {
         return text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 }
