@@ -20,7 +20,7 @@ struct LoginView: View {
 
                 ScrollView {
                     VStack(spacing: 20) {
-                        Text("Welcome Back! 👋")
+                        Text("Welcome Back!")
                             .font(.title)
                             .fontWeight(.medium)
                             .foregroundColor(Color.black)
