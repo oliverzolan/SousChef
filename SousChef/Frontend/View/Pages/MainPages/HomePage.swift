@@ -9,18 +9,14 @@ struct HomePage: View {
     let categories = ["Mexican", "French", "Italian", "American", "Greek", "Chinese", "Indian", "Middle Eastern", "Thai"]
 
     var body: some View {
-        NavigationView {
-            VStack {
-                // Header
-                Spacer().frame(height: 70)
+        ScrollView {
+            VStack() {
                 HStack {
                     Text("Chef John Paul Gaultier")
                         .font(.custom("Inter-Bold", size: 24))
                     Spacer()
                     HStack(spacing: 16) {
-                        //Notification Bell
                         Button(action: {
-                            //implement action
                         }) {
                             Image(systemName: "bell")
                                 .foregroundColor(.black)
@@ -31,7 +27,6 @@ struct HomePage: View {
                                         .offset(x: 6, y: -6)
                                 )
                         }
-                        //3 Lines
                         Button(action: {
                         }) {
                             Image(systemName: "line.horizontal.3")
@@ -40,15 +35,13 @@ struct HomePage: View {
                     }
                 }
                 .padding(.horizontal)
-
-                // Search Bar
+                
                 TextField("Search", text: $searchText)
                     .padding(10)
                     .background(Color(.systemGray6))
                     .cornerRadius(10)
                     .padding(.horizontal)
 
-                // Cuisine Categories
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         ForEach(categories, id: \.self) { category in
@@ -68,24 +61,18 @@ struct HomePage: View {
                     .padding(.horizontal)
                 }
 
-                // Featured Recipe Card
                 FeaturedRecipeView()
 
-                // Featured Recipes Grid
                 RecipeGrid(title: "Featured")
 
-                // Seasonal Recipes Grid
                 RecipeGrid(title: "Seasonal")
 
-                // Scan Buttons
-                
-                Spacer() // Pushes content to the top
-                CustomNavigationBar()
+                RecipeGrid(title: "Chicken")
             }
         }
-        .navigationBarBackButtonHidden(true)
     }
 }
+
 
 struct CuisineCategory: View {
     var name: String
@@ -105,10 +92,6 @@ struct CuisineCategory: View {
 struct FeaturedRecipeView: View {
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
-            Image("shrimp_jambalaya") // Change to IMAGE
-                .resizable()
-                .scaledToFit()
-                .cornerRadius(10)
             VStack(alignment: .leading) {
                 Text("Shrimp Jambalaya")
                     .font(.headline)

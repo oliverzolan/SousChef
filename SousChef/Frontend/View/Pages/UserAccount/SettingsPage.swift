@@ -1,7 +1,7 @@
 import SwiftUI
 import Firebase
 
-struct SettingsView: View {
+struct SettingView: View {
     @StateObject private var viewModel = SettingsViewModel()
 
     var body: some View {
