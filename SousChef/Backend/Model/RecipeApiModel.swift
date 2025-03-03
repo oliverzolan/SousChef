@@ -68,6 +68,7 @@ struct RecipeIngredient: Decodable {
     let measure: String?
     let food: String
     let weight: Double
+    let foodCategory: String
     let foodId: String
 }
 
