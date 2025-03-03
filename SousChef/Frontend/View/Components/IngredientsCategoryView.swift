@@ -1,10 +1,3 @@
-//
-//  IngredientsCategoryView.swift
-//  SousChef
-//
-//  Created by Garry Gomes on 12/31/24.
-//
-
 import SwiftUI
 
 struct IngredientCategoryView: View {
