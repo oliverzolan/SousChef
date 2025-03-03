@@ -17,8 +17,8 @@ struct SousChefApp: App {
     var body: some Scene {
         WindowGroup {
             NavigationView {
-                LoginPage().environmentObject(userSession)
-            }
+                LoginPage()
+            }.environmentObject(userSession)
         }
     }
 }
