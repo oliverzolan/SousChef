@@ -4,6 +4,7 @@ class PantryController: ObservableObject {
     @Published var pantryItems: [String] = []
     @Published var isLoading: Bool = true
     @Published var errorMessage: String? = nil
+    @Published var showAddIngredientPopup: Bool = false
 
     private let pantryURL = "https://souschef.click/pantry/user"
     private var userSession: UserSession
@@ -70,6 +71,10 @@ class PantryController: ObservableObject {
             }
         }.resume()
     }
+    
+    struct PantryItem: Codable {
+        let ingredient_name: String
+    }
 
     private func handleTokenExpiration() {
         userSession.refreshToken { newToken in
@@ -80,7 +85,6 @@ class PantryController: ObservableObject {
                 }
                 return
             }
-
             self.fetchPantryItems()
         }
     }

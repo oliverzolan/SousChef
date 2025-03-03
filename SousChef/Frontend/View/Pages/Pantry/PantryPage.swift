@@ -12,48 +12,49 @@ struct PantryPage: View {
         NavigationView {
             VStack(spacing: 10) {
                 HeaderComponent(title: "Pantry")
-                // Need to add Plus button for adding ingredients.
                 SearchComponent(searchText: .constant(""))
                     .frame(maxWidth: .infinity, maxHeight: 55)
 
-//                if let errorMessage = pantryController.errorMessage {
-//                    Text("Error: \(errorMessage)")
-//                        .foregroundColor(.red)
-//                        .padding()
-//                }
+                // Display error message, if any.
+                if let errorMessage = pantryController.errorMessage {
+                    Text("Error: \(errorMessage)")
+                        .foregroundColor(.red)
+                        .padding()
+                }
 
+                // Loading indicator.
                 if pantryController.isLoading {
                     ProgressView("Loading...")
                 } else {
-                    // Pantry categories
+                    // Display your category grid.
                     HStack(spacing: 10) {
                         VStack(spacing: 13) {
                             NavigationLink(destination: VegetablesIngredientsPage()) {
                                 CategoryButton(imageName: "vegetablesButton")
                             }
-                                .frame(maxWidth: .infinity, maxHeight: 150)
+                            .frame(maxWidth: .infinity, maxHeight: 150)
 
                             NavigationLink(destination: GrainsIngredientsPage()) {
                                 CategoryButton(imageName: "grainsButton")
                             }
-                                .frame(maxWidth: .infinity, maxHeight: 150)
+                            .frame(maxWidth: .infinity, maxHeight: 150)
 
                             HStack(spacing: 10) {
                                 NavigationLink(destination: SpicesIngredientsPage()) {
                                     CategoryButton(imageName: "spicesButton")
                                 }
-                                    .frame(maxWidth: .infinity, maxHeight: 100)
+                                .frame(maxWidth: .infinity, maxHeight: 100)
 
                                 NavigationLink(destination: CannedIngredientsPage()) {
                                     CategoryButton(imageName: "cannedButton")
                                 }
-                                    .frame(maxWidth: .infinity, maxHeight: 100)
+                                .frame(maxWidth: .infinity, maxHeight: 100)
                             }
 
                             NavigationLink(destination: DrinksIngredientsPage()) {
                                 CategoryButton(imageName: "drinksButton")
                             }
-                                .frame(maxWidth: .infinity, maxHeight: 125)
+                            .frame(maxWidth: .infinity, maxHeight: 125)
                         }
 
                         VStack(spacing: 10) {
@@ -71,7 +72,6 @@ struct PantryPage: View {
                                 CategoryButton(imageName: "dairyButton")
                             }
                             .frame(maxWidth: .infinity, maxHeight: 150)
-
                         }
                     }
                     .padding(.horizontal, 15)
@@ -80,30 +80,39 @@ struct PantryPage: View {
                         NavigationLink(destination: CondimentsIngredientsPage()) {
                             CategoryButton(imageName: "condimentsButton")
                         }
-                            .frame(maxWidth: .infinity, maxHeight: 200)
+                        .frame(maxWidth: .infinity, maxHeight: 200)
 
                         NavigationLink(destination: AllIngredientsPage()) {
                             CategoryButton(imageName: "allButton")
                         }
-                            .frame(maxWidth: .infinity, maxHeight: 200)
+                        .frame(maxWidth: .infinity, maxHeight: 200)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.horizontal, 39)
                 }
 
-                CustomNavigationBar()
+                Spacer()
+
+                // Plus button to show the add ingredient popup.
+//                Button(action: {
+//                    pantryController.showAddIngredientPopup.toggle()
+//                }) {
+//                    Image(systemName: "plus.circle.fill")
+//                        .font(.system(size: 50))
+//                        .foregroundColor(.blue)
+//                }
+                .padding()
             }
             .background(Color(.systemBackground))
             .onAppear {
                 pantryController.fetchPantryItems()
             }
+            // add ingredient popup
+            .sheet(isPresented: $pantryController.showAddIngredientPopup) {
+                PantryPopupView(isVisible: $pantryController.showAddIngredientPopup, pantryItems: $pantryController.pantryItems)
+            }
         }
         .navigationBarBackButtonHidden(true)
-    }
-
-    private func fetchCategoryItems(_ category: String) {
-        print("Fetching items for category: \(category)")
-        // Implement category-specific item fetching
     }
 }
 
