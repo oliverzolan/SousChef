@@ -3,22 +3,22 @@ import FirebaseAuth
 
 class PantryController: ObservableObject {
     @Published var pantryItems: [String] = []
-    @Published var fullPantryItems: [Ingredient] = []
+    @Published var fullPantryItems: [IngredientModel] = []
     @Published var isLoading: Bool = true
     @Published var errorMessage: String? = nil
     @Published var showAddIngredientPopup: Bool = false
-    @Published var quantities: [Int: Int] = [:]
-    
+    @Published var quantities: [String: Int] = [:]
+
     private let basePantryURL = "https://souschef.click/ingredients/all"
     var userSession: UserSession
+    private let ingredientsAPI = IngredientsAPI()
 
     init(userSession: UserSession) {
         self.userSession = userSession
     }
         
-    // Fetch all ingredients from aws user
+    /// Fetches all ingredients from AWS for the user
     func fetchIngredients() {
-        // check for aws id
         guard let userId = userSession.awsUserId else {
             DispatchQueue.main.async {
                 self.errorMessage = "AWS User ID not available"
@@ -51,17 +51,9 @@ class PantryController: ObservableObject {
         URLSession.shared.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
                 self.isLoading = false
-                if let httpResponse = response as? HTTPURLResponse {
-                    switch httpResponse.statusCode {
-                    case 200:
-                        break
-                    case 401:
-                        self.handleTokenExpiration()
-                        return
-                    default:
-                        self.errorMessage = "Error: Server returned status code \(httpResponse.statusCode)"
-                        return
-                    }
+                if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
+                    self.errorMessage = "Error: Server returned status code \(httpResponse.statusCode)"
+                    return
                 }
                 if let error = error {
                     self.errorMessage = "Failed to load pantry items: \(error.localizedDescription)"
@@ -71,32 +63,50 @@ class PantryController: ObservableObject {
                     self.errorMessage = "No data received from server"
                     return
                 }
-                // for debugging, prints raw json
-                if let jsonString = String(data: data, encoding: .utf8) {
-                    print("Raw JSON: \(jsonString)")
-                }
                 do {
-                    let items = try JSONDecoder().decode([Ingredient].self, from: data)
+                    let items = try JSONDecoder().decode([IngredientModel].self, from: data)
                     self.fullPantryItems = items
-                    self.pantryItems = items.map { $0.text }
+                    self.pantryItems = items.map { $0.label }
                 } catch {
                     self.errorMessage = "Failed to decode server response: \(error.localizedDescription)"
                 }
             }
         }.resume()
     }
-        
-    func increaseQuantity(for ingredientID: Int) {
+    
+    /// Fetches a single ingredient using Edamam API
+    func searchIngredient(query: String) {
+        isLoading = true
+        errorMessage = nil
+
+        ingredientsAPI.search(query: query) { result in
+            DispatchQueue.main.async {
+                self.isLoading = false
+                switch result {
+                case .success(let response):
+                    self.fullPantryItems = response.hints.map { $0.food }
+                    self.pantryItems = self.fullPantryItems.map { $0.label }
+                case .failure(let error):
+                    self.errorMessage = "Failed to search ingredients: \(error.localizedDescription)"
+                }
+            }
+        }
+    }
+    
+    /// Increases the quantity of an ingredient
+    func increaseQuantity(for ingredientID: String) {
         quantities[ingredientID, default: 0] += 1
     }
     
-    func decreaseQuantity(for ingredientID: Int) {
+    /// Decreases the quantity of an ingredient, ensuring it doesn't go below zero
+    func decreaseQuantity(for ingredientID: String) {
         let currentQuantity = quantities[ingredientID, default: 0]
         if currentQuantity > 0 {
             quantities[ingredientID] = currentQuantity - 1
         }
     }
     
+    /// Adds selected ingredients to the user's pantry
     func addSelectedIngredientsToPantry(completion: @escaping (Bool) -> Void) {
         guard let url = URL(string: "https://souschef.click/pantry/user/add-ingredients") else {
             self.errorMessage = "Invalid URL"
@@ -104,7 +114,6 @@ class PantryController: ObservableObject {
             return
         }
         
-        // Refresh firebase token
         Auth.auth().currentUser?.getIDTokenForcingRefresh(true) { idToken, error in
             if let error = error {
                 DispatchQueue.main.async {
@@ -121,10 +130,9 @@ class PantryController: ObservableObject {
                 return
             }
             
-            // Change this, no longer need selected
             let selectedIngredients = self.quantities.compactMap { (ingredientID, quantity) -> [String: Any]? in
                 guard quantity > 0 else { return nil }
-                return ["ingredient_id": ingredientID, "quantity": quantity]
+                return ["foodId": ingredientID, "quantity": quantity] 
             }
             
             guard !selectedIngredients.isEmpty else {

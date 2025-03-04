@@ -16,12 +16,11 @@ struct Hit: Decodable {
 }
 
 struct RecipeModel: Decodable {
-    let uri: String
     let label: String
     let image: String
     let url: String
-    let ingredients: [Ingredient]
-    let totalNutrients: Nutrients
+    let ingredients: [RecipeIngredient]
+    let totalNutrients: RecipeNutrients
     let calories: Double
     let totalWeight: Double
     let cuisineType: [String]?
@@ -34,7 +33,7 @@ struct RecipeModel: Decodable {
     }
 }
 
-struct Ingredient: Decodable {
+struct RecipeIngredient: Decodable {
     let text: String
     let quantity: Double
     let measure: String?
@@ -45,7 +44,7 @@ struct Ingredient: Decodable {
     let image: String?
 }
 
-struct Nutrients: Decodable {
+struct RecipeNutrients: Decodable {
     let energy: Nutrient?
     let fat: Nutrient?
     let saturatedFat: Nutrient?

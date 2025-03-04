@@ -6,11 +6,11 @@
 //
 import Foundation
 
-let RECIPE_API_ENDPOINT = "/api/recipes/v2"
-
-
-
 class RecipeAPI: BaseAPIComponent<RecipeResponse> {
+    private var RECIPE_API_ENDPOINT: String
+    private var user: String
+    private var type: String
+    
     var cuisineType: CuisineType?
     var mealType: MealType?
     var diet: Diet?
@@ -18,8 +18,11 @@ class RecipeAPI: BaseAPIComponent<RecipeResponse> {
     var calorieNum: Int?
     var searchInput: String?
 
-    override init() {
-        super.init()
+    override init(appId: String = "5732a059", appKey: String = "58090f7f2c16659ae520bd0f3a7f51d2") {
+        self.RECIPE_API_ENDPOINT = "/api/recipes/v2"
+        self.user = "SousChef2950"
+        self.type = "public"
+        super.init(appId: appId, appKey: appKey)
     }
 
     override func search(query: String, completion: @escaping (Result<RecipeResponse, Error>) -> Void) {

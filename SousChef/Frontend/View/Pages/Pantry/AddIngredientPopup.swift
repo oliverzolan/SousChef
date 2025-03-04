@@ -4,12 +4,12 @@ struct AddIngredientPopup: View {
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var userSession: UserSession
 
-    private let foodDatabaseAPI = FoodDatabaseAPI()
+    private let ingredientsAPI = IngredientsAPI()
 
     @Binding var ingredients: [String]
 
     @State private var searchText: String = ""
-    @State private var searchResults: [FoodModel] = []
+    @State private var searchResults: [IngredientModel] = []
     @State private var isLoading: Bool = false
     @State private var errorMessage: String?
 
@@ -23,7 +23,6 @@ struct AddIngredientPopup: View {
                         performSearch(query: newValue)
                     }
 
-                // Loading, error, or results
                 if isLoading {
                     ProgressView("Searching...")
                         .padding()
@@ -32,14 +31,14 @@ struct AddIngredientPopup: View {
                         .foregroundColor(.red)
                         .padding()
                 } else {
-                    List(searchResults) { food in
+                    List(searchResults, id: \.foodId) { ingredient in
                         Button {
-                            addIngredientToDatabase(food)
+                            addIngredientToDatabase(ingredient)
                         } label: {
                             VStack(alignment: .leading) {
-                                Text(food.label)
+                                Text(ingredient.label)
                                     .font(.headline)
-                                if let category = food.category {
+                                if let category = ingredient.category {
                                     Text(category)
                                         .font(.subheadline)
                                         .foregroundColor(.secondary)
@@ -62,8 +61,7 @@ struct AddIngredientPopup: View {
         }
     }
 
-
-    // Search helper
+    // MARK: - Search Logic
     private func performSearch(query: String) {
         guard !query.isEmpty else {
             searchResults = []
@@ -72,37 +70,36 @@ struct AddIngredientPopup: View {
         isLoading = true
         errorMessage = nil
 
-        foodDatabaseAPI.searchFoods(query: query) { result in
-            isLoading = false
-            switch result {
-            case .success(let foods):
-                // Filter duplicates by foodId
-                let uniqueFoods = foods.reduce(into: [FoodModel]()) { result, food in
-                    if !result.contains(where: { $0.foodId == food.foodId }) {
-                        result.append(food)
-                    }
+        ingredientsAPI.search(query: query) { result in
+            DispatchQueue.main.async {
+                self.isLoading = false
+                switch result {
+                case .success(let response):
+                    // Extract unique ingredients
+                    let uniqueIngredients = Array(Set(response.hints.map { $0.food })).sorted { $0.label < $1.label }
+                    self.searchResults = uniqueIngredients
+                case .failure(let error):
+                    self.errorMessage = error.localizedDescription
                 }
-                self.searchResults = uniqueFoods
-            case .failure(let error):
-                self.errorMessage = error.localizedDescription
             }
         }
     }
 
-    private func addIngredientToDatabase(_ food: FoodModel) {
+    // MARK: - Adding Ingredients
+    private func addIngredientToDatabase(_ ingredient: IngredientModel) {
         guard let awsUserId = userSession.awsUserId, let token = userSession.token else {
             print("AWS User ID or token not available")
             return
         }
         
         let ingredientPayload: [String: Any] = [
-            "foodId": food.foodId,
-            "text": food.label,
-            "quantity": 1,         // Default quantity = 1
-            "measure": "",         // optional
-            "food": food.label,    // optional
+            "foodId": ingredient.foodId,
+            "text": ingredient.label,
+            "quantity": 1,
+            "measure": "",
+            "food": ingredient.label,
             "weight": 0,
-            "foodCategory": food.category ?? ""
+            "foodCategory": ingredient.category ?? ""
         ]
         
         let payload: [String: Any] = [
@@ -139,7 +136,7 @@ struct AddIngredientPopup: View {
                 }
                 if httpResponse.statusCode == 200 {
                     print("Ingredient added successfully")
-                    self.ingredients.append(food.label)
+                    self.ingredients.append(ingredient.label)
                     self.presentationMode.wrappedValue.dismiss()
                 } else {
                     print("Failed to add ingredient. Server returned status code: \(httpResponse.statusCode)")

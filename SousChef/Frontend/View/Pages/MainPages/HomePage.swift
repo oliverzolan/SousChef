@@ -18,9 +18,7 @@ struct HomePage: View {
                 ScrollView {
                     VStack(spacing: 20) {
                         header
-                        
                         searchBar
-                        
                         categoryScroll
                         
                         if isLoading {
@@ -142,7 +140,7 @@ struct HomePage: View {
 
     var recipeGrid: some View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-            ForEach(recipes, id: \.label) { recipe in
+            ForEach(recipes, id: \.url) { recipe in
                 NavigationLink(destination: RecipeDetailView(recipe: recipe)) {
                     RecipeBoxView(recipe: recipe)
                 }
@@ -160,13 +158,13 @@ struct HomePage: View {
         isLoading = true
         errorMessage = nil
         
-        let api = RecipeAPI(searchInput: searchText)
-        api.searchRecipes(query: searchText) { result in
+        let api = RecipeAPI()
+        api.search(query: searchText) { result in
             DispatchQueue.main.async {
                 isLoading = false
                 switch result {
-                case .success(let recipes):
-                    self.recipes = recipes
+                case .success(let recipeResponse):
+                    self.recipes = recipeResponse.hits.map { $0.recipe } 
                 case .failure(let error):
                     self.errorMessage = error.localizedDescription
                 }
@@ -174,3 +172,4 @@ struct HomePage: View {
         }
     }
 }
+

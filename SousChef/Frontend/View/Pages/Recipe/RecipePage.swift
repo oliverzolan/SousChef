@@ -34,7 +34,7 @@ struct RecipeDetailView: View {
                     .padding(.horizontal)
 
                 // Calories
-                if let calories = recipe.totalNutrients["ENERC_KCAL"]?.quantity {
+                if let calories = recipe.totalNutrients.energy?.quantity {
                     Text("Calories: \(Int(calories)) kcal")
                         .font(.subheadline)
                         .foregroundColor(.gray)
@@ -47,10 +47,11 @@ struct RecipeDetailView: View {
                     .fontWeight(.semibold)
                     .padding(.horizontal)
 
-                ForEach(recipe.ingredientLines, id: \.self) { ingredient in
-                    Text("• \(ingredient)")
+                ForEach(recipe.ingredients, id: \.foodId) { ingredient in
+                    Text("• \(ingredient.text)")
                         .padding(.horizontal)
                 }
+
 
                 // Nutrients
                 Text("Nutritional Info")
@@ -59,22 +60,22 @@ struct RecipeDetailView: View {
                     .padding(.horizontal)
 
                 VStack(alignment: .leading, spacing: 5) {
-                    if let fat = recipe.totalNutrients["FAT"] {
+                    if let fat = recipe.totalNutrients.fat {
                         Text("Fat: \(String(format: "%.1f", fat.quantity)) \(fat.unit)")
                     }
-                    if let protein = recipe.totalNutrients["PROCNT"] {
+                    if let protein = recipe.totalNutrients.protein {
                         Text("Protein: \(String(format: "%.1f", protein.quantity)) \(protein.unit)")
                     }
-                    if let carbs = recipe.totalNutrients["CHOCDF"] {
+                    if let carbs = recipe.totalNutrients.carbs {
                         Text("Carbs: \(String(format: "%.1f", carbs.quantity)) \(carbs.unit)")
                     }
-                    if let sugar = recipe.totalNutrients["SUGAR"] {
+                    if let sugar = recipe.totalNutrients.sugar {
                         Text("Sugar: \(String(format: "%.1f", sugar.quantity)) \(sugar.unit)")
                     }
-                    if let fiber = recipe.totalNutrients["FIBTG"] {
+                    if let fiber = recipe.totalNutrients.fiber {
                         Text("Fiber: \(String(format: "%.1f", fiber.quantity)) \(fiber.unit)")
                     }
-                    if let sodium = recipe.totalNutrients["NA"] {
+                    if let sodium = recipe.totalNutrients.sodium {
                         Text("Sodium: \(String(format: "%.1f", sodium.quantity)) \(sodium.unit)")
                     }
                 }
@@ -106,37 +107,54 @@ struct RecipeDetailView_Previews: PreviewProvider {
     static var previews: some View {
         RecipeDetailView(
             recipe: RecipeModel(
-                uri: "sample_uri",
                 label: "Sample Recipe",
                 image: "https://via.placeholder.com/300",
                 url: "https://www.example.com",
-                source: "Sample Source",
-                shareAs: "https://www.example.com/share",
-                yield: 4,
-                dietLabels: ["Low-Carb"],
-                healthLabels: ["Vegan", "Gluten-Free"],
-                cautions: ["Sulfites"],
-                ingredientLines: [
-                    "1 cup of sugar",
-                    "2 eggs"
+                ingredients: [
+                    RecipeIngredient(
+                        text: "1 cup of sugar",
+                        quantity: 1.0,
+                        measure: "cup",
+                        food: "sugar",
+                        weight: 200.0,
+                        foodCategory: "sugars",
+                        foodId: "food_sugar",
+                        image: nil
+                    ),
+                    RecipeIngredient(
+                        text: "2 eggs",
+                        quantity: 2.0,
+                        measure: "unit",
+                        food: "eggs",
+                        weight: 100.0,
+                        foodCategory: "Eggs",
+                        foodId: "food_eggs",
+                        image: nil
+                    )
                 ],
-                ingredients: [],
+                totalNutrients: RecipeNutrients(
+                    energy: Nutrient(label: "Energy", quantity: 500, unit: "kcal"),
+                    fat: Nutrient(label: "Fat", quantity: 20, unit: "g"),
+                    saturatedFat: nil, // You can provide values or keep nil if not available
+                    transFat: nil,
+                    carbs: Nutrient(label: "Carbs", quantity: 60, unit: "g"),
+                    fiber: Nutrient(label: "Fiber", quantity: 5, unit: "g"),
+                    sugar: Nutrient(label: "Sugar", quantity: 30, unit: "g"),
+                    protein: Nutrient(label: "Protein", quantity: 10, unit: "g"),
+                    cholesterol: Nutrient(label: "Cholesterol", quantity: 100, unit: "mg"), // Corrected placement
+                    sodium: Nutrient(label: "Sodium", quantity: 300, unit: "mg"), // Corrected placement
+                    calcium: nil,
+                    potassium: nil,
+                    iron: nil,
+                    vitaminD: nil
+                ),
                 calories: 500,
                 totalWeight: 200,
-                totalTime: 30,
                 cuisineType: ["american"],
                 mealType: ["breakfast"],
-                dishType: ["main course"],
-                totalNutrients: [
-                    "ENERC_KCAL": Nutrients(label: "Energy", quantity: 500, unit: "kcal"),
-                    "FAT": Nutrients(label: "Fat", quantity: 20, unit: "g"),
-                    "CHOCDF": Nutrients(label: "Carbs", quantity: 60, unit: "g"),
-                    "FIBTG": Nutrients(label: "Fiber", quantity: 5, unit: "g"),
-                    "SUGAR": Nutrients(label: "Sugar", quantity: 30, unit: "g"),
-                    "PROCNT": Nutrients(label: "Protein", quantity: 10, unit: "g"),
-                    "NA": Nutrients(label: "Sodium", quantity: 300, unit: "mg")
-                ]
+                dishType: ["main course"]
             )
         )
     }
 }
+
