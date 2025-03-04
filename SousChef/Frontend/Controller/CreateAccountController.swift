@@ -14,13 +14,13 @@ import CryptoKit
 class CreateAccountViewController: ObservableObject {
     @Published var email: String = ""
     @Published var fullName: String = ""
-    @Published var displayName: String = "" // ✅ Added Display Name field
+    @Published var displayName: String = ""
     @Published var password: String = ""
     @Published var errorMessage: String?
     @Published var isLoggedIn: Bool = false
     private var currentNonce: String?
 
-    // ✅ Regular Email Sign-Up with Display Name Support
+    
     func signUp() {
         Auth.auth().createUser(withEmail: email, password: password) { result, error in
             if let error = error {
@@ -43,7 +43,6 @@ class CreateAccountViewController: ObservableObject {
         }
     }
 
-    // ✅ Function to Update Display Name in Firebase
     private func updateUserDisplayName(user: User) {
         let changeRequest = user.createProfileChangeRequest()
         changeRequest.displayName = self.displayName // Set Display Name
@@ -56,7 +55,7 @@ class CreateAccountViewController: ObservableObject {
         }
     }
 
-    // ✅ Google Sign-Up
+    
     func signUpWithGoogle() {
         guard let rootViewController = UIApplication.shared.windows.first?.rootViewController else {
             self.errorMessage = "Unable to get root view controller."
@@ -89,7 +88,7 @@ class CreateAccountViewController: ObservableObject {
                     return
                 }
 
-                // ✅ Set Display Name for Google Sign-Up
+               
                 if let user = authResult?.user {
                     self.updateUserDisplayName(user: user)
                 }
@@ -101,7 +100,7 @@ class CreateAccountViewController: ObservableObject {
         }
     }
 
-    // ✅ Apple Sign-Up
+    
     func handleAppleRequest(_ request: ASAuthorizationAppleIDRequest) {
         let nonce = generateNonce()
         currentNonce = nonce
@@ -131,7 +130,7 @@ class CreateAccountViewController: ObservableObject {
                         return
                     }
 
-                    // ✅ Set Display Name for Apple Sign-Up
+                    
                     if let user = authResult?.user, let fullName = appleIDCredential.fullName {
                         let displayName = "\(fullName.givenName ?? "") \(fullName.familyName ?? "")".trimmingCharacters(in: .whitespaces)
                         self.displayName = displayName
@@ -150,7 +149,7 @@ class CreateAccountViewController: ObservableObject {
         }
     }
 
-    // ✅ Helper Methods
+    
     func generateNonce(length: Int = 32) -> String {
         let charset: [Character] = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
         var result = String()
@@ -169,7 +168,7 @@ class CreateAccountViewController: ObservableObject {
                     }
                 }
             } else {
-                fatalError("❌ Unable to generate secure nonce")
+                fatalError("Unable to generate secure nonce")
             }
         }
 
@@ -182,7 +181,7 @@ class CreateAccountViewController: ObservableObject {
         return hashedData.map { String(format: "%02x", $0) }.joined()
     }
 
-    // ✅ Send to Server with Display Name Support
+    
     private func sendToServer(email: String, token: String, displayName: String) {
         guard let url = URL(string: "https://souschef.click/users/create") else {
             print("Invalid URL")
