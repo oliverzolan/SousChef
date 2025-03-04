@@ -1,78 +1,86 @@
 import SwiftUI
 
 struct HomePage: View {
-    
-    @EnvironmentObject var userSession: UserSession // Access shared user session
+
+    @EnvironmentObject var userSession: UserSession
     @State private var searchText = ""
-    @State private var selectedCategory: String? = nil // Track selected category
+    @State private var selectedCategory: String? = nil
 
     let categories = ["Mexican", "French", "Italian", "American", "Greek", "Chinese", "Indian", "Middle Eastern", "Thai"]
 
     var body: some View {
-        ScrollView {
-            VStack() {
-                HStack {
-                    Text("Chef John Paul Gaultier")
-                        .font(.custom("Inter-Bold", size: 24))
-                    Spacer()
-                    HStack(spacing: 16) {
-                        Button(action: {
-                        }) {
-                            Image(systemName: "bell")
-                                .foregroundColor(.black)
-                                .overlay(
-                                    Circle()
-                                        .fill(Color.red)
-                                        .frame(width: 10, height: 10)
-                                        .offset(x: 6, y: -6)
-                                )
-                        }
-                        Button(action: {
-                        }) {
-                            Image(systemName: "line.horizontal.3")
-                                .foregroundColor(.black)
-                        }
-                    }
-                }
-                .padding(.horizontal)
-                
-                TextField("Search", text: $searchText)
-                    .padding(10)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(10)
-                    .padding(.horizontal)
+        ZStack {
+            AppColors.background
+                .ignoresSafeArea()
 
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(categories, id: \.self) { category in
+            ScrollView {
+                VStack(spacing: 20) {
+                    HStack {
+                        Text("Chef John Paul Gaultier")
+                            .font(.custom("Inter-Bold", size: 24))
+                        Spacer()
+                        HStack(spacing: 16) {
                             Button(action: {
-                                selectedCategory = (selectedCategory == category) ? nil : category
+                                // Notifications action
                             }) {
-                                Text(category)
-                                    .font(.custom("Inter-Bold", size: 15))
-                                    .foregroundColor(selectedCategory == category ? .white : .black)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 4)
-                                    .background(selectedCategory == category ? AppColors.secondary3 : AppColors.lightGray)
-                                    .cornerRadius(20)
+                                Image(systemName: "bell")
+                                    .foregroundColor(.black)
+                                    .overlay(
+                                        Circle()
+                                            .fill(Color.red)
+                                            .frame(width: 10, height: 10)
+                                            .offset(x: 6, y: -6)
+                                    )
+                            }
+                            Button(action: {
+                                // Menu action
+                            }) {
+                                Image(systemName: "line.horizontal.3")
+                                    .foregroundColor(.black)
                             }
                         }
                     }
                     .padding(.horizontal)
+
+                    TextField("Search", text: $searchText)
+                        .padding(10)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(10)
+                        .padding(.horizontal)
+
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            ForEach(categories, id: \.self) { category in
+                                Button(action: {
+                                    selectedCategory = (selectedCategory == category) ? nil : category
+                                }) {
+                                    Text(category)
+                                        .font(.custom("Inter-Bold", size: 15))
+                                        .foregroundColor(selectedCategory == category ? .white : .black)
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 4)
+                                        .background(selectedCategory == category ? AppColors.secondary3 : AppColors.lightGray)
+                                        .cornerRadius(20)
+                                }
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+
+                    FeaturedRecipeView()
+
+                    RecipeGrid(title: "Featured")
+
+                    RecipeGrid(title: "Seasonal")
+
+                    RecipeGrid(title: "Chicken")
                 }
-
-                FeaturedRecipeView()
-
-                RecipeGrid(title: "Featured")
-
-                RecipeGrid(title: "Seasonal")
-
-                RecipeGrid(title: "Chicken")
+                .padding(.top, 20)
             }
+            .ignoresSafeArea(.keyboard, edges: .bottom)
         }
     }
 }
-
 
 struct CuisineCategory: View {
     var name: String
@@ -91,7 +99,12 @@ struct CuisineCategory: View {
 
 struct FeaturedRecipeView: View {
     var body: some View {
-        ZStack(alignment: .bottomTrailing) {
+        ZStack(alignment: .bottomLeading) {
+            Rectangle()
+                .fill(Color.gray)
+                .frame(height: 150)
+                .cornerRadius(10)
+
             VStack(alignment: .leading) {
                 Text("Shrimp Jambalaya")
                     .font(.headline)
@@ -103,18 +116,14 @@ struct FeaturedRecipeView: View {
             .padding()
             .background(Color.black.opacity(0.5))
             .cornerRadius(10)
-            .frame(maxWidth: .infinity, maxHeight: .infinity) // Allows it to grow
         }
         .padding(.horizontal)
     }
 }
 
-
-
-
 struct ScanButton: View {
     var title: String
-    
+
     var body: some View {
         Button(action: {
             // Scan action
@@ -130,10 +139,9 @@ struct ScanButton: View {
     }
 }
 
-// MARK: - SwiftUI Preview for Canvas Mode
 struct HomePage_Previews: PreviewProvider {
     static var previews: some View {
         HomePage()
-            .environmentObject(UserSession()) // Ensure the user session is injected
+            .environmentObject(UserSession())
     }
 }
