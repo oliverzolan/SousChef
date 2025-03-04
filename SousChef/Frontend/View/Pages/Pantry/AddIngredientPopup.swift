@@ -1,4 +1,5 @@
 import SwiftUI
+import FirebaseAuth
 
 struct AddIngredientPopup: View {
     @Environment(\.presentationMode) var presentationMode
@@ -88,66 +89,85 @@ struct AddIngredientPopup: View {
             }
         }
     }
-
+    
     private func addIngredientToDatabase(_ food: FoodModel) {
-        guard let awsUserId = userSession.awsUserId, let token = userSession.token else {
-            print("AWS User ID or token not available")
+        // Ensure the user is authenticated
+        guard let user = Auth.auth().currentUser else {
+            print("User not authenticated")
             return
         }
-        
-        let ingredientPayload: [String: Any] = [
-            "foodId": food.foodId,
-            "text": food.label,
-            "quantity": 1,         // Default quantity = 1
-            "measure": "",         // optional
-            "food": food.label,    // optional
-            "weight": 0,
-            "foodCategory": food.category ?? ""
-        ]
-        
-        let payload: [String: Any] = [
-            "user_id": awsUserId,
-            "ingredients": [ingredientPayload]
-        ]
-        
-        guard let url = URL(string: "https://souschef.click/ingredients/add") else {
-            print("Invalid URL for add ingredients endpoint")
-            return
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue(token, forHTTPHeaderField: "Authorization")
-        
-        do {
-            request.httpBody = try JSONSerialization.data(withJSONObject: payload, options: [])
-        } catch {
-            print("Failed to encode payload: \(error.localizedDescription)")
-            return
-        }
-        
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            DispatchQueue.main.async {
-                if let error = error {
-                    print("Error adding ingredient: \(error.localizedDescription)")
-                    return
-                }
-                guard let httpResponse = response as? HTTPURLResponse else {
-                    print("No valid response from server")
-                    return
-                }
-                if httpResponse.statusCode == 200 {
-                    print("Ingredient added successfully")
-                    self.ingredients.append(food.label)
-                    self.presentationMode.wrappedValue.dismiss()
-                } else {
-                    print("Failed to add ingredient. Server returned status code: \(httpResponse.statusCode)")
-                    if let data = data, let errorResponse = String(data: data, encoding: .utf8) {
-                        print("Server error response: \(errorResponse)")
-                    }
-                }
+
+        // Retrieve the latest Firebase token
+        user.getIDTokenForcingRefresh(true) { idToken, error in
+            if let error = error {
+                print("Failed to retrieve authentication token: \(error.localizedDescription)")
+                return
             }
-        }.resume()
+
+            guard let token = idToken else {
+                print("Authentication token is missing")
+                return
+            }
+
+            // Construct the request URL for adding ingredients
+            guard let url = URL(string: "https://souschef.click/ingredients/add") else {
+                print("Invalid URL for adding ingredients")
+                return
+            }
+            
+            print("DEBUG: Firebase Auth Token -> \(token)")
+
+            // Construct request payload based on backend expectations
+            let ingredientPayload: [String: Any] = [
+                "foodId": food.foodId,
+                "text": food.label,
+                "quantity": 1,         // Default quantity = 1
+                "measure": "",         // Optional
+                "food": food.label,    // Optional
+                "weight": 0,
+                "foodCategory": food.category ?? ""
+            ]
+
+            let payload: [String: Any] = [
+                "ingredients": [ingredientPayload]  // No need for user_id; backend gets it from Firebase token
+            ]
+
+            do {
+                let jsonData = try JSONSerialization.data(withJSONObject: payload, options: [])
+                var request = URLRequest(url: url)
+                request.httpMethod = "POST"
+                request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+                request.addValue(token, forHTTPHeaderField: "Authorization") // Firebase token for authentication
+                request.httpBody = jsonData
+
+                // Perform the request
+                URLSession.shared.dataTask(with: request) { data, response, error in
+                    DispatchQueue.main.async {
+                        if let error = error {
+                            print("Error adding ingredient: \(error.localizedDescription)")
+                            return
+                        }
+
+                        guard let httpResponse = response as? HTTPURLResponse else {
+                            print("No valid response from server")
+                            return
+                        }
+
+                        if httpResponse.statusCode == 200 {
+                            print("Ingredient added successfully")
+                            self.ingredients.append(food.label)
+                            self.presentationMode.wrappedValue.dismiss()
+                        } else {
+                            print("Failed to add ingredient. Server returned status code: \(httpResponse.statusCode)")
+                            if let data = data, let errorResponse = String(data: data, encoding: .utf8) {
+                                print("Server error response: \(errorResponse)")
+                            }
+                        }
+                    }
+                }.resume()
+            } catch {
+                print("Failed to encode payload: \(error.localizedDescription)")
+            }
+        }
     }
 }

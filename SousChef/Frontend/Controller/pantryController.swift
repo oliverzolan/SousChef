@@ -9,7 +9,7 @@ class PantryController: ObservableObject {
     @Published var showAddIngredientPopup: Bool = false
     @Published var quantities: [Int: Int] = [:]
     
-    private let basePantryURL = "https://souschef.click/ingredients/all"
+    private let basePantryURL = "https://souschef.click/ingredients"
     var userSession: UserSession
 
     init(userSession: UserSession) {
@@ -18,72 +18,109 @@ class PantryController: ObservableObject {
         
     // Fetch all ingredients from aws user
     func fetchIngredients() {
-        // check for aws id
-        guard let userId = userSession.awsUserId else {
+        // Ensure the user is authenticated
+        guard let user = Auth.auth().currentUser else {
             DispatchQueue.main.async {
-                self.errorMessage = "AWS User ID not available"
+                self.errorMessage = "User not authenticated"
                 self.isLoading = false
             }
             return
         }
-        let fullURLString = "\(basePantryURL)/\(userId)"
-        guard let url = URL(string: fullURLString) else {
+
+        // Retrieve the latest ID token
+        user.getIDTokenForcingRefresh(true) { idToken, error in
             DispatchQueue.main.async {
-                self.errorMessage = "Invalid URL"
                 self.isLoading = false
             }
-            return
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        guard let token = userSession.token else {
-            DispatchQueue.main.async {
-                self.errorMessage = "User is not authenticated"
-                self.isLoading = false
+
+            if let error = error {
+                DispatchQueue.main.async {
+                    self.errorMessage = "Failed to retrieve authentication token: \(error.localizedDescription)"
+                }
+                return
             }
-            return
-        }
-        request.addValue(token, forHTTPHeaderField: "Authorization")
-        
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            DispatchQueue.main.async {
-                self.isLoading = false
+
+            guard let token = idToken else {
+                DispatchQueue.main.async {
+                    self.errorMessage = "Authentication token is missing"
+                }
+                return
+            }
+
+            // Construct the request URL (using /all as the backend endpoint)
+            guard let url = URL(string: "\(self.basePantryURL)/all") else {
+                DispatchQueue.main.async {
+                    self.errorMessage = "Invalid URL for fetching ingredients"
+                }
+                return
+            }
+
+            var request = URLRequest(url: url)
+            request.httpMethod = "GET"
+            request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.addValue(token, forHTTPHeaderField: "Authorization")  // Firebase token for authentication
+
+            // Perform the request
+            URLSession.shared.dataTask(with: request) { data, response, error in
+                DispatchQueue.main.async {
+                    self.isLoading = false
+                }
+
                 if let httpResponse = response as? HTTPURLResponse {
                     switch httpResponse.statusCode {
                     case 200:
                         break
                     case 401:
-                        self.handleTokenExpiration()
+                        DispatchQueue.main.async {
+                            self.handleTokenExpiration()
+                        }
+                        return
+                    case 404:
+                        DispatchQueue.main.async {
+                            self.errorMessage = "Incorrect path."
+                        }
                         return
                     default:
-                        self.errorMessage = "Error: Server returned status code \(httpResponse.statusCode)"
+                        DispatchQueue.main.async {
+                            self.errorMessage = "Error: Server returned status code \(httpResponse.statusCode)"
+                        }
                         return
                     }
                 }
+
                 if let error = error {
-                    self.errorMessage = "Failed to load pantry items: \(error.localizedDescription)"
+                    DispatchQueue.main.async {
+                        self.errorMessage = "Failed to load pantry items: \(error.localizedDescription)"
+                    }
                     return
                 }
+
                 guard let data = data else {
-                    self.errorMessage = "No data received from server"
+                    DispatchQueue.main.async {
+                        self.errorMessage = "No data received from server"
+                    }
                     return
                 }
-                // for debugging, prints raw json
+
+                // Debugging: print raw JSON response
                 if let jsonString = String(data: data, encoding: .utf8) {
                     print("Raw JSON: \(jsonString)")
                 }
+
+                // Parse JSON response
                 do {
                     let items = try JSONDecoder().decode([Ingredient].self, from: data)
-                    self.fullPantryItems = items
-                    self.pantryItems = items.map { $0.text }
+                    DispatchQueue.main.async {
+                        self.fullPantryItems = items
+                        self.pantryItems = items.map { $0.text }
+                    }
                 } catch {
-                    self.errorMessage = "Failed to decode server response: \(error.localizedDescription)"
+                    DispatchQueue.main.async {
+                        self.errorMessage = "Failed to decode server response: \(error.localizedDescription)"
+                    }
                 }
-            }
-        }.resume()
+            }.resume()
+        }
     }
         
     func increaseQuantity(for ingredientID: Int) {
