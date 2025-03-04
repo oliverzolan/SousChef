@@ -16,6 +16,7 @@ struct Hit: Decodable {
 }
 
 struct RecipeModel: Decodable {
+    let uri: String
     let label: String
     let image: String
     let url: String
