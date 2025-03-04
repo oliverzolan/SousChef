@@ -23,7 +23,7 @@ struct ScanOptionsPopout: View {
             .background(Color.black.opacity(0.75))
             .cornerRadius(15)
             .padding(.horizontal, 20)
-            .padding(.bottom, 90) // ✅ Moves it above the tab bar
+            .padding(.bottom, 90) 
             .transition(.move(edge: .bottom))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)

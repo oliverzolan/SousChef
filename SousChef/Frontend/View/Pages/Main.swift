@@ -54,7 +54,7 @@ struct MainTabView: View {
         .onChange(of: selectedTab) { oldValue, newValue in
             if newValue == 2 {
                 isShowingScanOptions = true
-                selectedTab = 0 // Stay on homepage
+                selectedTab = 0
             }
         }
     }
