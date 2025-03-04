@@ -1,11 +1,37 @@
-import SwiftUICore
+import SwiftUI
 
 struct AllIngredientsPage: View {
+    @EnvironmentObject var userSession: UserSession
+    @StateObject private var pantryController: PantryController
+
+    init(userSession: UserSession) {
+        _pantryController = StateObject(wrappedValue: PantryController(userSession: userSession))
+    }
+    
     var body: some View {
         BaseIngredientsPage(
             title: "Ingredients",
-            ingredients: ["Rice", "Quinoa", "Oats"]
+            ingredients: pantryController.pantryItems
         )
+        .onAppear {
+            pantryController.fetchIngredients()
+        }
+        .alert(isPresented: Binding<Bool>(
+            get: { pantryController.errorMessage != nil },
+            set: { _ in pantryController.errorMessage = nil }
+        )) {
+            Alert(title: Text("Error"),
+                  message: Text(pantryController.errorMessage ?? "Unknown error"),
+                  dismissButton: .default(Text("OK")))
+        }
     }
 }
 
+struct AllIngredientsPage_Previews: PreviewProvider {
+    static var previews: some View {
+        NavigationView {
+            AllIngredientsPage(userSession: UserSession())
+                .environmentObject(UserSession())
+        }
+    }
+}

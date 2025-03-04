@@ -1,13 +1,13 @@
 import SwiftUI
 
+// Shows ingredient name, a quantity field, and a button to show nutrition info.
 struct IngredientRow: View {
     let ingredient: String
     @State private var quantity: String = "1"
     @State private var showNutritionSheet: Bool = false
-    
+
     var body: some View {
         HStack {
-            // Ingredient name and editable quantity
             Text(ingredient)
                 .font(.body)
             Spacer()
@@ -16,11 +16,10 @@ struct IngredientRow: View {
                 .multilineTextAlignment(.center)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .keyboardType(.numberPad)
-            
-            // Info button
-            Button(action: {
+
+            Button {
                 showNutritionSheet.toggle()
-            }) {
+            } label: {
                 Image(systemName: "info.circle")
                     .font(.title2)
                     .foregroundColor(.blue)
@@ -39,6 +38,8 @@ struct BaseIngredientsPage: View {
     let title: String
     let ingredients: [String]
     
+    @State private var showAddIngredientSheet = false
+    
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 20) {
@@ -53,7 +54,7 @@ struct BaseIngredientsPage: View {
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
             Button(action: {
-                print("Add Ingredient tapped")
+                showAddIngredientSheet = true
             }) {
                 Text("Add Ingredient")
                     .fontWeight(.semibold)
@@ -66,7 +67,9 @@ struct BaseIngredientsPage: View {
                     .padding(.vertical, 10)
             }
             .background(Color(.systemBackground))
-            // Add nav bar component
+        }
+        .sheet(isPresented: $showAddIngredientSheet) {
+            AddIngredientPopup(ingredients: .constant([]))
         }
     }
 }
@@ -76,7 +79,7 @@ struct BaseIngredientsPage_Previews: PreviewProvider {
         NavigationView {
             BaseIngredientsPage(
                 title: "Ingredients",
-                ingredients: ["Carrots", "Broccoli", "Spinach", "Rice", "Quinoa"]
+                ingredients: ["Carrots", "Broccoli", "Spinach"]
             )
         }
     }

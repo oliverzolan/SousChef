@@ -151,7 +151,6 @@ struct LoginView: View {
                 .navigationDestination(isPresented: $viewModel.navigateToHome) {
                     MainTabView()
                         .navigationBarBackButtonHidden(true)
-                        .environmentObject(userSession)
                 }
             }
         }

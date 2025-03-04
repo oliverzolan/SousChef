@@ -9,90 +9,136 @@ struct PantryPage: View {
     }
 
     var body: some View {
-        VStack(spacing: 10) {
-            HeaderComponent(title: "Pantry")
-            SearchComponent(searchText: .constant(""))
-                .frame(maxWidth: .infinity, maxHeight: 55)
+        NavigationView {
+            VStack(spacing: 10) {
+                HeaderComponent(title: "Pantry")
+                SearchComponent(searchText: .constant(""))
+                    .frame(maxWidth: .infinity, maxHeight: 55)
 
-//                if let errorMessage = pantryController.errorMessage {
-//                    Text("Error: \(errorMessage)")
-//                        .foregroundColor(.red)
-//                        .padding()
-//                }
+                // Display error message
+                if let errorMessage = pantryController.errorMessage {
+                    Text("Error: \(errorMessage)")
+                        .foregroundColor(.red)
+                        .padding()
+                }
 
-            if pantryController.isLoading {
-                ProgressView("Loading...")
-            } else {
-                // Pantry categories
-                HStack(spacing: 10) {
-                    VStack(spacing: 13) {
-                        CategoryButton(imageName: "vegetablesButton") { fetchCategoryItems("vegetables") }
+                // Loading indicator
+                if pantryController.isLoading {
+                    ProgressView("Loading...")
+                } else {
+                    // Display category grid
+                    HStack(spacing: 10) {
+                        VStack(spacing: 13) {
+                            NavigationLink(destination: VegetablesIngredientsPage()) {
+                                CategoryButton(imageName: "vegetablesButton")
+                            }
                             .frame(maxWidth: .infinity, maxHeight: 150)
 
-                        CategoryButton(imageName: "grainsButton") { fetchCategoryItems("grains") }
+                            NavigationLink(destination: GrainsIngredientsPage()) {
+                                CategoryButton(imageName: "grainsButton")
+                            }
                             .frame(maxWidth: .infinity, maxHeight: 150)
 
-                        HStack(spacing: 10) {
-                            CategoryButton(imageName: "spicesButton") { fetchCategoryItems("spices") }
+                            HStack(spacing: 10) {
+                                NavigationLink(destination: SpicesIngredientsPage()) {
+                                    CategoryButton(imageName: "spicesButton")
+                                }
                                 .frame(maxWidth: .infinity, maxHeight: 100)
 
-                            CategoryButton(imageName: "cannedButton") { fetchCategoryItems("canned") }
+                                NavigationLink(destination: CannedIngredientsPage()) {
+                                    CategoryButton(imageName: "cannedButton")
+                                }
                                 .frame(maxWidth: .infinity, maxHeight: 100)
+                            }
+
+                            NavigationLink(destination: DrinksIngredientsPage()) {
+                                CategoryButton(imageName: "drinksButton")
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: 125)
                         }
 
-                        CategoryButton(imageName: "drinksButton") { fetchCategoryItems("drinks") }
-                            .frame(maxWidth: .infinity, maxHeight: 125)
-                    }
-
-                    VStack(spacing: 10) {
-                        CategoryButton(imageName: "meatsButton") { fetchCategoryItems("meats") }
+                        VStack(spacing: 10) {
+                            NavigationLink(destination: MeatsIngredientsPage()) {
+                                CategoryButton(imageName: "meatsButton")
+                            }
                             .frame(maxWidth: .infinity, maxHeight: 150)
-
-                        CategoryButton(imageName: "fruitButton") { fetchCategoryItems("fruit") }
+                            
+                            NavigationLink(destination: FruitsIngredientsPage()) {
+                                CategoryButton(imageName: "fruitButton")
+                            }
                             .frame(maxWidth: .infinity, maxHeight: 240)
 
-                        CategoryButton(imageName: "dairyButton") { fetchCategoryItems("dairy") }
+                            NavigationLink(destination: DairyIngredientsPage()) {
+                                CategoryButton(imageName: "dairyButton")
+                            }
                             .frame(maxWidth: .infinity, maxHeight: 150)
+                        }
                     }
-                }
-                .padding(.horizontal, 15)
+                    .padding(.horizontal, 15)
 
-                HStack(spacing: 10) {
-                    CategoryButton(imageName: "condimentsButton") { fetchCategoryItems("condiments") }
+                    HStack(spacing: 10) {
+                        NavigationLink(destination: CondimentsIngredientsPage()) {
+                            CategoryButton(imageName: "condimentsButton")
+                        }
                         .frame(maxWidth: .infinity, maxHeight: 200)
 
-                    CategoryButton(imageName: "allButton") { fetchCategoryItems("all") }
+                        NavigationLink(destination: AllIngredientsPage(userSession: userSession)) {
+                            CategoryButton(imageName: "allButton")
+                        }
                         .frame(maxWidth: .infinity, maxHeight: 200)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 39)
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.horizontal, 39)
+
+                Spacer()
+
+                // Plus button to show the add ingredient popup.
+//                Button(action: {
+//                    pantryController.showAddIngredientPopup.toggle()
+//                }) {
+//                    Image(systemName: "plus.circle.fill")
+//                        .font(.system(size: 50))
+//                        .foregroundColor(.blue)
+//                }
+                .padding()
             }
+            .background(Color(.systemBackground))
+            .onAppear {
+                pantryController.fetchIngredients()
+            }
+            // add ingredient popup
+//            .sheet(isPresented: $pantryController.showAddIngredientPopup) {
+//                PantryPopupView(isVisible: $pantryController.showAddIngredientPopup, pantryItems: $pantryController.pantryItems)
+//            }
         }
-        .background(Color(.systemBackground))
-        .onAppear {
-            pantryController.fetchPantryItems()
-        }
+        .navigationBarBackButtonHidden(true)
     }
-}
-
-private func fetchCategoryItems(_ category: String) {
-    print("Fetching items for category: \(category)")
-    // Implement category-specific item fetching
 }
 
 struct CategoryButton: View {
     var imageName: String
-    var action: () -> Void
+    var action: (() -> Void)? = nil
     
     var body: some View {
-        Button(action: action) {
-            Image(imageName)
-                .resizable()
-                .scaledToFill()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-                .shadow(color: Color.black.opacity(0.35), radius: 5, x: 0, y: 5)
+        Group {
+            if let action = action {
+                Button(action: action) {
+                    imageView
+                }
+            } else {
+                imageView
+            }
         }
+    }
+    
+    private var imageView: some View {
+        Image(imageName)
+            .resizable()
+            .scaledToFill()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .shadow(color: Color.black.opacity(0.35), radius: 5, x: 0, y: 5)
     }
 }
 
