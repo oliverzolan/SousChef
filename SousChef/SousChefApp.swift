@@ -17,8 +17,9 @@ struct SousChefApp: App {
     var body: some Scene {
         WindowGroup {
             NavigationView {
-                LoginPage().environmentObject(userSession)
+                LoginPage()
             }
+            .environmentObject(userSession)
         }
     }
 }
@@ -31,11 +32,12 @@ struct SousChefApp: App {
 //        WindowGroup {
 //            if let _ = userSession.token, !userSession.isGuest {
 //                // Navigate to the homepage if authenticated
-//                HomePage().environmentObject(userSession)
+//                HomePage()
 //            } else {
 //                // Show login options
-//                LoginPage().environmentObject(userSession)
+//                LoginPage()
 //            }
+//            .environmentObject(userSession)
 //        }
 //    }
 //}

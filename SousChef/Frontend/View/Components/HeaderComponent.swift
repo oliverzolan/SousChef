@@ -11,7 +11,6 @@ struct HeaderComponent: View {
                 .foregroundColor(.black)
                 .frame(maxWidth: .infinity, alignment: .center)
         }
-        .frame(height: 50)
-        .padding(.vertical, 10)
+        .padding(.vertical, 5)
     }
 }

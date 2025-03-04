@@ -81,7 +81,7 @@ struct ChatbotPage: View {
             }
             .padding()
             
-            CustomNavigationBar()
+//            CustomNavigationBar()
         }
         .navigationBarBackButtonHidden(true)
     }

@@ -2,7 +2,7 @@
 //  scanIngrdients_activity.swift
 //  SousChef
 //
-//  Created by Garry Gomes on 12/8/24.
+//  Created by Sutter Reynolds on 12/8/24.
 //
 
 import SwiftUI

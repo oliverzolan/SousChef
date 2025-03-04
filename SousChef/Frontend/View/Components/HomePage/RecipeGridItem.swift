@@ -9,38 +9,23 @@ import Foundation
 import SwiftUI
 
 struct RecipeGridItem: View {
-    var recipeName: String
-    var imageName: String
-    var size: CGSize // Allows different sizes for items
-    var isHighlighted: Bool = false
+    var title: String
+    var color: Color
+    var width: CGFloat
+    var height: CGFloat
 
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            Image(imageName)
-                .resizable()
-                .scaledToFill()
-                .frame(width: size.width, height: size.height)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(isHighlighted ? Color.blue : Color.clear, lineWidth: 3) // Highlight effect
-                )
-
-            // Text overlay
-            HStack {
-                Text(recipeName)
-                    .font(.custom("Inter-Bold", size: 14))
-                    .foregroundColor(.white)
-                Spacer()
-                Image(systemName: "arrow.right")
-                    .foregroundColor(.white)
-            }
-            .padding(8)
-            .background(Color.black.opacity(0.5))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .padding(4)
+        Button(action: {
+            print("Tapped \(title)")
+        }) {
+            Text(title)
+                .font(.headline)
+                .foregroundColor(.white)
+                .frame(width: width, height: height)
+                .background(color)
+                .clipShape(RoundedRectangle(cornerRadius: 15))
+                .shadow(color: Color.black.opacity(0.35), radius: 5, x: 0, y: 5)
         }
-        .frame(width: size.width, height: size.height)
     }
 }
 
