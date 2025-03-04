@@ -19,14 +19,21 @@ class LoginViewController: ObservableObject {
     private var currentNonce: String?
 
     func logIn() {
+        guard !email.isEmpty, !password.isEmpty else {
+            self.errorMessage = "Email and password cannot be empty."
+            self.navigateToHome = false
+            return
+        }
+
         Auth.auth().signIn(withEmail: email, password: password) { [weak self] result, error in
             if let error = error as NSError? {
                 switch AuthErrorCode(rawValue: error.code) {
                 case .wrongPassword, .invalidEmail, .userNotFound:
                     self?.errorMessage = "No account with that Email or Password Incorrect."
                 default:
-                    self?.errorMessage = "No account with that Email or Password Incorrect."
+                    self?.errorMessage = "Something went wrong. Please try again."
                 }
+                self?.navigateToHome = false
                 return
             }
             self?.errorMessage = nil
