@@ -5,6 +5,7 @@ struct HomePage: View {
     @EnvironmentObject var userSession: UserSession
     @State private var searchText = ""
     @State private var selectedCategory: String? = nil
+    @State private var showMenu = false
 
     let categories = ["Mexican", "French", "Italian", "American", "Greek", "Chinese", "Indian", "Middle Eastern", "Thai"]
 
@@ -17,7 +18,7 @@ struct HomePage: View {
                 VStack(spacing: 20) {
                     HStack {
                         Text("Chef John Paul Gaultier")
-                            .font(.custom("Inter-Bold", size: 24))
+                            .font(.custom("Inter-Bold", size: 28))
                         Spacer()
                         HStack(spacing: 16) {
                             Button(action: {
@@ -33,7 +34,9 @@ struct HomePage: View {
                                     )
                             }
                             Button(action: {
-                                // Menu action
+                                withAnimation(.easeOut(duration: 0.3)) {
+                                    showMenu.toggle()
+                                }
                             }) {
                                 Image(systemName: "line.horizontal.3")
                                     .foregroundColor(.black)
@@ -67,81 +70,44 @@ struct HomePage: View {
                         .padding(.horizontal)
                     }
 
-                    FeaturedRecipeView()
-
                     RecipeGrid(title: "Featured")
-
                     RecipeGrid(title: "Seasonal")
-
                     RecipeGrid(title: "Chicken")
                 }
                 .padding(.top, 20)
             }
             .ignoresSafeArea(.keyboard, edges: .bottom)
-        }
-    }
-}
+            .blur(radius: showMenu ? 5 : 0)
 
-struct CuisineCategory: View {
-    var name: String
-    var isSelected: Bool
+            // Persistent menu container
+            ZStack {
+                // Background overlay
+                if showMenu {
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                        .onTapGesture {
+                            withAnimation(.easeOut(duration: 0.3)) {
+                                showMenu = false
+                            }
+                        }
+                        .transition(.opacity)
+                }
 
-    var body: some View {
-        Text(name)
-            .font(.headline)
-            .foregroundColor(isSelected ? .white : .black)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(isSelected ? AppColors.secondary3 : AppColors.lightGray)
-            .cornerRadius(20)
-    }
-}
-
-struct FeaturedRecipeView: View {
-    var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            Rectangle()
-                .fill(Color.gray)
-                .frame(height: 150)
-                .cornerRadius(10)
-
-            VStack(alignment: .leading) {
-                Text("Shrimp Jambalaya")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                Text("Lorem ipsum dolor sit amet, consectetur adipiscing elit...")
-                    .font(.caption)
-                    .foregroundColor(.white)
+                HStack {
+                    Spacer()
+                    SideMenuView(userName: "John Paul Gaultier") {
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            showMenu = false
+                        }
+                    }
+                    .frame(width: 250)
+                    .frame(maxHeight: .infinity)
+                    .background(Color.clear)
+                    .offset(x: showMenu ? 0 : 300) // 300 matches or exceeds width
+                }
             }
-            .padding()
-            .background(Color.black.opacity(0.5))
-            .cornerRadius(10)
+            .animation(.easeOut(duration: 0.3), value: showMenu)
+            .zIndex(1)
         }
-        .padding(.horizontal)
-    }
-}
-
-struct ScanButton: View {
-    var title: String
-
-    var body: some View {
-        Button(action: {
-            // Scan action
-        }) {
-            Text(title)
-                .font(.headline)
-                .foregroundColor(.white)
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.gray)
-                .cornerRadius(10)
-        }
-    }
-}
-
-struct HomePage_Previews: PreviewProvider {
-    static var previews: some View {
-        HomePage()
-            .environmentObject(UserSession())
     }
 }
