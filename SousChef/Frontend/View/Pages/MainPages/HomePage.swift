@@ -14,94 +14,100 @@ struct HomePage: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
-                    header
-
-                    searchBar
-
-                    categoryScroll
-
-                    if isLoading {
-                        ProgressView()
-                            .padding()
-                    } else if let errorMessage = errorMessage {
-                        Text(errorMessage)
-                            .foregroundColor(.red)
-                            .padding()
-                    } else if !recipes.isEmpty {
-                        recipeGrid
-                    } else {
-                        Text("Search for recipes to get started!")
-                            .foregroundColor(.gray)
-                            .padding()
+            ZStack {
+                ScrollView {
+                    VStack(spacing: 20) {
+                        header
+                        
+                        searchBar
+                        
+                        categoryScroll
+                        
+                        if isLoading {
+                            ProgressView()
+                                .padding()
+                        } else if let errorMessage = errorMessage {
+                            Text(errorMessage)
+                                .foregroundColor(.red)
+                                .padding()
+                        } else if !recipes.isEmpty {
+                            recipeGrid
+                        } else {
+                            Text("Search for recipes to get started!")
+                                .foregroundColor(.gray)
+                                .padding()
+                        }
+                        
+                        RecipeGrid(title: "Featured")
+                        RecipeGrid(title: "Seasonal")
+                        RecipeGrid(title: "Chicken")
                     }
+                    .padding(.top)
+                }
+                .blur(radius: showMenu ? 5 : 0)
+                .ignoresSafeArea(.keyboard, edges: .bottom)
+                
+                if showMenu {
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                        .onTapGesture {
+                            withAnimation(.easeOut(duration: 0.3)) {
+                                showMenu = false
+                            }
+                        }
+                    
                     HStack {
-                        Text("Chef John Paul Gaultier")
-                            .font(.custom("Inter-Bold", size: 28))
                         Spacer()
-                        HStack(spacing: 16) {
-                            Button(action: {
-                                // Notifications action
-                            }) {
-                                Image(systemName: "bell")
-                                    .foregroundColor(.black)
-                                    .overlay(
-                                        Circle()
-                                            .fill(Color.red)
-                                            .frame(width: 10, height: 10)
-                                            .offset(x: 6, y: -6)
-                                    )
-                            }
-                            Button(action: {
-                                withAnimation(.easeOut(duration: 0.3)) {
-                                    showMenu.toggle()
-                                }
-                            }) {
-                                Image(systemName: "line.horizontal.3")
-                                    .foregroundColor(.black)
+                        SideMenuView(userName: "John Paul Gaultier") {
+                            withAnimation(.easeOut(duration: 0.3)) {
+                                showMenu = false
                             }
                         }
+                        .frame(width: 250)
+                        .frame(maxHeight: .infinity)
+                        .background(Color.clear)
+                        .offset(x: showMenu ? 0 : 300)
                     }
-                    .padding(.horizontal)
-
-                    TextField("Search", text: $searchText)
-                        .padding(10)
-                        .background(Color(.systemGray6))
-                        .cornerRadius(10)
-                        .padding(.horizontal)
-
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
-                            ForEach(categories, id: \.self) { category in
-                                Button(action: {
-                                    selectedCategory = (selectedCategory == category) ? nil : category
-                                }) {
-                                    Text(category)
-                                        .font(.custom("Inter-Bold", size: 15))
-                                        .foregroundColor(selectedCategory == category ? .white : .black)
-                                        .padding(.horizontal, 16)
-                                        .padding(.vertical, 4)
-                                        .background(selectedCategory == category ? AppColors.secondary3 : AppColors.lightGray)
-                                        .cornerRadius(20)
-                                }
-                            }
-                        }
-                        .padding(.horizontal)
-                    }
-
-                    RecipeGrid(title: "Featured")
-                    RecipeGrid(title: "Seasonal")
-                    RecipeGrid(title: "Chicken")
+                    .animation(.easeOut(duration: 0.3), value: showMenu)
+                    .zIndex(1)
                 }
             }
-            .onChange(of: searchText) { newValue in
+            .onChange(of: searchText) { _ in
                 fetchRecipes()
             }
-            .padding(.top)
         }
     }
 
+    var header: some View {
+        HStack {
+            Text("Chef John Paul Gaultier")
+                .font(.custom("Inter-Bold", size: 28))
+            Spacer()
+            HStack(spacing: 16) {
+                Button(action: {
+                    // Notifications action
+                }) {
+                    Image(systemName: "bell")
+                        .foregroundColor(.black)
+                        .overlay(
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 10, height: 10)
+                                .offset(x: 6, y: -6)
+                        )
+                }
+                Button(action: {
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        showMenu.toggle()
+                    }
+                }) {
+                    Image(systemName: "line.horizontal.3")
+                        .foregroundColor(.black)
+                }
+            }
+        }
+        .padding(.horizontal)
+    }
 
     var searchBar: some View {
         TextField("Search", text: $searchText)
@@ -165,38 +171,6 @@ struct HomePage: View {
                     self.errorMessage = error.localizedDescription
                 }
             }
-            .ignoresSafeArea(.keyboard, edges: .bottom)
-            .blur(radius: showMenu ? 5 : 0)
-
-            // Persistent menu container
-            ZStack {
-                // Background overlay
-                if showMenu {
-                    Color.black.opacity(0.3)
-                        .ignoresSafeArea()
-                        .onTapGesture {
-                            withAnimation(.easeOut(duration: 0.3)) {
-                                showMenu = false
-                            }
-                        }
-                        .transition(.opacity)
-                }
-
-                HStack {
-                    Spacer()
-                    SideMenuView(userName: "John Paul Gaultier") {
-                        withAnimation(.easeOut(duration: 0.3)) {
-                            showMenu = false
-                        }
-                    }
-                    .frame(width: 250)
-                    .frame(maxHeight: .infinity)
-                    .background(Color.clear)
-                    .offset(x: showMenu ? 0 : 300) // 300 matches or exceeds width
-                }
-            }
-            .animation(.easeOut(duration: 0.3), value: showMenu)
-            .zIndex(1)
         }
     }
 }
