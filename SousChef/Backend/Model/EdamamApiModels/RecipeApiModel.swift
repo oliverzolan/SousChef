@@ -2,10 +2,11 @@
 //  RecipeApiModels.swift
 //  SousChef
 //
-//  Created by Garry Gomes on 2/25/25.
+//  Created by Sutter Reynolds on 2/25/25.
 //
 
-// Response Structure
+import Foundation
+
 struct RecipeResponse: Decodable {
     let hits: [Hit]
 }
@@ -18,8 +19,29 @@ struct RecipeModel: Decodable {
     let label: String
     let image: String
     let url: String
-    let ingredientLines: [RecipeIngredient]
+    let ingredients: [Ingredient]
     let totalNutrients: Nutrients
+    let calories: Double
+    let totalWeight: Double
+    let cuisineType: [String]?
+    let mealType: [String]?
+    let dishType: [String]?
+    
+    private enum CodingKeys: String, CodingKey {
+        case label, image, url, ingredients = "ingredients"
+        case totalNutrients, calories, totalWeight, cuisineType, mealType, dishType
+    }
+}
+
+struct Ingredient: Decodable {
+    let text: String
+    let quantity: Double
+    let measure: String?
+    let food: String
+    let weight: Double
+    let foodCategory: String
+    let foodId: String
+    let image: String?
 }
 
 struct Nutrients: Decodable {
@@ -62,17 +84,7 @@ struct Nutrient: Decodable {
     let unit: String
 }
 
-struct RecipeIngredient: Decodable {
-    let text: String
-    let quantity: Double
-    let measure: String?
-    let food: String
-    let weight: Double
-    let foodCategory: String
-    let foodId: String
-}
 
-//Query Structure
 enum CuisineType: String, CaseIterable {
     case american, asian, british, caribbean, centralEurope = "central europe", chinese, easternEurope = "eastern europe"
     case french, indian, italian, japanese, kosher, mediterranean, mexican, middleEastern = "middle eastern"
