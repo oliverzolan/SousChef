@@ -5,55 +5,19 @@
 //  Created by Bennet Rau on 3/3/25.
 //
 
-
 import SwiftUI
 
 struct ScanOptionsPopout: View {
     @Binding var isShowing: Bool
-    
+
     var body: some View {
         VStack {
             Spacer() // Push popout to the bottom
             
             VStack(spacing: 15) {
-                Button(action: { isShowing = false }) {
-                    HStack {
-                        Image(systemName: "camera")
-                            .foregroundColor(.white)
-                        Text("Scan Ingridients")
-                            .foregroundColor(.white)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(AppColors.primary2)
-                    .cornerRadius(10)
-                }
-                
-                Button(action: { isShowing = false }) {
-                    HStack {
-                        Image(systemName: "doc.text.viewfinder")
-                            .foregroundColor(.white)
-                        Text("Scan Receipt")
-                            .foregroundColor(.white)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(AppColors.primary2)
-                    .cornerRadius(10)
-                }
-                
-                Button(action: { isShowing = false }) {
-                    HStack {
-                        Image(systemName: "barcode.viewfinder")
-                            .foregroundColor(.white)
-                        Text("Scan Barcode")
-                            .foregroundColor(.white)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(AppColors.primary2)
-                    .cornerRadius(10)
-                }
+                scanButton(destination: ScanIngredientPage(), icon: "camera", label: "Scan Ingredients")
+                scanButton(destination: ReceiptPage(), icon: "doc.text.viewfinder", label: "Scan Receipt")
+                scanButton(destination: EmptyView(), icon: "barcode.viewfinder", label: "Scan Barcode")
             }
             .padding()
             .background(Color.black.opacity(0.75))
@@ -69,6 +33,21 @@ struct ScanOptionsPopout: View {
             isShowing = false
         }
     }
+
+    private func scanButton<Destination: View>(destination: Destination, icon: String, label: String) -> some View {
+        NavigationLink(destination: destination) {
+            HStack {
+                Image(systemName: icon)
+                    .foregroundColor(.white)
+                Text(label)
+                    .foregroundColor(.white)
+            }
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background(AppColors.primary2)
+            .cornerRadius(10)
+        }
+    }
 }
 
 #Preview {
@@ -76,7 +55,9 @@ struct ScanOptionsPopout: View {
         @State private var isShowingPreview = true
 
         var body: some View {
-            ScanOptionsPopout(isShowing: $isShowingPreview)
+            NavigationStack {
+                ScanOptionsPopout(isShowing: $isShowingPreview)
+            }
         }
     }
 
