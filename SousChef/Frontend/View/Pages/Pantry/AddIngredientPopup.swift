@@ -86,10 +86,6 @@ struct AddIngredientPopup: View {
     }
 
     private func addIngredientToDatabase(_ ingredient: EdamamIngredientModel) {
-        guard let token = userSession.token else {
-            print("User token not available")
-            return
-        }
 
         let awsIngredient = AWSIngredientModel(
             food: ingredient.label,
@@ -117,19 +113,5 @@ struct AddIngredientPopup: View {
                 }
             }
         }
-    }
-}
-
-struct AddIngredientPopup_Previews: PreviewProvider {
-    static var previews: some View {
-        // Create a mock user session
-        let mockSession = UserSession()
-        mockSession.token = "mock_token"
-
-        @State var mockIngredients: [String] = ["Tomato", "Onion", "Garlic"]
-
-        return AddIngredientPopup(ingredients: $mockIngredients)
-            .environmentObject(mockSession)
-            .previewDevice("iPhone 16 Pro")
     }
 }

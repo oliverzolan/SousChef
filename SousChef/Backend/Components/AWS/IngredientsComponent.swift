@@ -2,7 +2,7 @@
 //  IngredientsComponent.swift
 //  SousChef
 //
-//  Created by Sutter Reynolds on 3/5/25.
+//  Created by Oliver Zolan on 3/5/25.
 //
 
 import Foundation
