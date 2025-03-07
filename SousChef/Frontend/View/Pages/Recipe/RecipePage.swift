@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct RecipeDetailView: View {
-    let recipe: RecipeModel
+    let recipe: EdamamRecipeModel
 
     var body: some View {
         ScrollView {
@@ -106,12 +106,12 @@ struct RecipeDetailView: View {
 struct RecipeDetailView_Previews: PreviewProvider {
     static var previews: some View {
         RecipeDetailView(
-            recipe: RecipeModel(
+            recipe: EdamamRecipeModel(
                 label: "Sample Recipe",
                 image: "https://via.placeholder.com/300",
                 url: "https://www.example.com",
                 ingredients: [
-                    RecipeIngredient(
+                    EdamamRecipeIngredient(
                         text: "1 cup of sugar",
                         quantity: 1.0,
                         measure: "cup",
@@ -121,7 +121,7 @@ struct RecipeDetailView_Previews: PreviewProvider {
                         foodId: "food_sugar",
                         image: nil
                     ),
-                    RecipeIngredient(
+                    EdamamRecipeIngredient(
                         text: "2 eggs",
                         quantity: 2.0,
                         measure: "unit",
@@ -132,17 +132,17 @@ struct RecipeDetailView_Previews: PreviewProvider {
                         image: nil
                     )
                 ],
-                totalNutrients: RecipeNutrients(
-                    energy: Nutrient(label: "Energy", quantity: 500, unit: "kcal"),
-                    fat: Nutrient(label: "Fat", quantity: 20, unit: "g"),
-                    saturatedFat: nil, // You can provide values or keep nil if not available
+                totalNutrients: EdamamRecipeNutrients(
+                    energy: EdamamRecipeNutrient(label: "Energy", quantity: 500, unit: "kcal"),
+                    fat: EdamamRecipeNutrient(label: "Fat", quantity: 20, unit: "g"),
+                    saturatedFat: nil,
                     transFat: nil,
-                    carbs: Nutrient(label: "Carbs", quantity: 60, unit: "g"),
-                    fiber: Nutrient(label: "Fiber", quantity: 5, unit: "g"),
-                    sugar: Nutrient(label: "Sugar", quantity: 30, unit: "g"),
-                    protein: Nutrient(label: "Protein", quantity: 10, unit: "g"),
-                    cholesterol: Nutrient(label: "Cholesterol", quantity: 100, unit: "mg"), // Corrected placement
-                    sodium: Nutrient(label: "Sodium", quantity: 300, unit: "mg"), // Corrected placement
+                    carbs: EdamamRecipeNutrient(label: "Carbs", quantity: 60, unit: "g"),
+                    fiber: EdamamRecipeNutrient(label: "Fiber", quantity: 5, unit: "g"),
+                    sugar: EdamamRecipeNutrient(label: "Sugar", quantity: 30, unit: "g"),
+                    protein: EdamamRecipeNutrient(label: "Protein", quantity: 10, unit: "g"),
+                    cholesterol: EdamamRecipeNutrient(label: "Cholesterol", quantity: 100, unit: "mg"),
+                    sodium: EdamamRecipeNutrient(label: "Sodium", quantity: 300, unit: "mg"),
                     calcium: nil,
                     potassium: nil,
                     iron: nil,

@@ -4,12 +4,12 @@ struct AddIngredientPopup: View {
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var userSession: UserSession
 
-    private let ingredientsAPI = IngredientsAPI()
+    private let ingredientsAPI = EdamamIngredientsComponent()
 
     @Binding var ingredients: [String]
 
     @State private var searchText: String = ""
-    @State private var searchResults: [IngredientModel] = []
+    @State private var searchResults: [EdamamIngredientModel] = []
     @State private var isLoading: Bool = false
     @State private var errorMessage: String?
 
@@ -70,12 +70,12 @@ struct AddIngredientPopup: View {
         isLoading = true
         errorMessage = nil
 
-        ingredientsAPI.search(query: query) { result in
+        ingredientsAPI.searchIngredients(query: query) { result in
+            print(result)
             DispatchQueue.main.async {
                 self.isLoading = false
                 switch result {
                 case .success(let response):
-                    // Extract unique ingredients
                     let uniqueIngredients = Array(Set(response.hints.map { $0.food })).sorted { $0.label < $1.label }
                     self.searchResults = uniqueIngredients
                 case .failure(let error):
@@ -85,66 +85,51 @@ struct AddIngredientPopup: View {
         }
     }
 
-    // MARK: - Adding Ingredients
-    private func addIngredientToDatabase(_ ingredient: IngredientModel) {
-        guard let awsUserId = userSession.awsUserId, let token = userSession.token else {
-            print("AWS User ID or token not available")
+    private func addIngredientToDatabase(_ ingredient: EdamamIngredientModel) {
+        guard let token = userSession.token else {
+            print("User token not available")
             return
         }
-        
-        let ingredientPayload: [String: Any] = [
-            "foodId": ingredient.foodId,
-            "text": ingredient.label,
-            "quantity": 1,
-            "measure": "",
-            "food": ingredient.label,
-            "weight": 0,
-            "foodCategory": ingredient.category ?? ""
-        ]
-        
-        let payload: [String: Any] = [
-            "user_id": awsUserId,
-            "ingredients": [ingredientPayload]
-        ]
-        
-        guard let url = URL(string: "https://souschef.click/ingredients/add") else {
-            print("Invalid URL for add ingredients endpoint")
-            return
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue(token, forHTTPHeaderField: "Authorization")
-        
-        do {
-            request.httpBody = try JSONSerialization.data(withJSONObject: payload, options: [])
-        } catch {
-            print("Failed to encode payload: \(error.localizedDescription)")
-            return
-        }
-        
-        URLSession.shared.dataTask(with: request) { data, response, error in
+
+        let awsIngredient = AWSIngredientModel(
+            food: ingredient.label,
+            foodCategory: ingredient.category ?? "Unknown",
+            foodId: ingredient.foodId,
+            measure: ingredient.nutrients != nil ? "Serving" : "",
+            quantity: 1,
+            text: ingredient.label,
+            weight: ingredient.nutrients?.energy ?? 0
+        )
+
+        let ingredients = [awsIngredient]
+
+        let ingredientsAPI = AWSIngredientsComponent(userSession: userSession)
+
+        ingredientsAPI.addIngredients(ingredients: ingredients) { result in
             DispatchQueue.main.async {
-                if let error = error {
-                    print("Error adding ingredient: \(error.localizedDescription)")
-                    return
-                }
-                guard let httpResponse = response as? HTTPURLResponse else {
-                    print("No valid response from server")
-                    return
-                }
-                if httpResponse.statusCode == 200 {
+                switch result {
+                case .success:
                     print("Ingredient added successfully")
-                    self.ingredients.append(ingredient.label)
+                    self.ingredients.append(awsIngredient.text)
                     self.presentationMode.wrappedValue.dismiss()
-                } else {
-                    print("Failed to add ingredient. Server returned status code: \(httpResponse.statusCode)")
-                    if let data = data, let errorResponse = String(data: data, encoding: .utf8) {
-                        print("Server error response: \(errorResponse)")
-                    }
+                case .failure(let error):
+                    print("Failed to add ingredient: \(error.localizedDescription)")
                 }
             }
-        }.resume()
+        }
+    }
+}
+
+struct AddIngredientPopup_Previews: PreviewProvider {
+    static var previews: some View {
+        // Create a mock user session
+        let mockSession = UserSession()
+        mockSession.token = "mock_token"
+
+        @State var mockIngredients: [String] = ["Tomato", "Onion", "Garlic"]
+
+        return AddIngredientPopup(ingredients: $mockIngredients)
+            .environmentObject(mockSession)
+            .previewDevice("iPhone 16 Pro")
     }
 }

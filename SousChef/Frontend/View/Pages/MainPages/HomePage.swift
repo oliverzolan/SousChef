@@ -5,7 +5,7 @@ struct HomePage: View {
     @EnvironmentObject var userSession: UserSession
     @State private var searchText = ""
     @State private var selectedCategory: String? = nil
-    @State private var recipes: [RecipeModel] = []
+    @State private var recipes: [EdamamRecipeModel] = []
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var showMenu = false
@@ -158,13 +158,13 @@ struct HomePage: View {
         isLoading = true
         errorMessage = nil
         
-        let api = RecipeAPI()
-        api.search(query: searchText) { result in
+        let api = EdamamRecipeComponent()
+        api.searchRecipes(query: searchText) { result in
             DispatchQueue.main.async {
                 isLoading = false
                 switch result {
-                case .success(let recipeResponse):
-                    self.recipes = recipeResponse.hits.map { $0.recipe } 
+                case .success(let EdamamRecipeResponse):
+                    self.recipes = EdamamRecipeResponse.hits.map { $0.recipe } 
                 case .failure(let error):
                     self.errorMessage = error.localizedDescription
                 }

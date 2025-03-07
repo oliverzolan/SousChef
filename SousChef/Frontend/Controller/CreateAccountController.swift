@@ -28,7 +28,7 @@ class CreateAccountViewController: ObservableObject {
                     self.errorMessage = error.localizedDescription
                 }
             } else if let user = result?.user {
-                self.updateUserDisplayName(user: user) // ✅ Update Display Name
+                self.updateUserDisplayName(user: user)
 
                 user.getIDToken { token, error in
                     if let token = token {
@@ -193,7 +193,7 @@ class CreateAccountViewController: ObservableObject {
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         request.addValue(token, forHTTPHeaderField: "Authorization")
         request.addValue(email, forHTTPHeaderField: "Email")
-        request.addValue(displayName, forHTTPHeaderField: "Display-Name") // ✅ Added Display Name
+        request.addValue(displayName, forHTTPHeaderField: "Display-Name")
 
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {

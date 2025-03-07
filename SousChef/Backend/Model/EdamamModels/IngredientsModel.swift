@@ -6,33 +6,33 @@
 //
 import Foundation
 
-struct IngredientResponse: Decodable {
-    let hints: [Hint]
+struct EdamamIngredientResponse: Decodable {
+    let hints: [EdamamIngredientHint]
 }
 
-struct Hint: Decodable {
-    let food: IngredientModel
+struct EdamamIngredientHint: Decodable {
+    let food: EdamamIngredientModel
 }
 
-struct IngredientModel: Decodable, Identifiable, Hashable {
+struct EdamamIngredientModel: Decodable, Identifiable, Hashable {
     var id: String { foodId }
     let foodId: String
     let label: String
     let category: String?
     let categoryLabel: String?
     let image: String?
-    let nutrients: IngredientNutrients?
+    let nutrients: EdamamIngredientNutrients?
     
     func hash(into hasher: inout Hasher) {
         hasher.combine(foodId)
     }
 
-    static func == (lhs: IngredientModel, rhs: IngredientModel) -> Bool {
+    static func == (lhs: EdamamIngredientModel, rhs: EdamamIngredientModel) -> Bool {
         return lhs.foodId == rhs.foodId
     }
 }
 
-struct IngredientNutrients: Decodable {
+struct EdamamIngredientNutrients: Decodable {
     let energy: Double?
     let protein: Double?
     let fat: Double?

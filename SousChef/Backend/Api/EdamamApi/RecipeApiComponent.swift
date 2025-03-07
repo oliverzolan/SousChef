@@ -4,29 +4,30 @@
 //
 //  Created by Sutter Reynolds on 2/23/25.
 //
+
 import Foundation
 
-class RecipeAPI: BaseAPIComponent<RecipeResponse> {
-    private var RECIPE_API_ENDPOINT: String
-    private var user: String
-    private var type: String
+class EdamamRecipeComponent: EdamamAbstract {
+    private let RECIPE_ENDPOINT: String
+    private let user: String
+    private let type: String
     
-    var cuisineType: CuisineType?
-    var mealType: MealType?
-    var diet: Diet?
-    var health: Health?
+    var cuisineType: EdamamRecipeCuisineType?
+    var mealType: EdamamRecipeMealType?
+    var diet: EdamamRecipeDiet?
+    var health: EdamamRecipeHealth?
     var calorieNum: Int?
     var searchInput: String?
 
     override init(appId: String = "5732a059", appKey: String = "58090f7f2c16659ae520bd0f3a7f51d2") {
-        self.RECIPE_API_ENDPOINT = "/api/recipes/v2"
+        self.RECIPE_ENDPOINT = "/api/recipes/v2"
         self.user = "SousChef2950"
         self.type = "public"
         super.init(appId: appId, appKey: appKey)
     }
 
-    override func search(query: String, completion: @escaping (Result<RecipeResponse, Error>) -> Void) {
-        var urlComponents = URLComponents(string: baseURL + RECIPE_API_ENDPOINT)
+    func searchRecipes(query: String, completion: @escaping (Result<EdamamRecipeResponse, Error>) -> Void) {
+        var urlComponents = URLComponents(string: baseURL + RECIPE_ENDPOINT)
         var queryItems: [URLQueryItem] = [
             URLQueryItem(name: "app_id", value: appId),
             URLQueryItem(name: "app_key", value: appKey),
@@ -66,20 +67,21 @@ class RecipeAPI: BaseAPIComponent<RecipeResponse> {
                 DispatchQueue.main.async { completion(.failure(error)) }
                 return
             }
-            
+
             guard let data = data else {
                 DispatchQueue.main.async {
                     completion(.failure(NSError(domain: "No Data", code: 0, userInfo: nil)))
                 }
                 return
             }
-            
+
             do {
-                let decodedResponse = try JSONDecoder().decode(RecipeResponse.self, from: data)
+                let decodedResponse = try JSONDecoder().decode(EdamamRecipeResponse.self, from: data)
                 DispatchQueue.main.async { completion(.success(decodedResponse)) }
             } catch {
                 DispatchQueue.main.async { completion(.failure(error)) }
             }
         }.resume()
+
     }
 }
