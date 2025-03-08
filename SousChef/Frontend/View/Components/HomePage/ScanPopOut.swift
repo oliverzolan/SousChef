@@ -16,7 +16,7 @@ struct ScanOptionsPopout: View {
             Spacer() // Push popout to the bottom
             
             VStack(spacing: 15) {
-                scanButton(destination: ScanIngredientPage(), icon: "camera", label: "Scan Ingredients")
+                scanButton(destination: FoodScanPage(), icon: "camera", label: "Scan Ingredients")
                 scanButton(destination: ReceiptPage(), icon: "doc.text.viewfinder", label: "Scan Receipt")
                 scanButton(destination: ScanBarcodePage(userSession: _userSession), icon: "barcode.viewfinder", label: "Scan Barcode")
             }
