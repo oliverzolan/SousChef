@@ -60,7 +60,8 @@ class AWSIngredientsComponent: AWSAbstract {
             return
         }
         
-        print(token)
+        // Print token
+        //print(token)
 
         let urlComponents = URLComponents(string: baseURL + route + "/add")
         
