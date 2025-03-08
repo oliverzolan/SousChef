@@ -12,12 +12,14 @@ import GoogleSignIn
 @main
 struct SousChefApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @StateObject private var userSession = UserSession() 
+    @StateObject private var userSession = UserSession() // Initialize UserSession
 
     var body: some Scene {
         WindowGroup {
-            LoginPage()
-                .environmentObject(userSession)
+            NavigationView {
+                LoginPage()
+                    .environmentObject(userSession)
+            }
         }
     }
 }
