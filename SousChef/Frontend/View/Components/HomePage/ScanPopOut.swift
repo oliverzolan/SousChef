@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ScanOptionsPopout: View {
     @Binding var isShowing: Bool
+    @EnvironmentObject var userSession: UserSession
 
     var body: some View {
         VStack {
@@ -17,7 +18,7 @@ struct ScanOptionsPopout: View {
             VStack(spacing: 15) {
                 scanButton(destination: ScanIngredientPage(), icon: "camera", label: "Scan Ingredients")
                 scanButton(destination: ReceiptPage(), icon: "doc.text.viewfinder", label: "Scan Receipt")
-                scanButton(destination: EmptyView(), icon: "barcode.viewfinder", label: "Scan Barcode")
+                scanButton(destination: ScanBarcodePage(userSession: _userSession), icon: "barcode.viewfinder", label: "Scan Barcode")
             }
             .padding()
             .background(Color.black.opacity(0.75))
