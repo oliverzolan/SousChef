@@ -19,18 +19,21 @@ class LoginViewController: ObservableObject {
     private var currentNonce: String?
 
     func logIn() {
-        Auth.auth().signIn(withEmail: email, password: password) { result, error in
-            if let error = error {
-                DispatchQueue.main.async {
-                    self.errorMessage = error.localizedDescription
+        Auth.auth().signIn(withEmail: email, password: password) { [weak self] result, error in
+            if let error = error as NSError? {
+                switch AuthErrorCode(rawValue: error.code) {
+                case .wrongPassword, .invalidEmail, .userNotFound:
+                    self?.errorMessage = "No account with that Email or Password Incorrect."
+                default:
+                    self?.errorMessage = "No account with that Email or Password Incorrect."
                 }
-            } else {
-                DispatchQueue.main.async {
-                    self.navigateToHome = true
-                }
+                return
             }
+            self?.errorMessage = nil
+            self?.navigateToHome = true
         }
     }
+    
 
     func signInWithGoogle() {
         guard let rootViewController = UIApplication.shared.windows.first?.rootViewController else {
@@ -52,12 +55,12 @@ class LoginViewController: ObservableObject {
 
             let credential = GoogleAuthProvider.credential(withIDToken: idToken, accessToken: authentication.accessToken.tokenString)
 
-            Auth.auth().signIn(with: credential) { authResult, error in
+            Auth.auth().signIn(with: credential) { [weak self] authResult, error in
                 if let error = error {
-                    self.errorMessage = error.localizedDescription
+                    self?.errorMessage = error.localizedDescription
                 } else {
                     DispatchQueue.main.async {
-                        self.navigateToHome = true
+                        self?.navigateToHome = true
                     }
                 }
             }
@@ -72,12 +75,36 @@ class LoginViewController: ObservableObject {
     }
 
     func handleAppleCompletion(_ result: Result<ASAuthorization, Error>) {
-        if case .failure(let error) = result {
+        switch result {
+        case .success(let authorization):
+            guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential,
+                  let nonce = currentNonce,
+                  let appleIDToken = appleIDCredential.identityToken,
+                  let idTokenString = String(data: appleIDToken, encoding: .utf8) else {
+                self.errorMessage = "Apple Sign-In failed. Please try again."
+                return
+            }
+
+            let credential = OAuthProvider.credential(
+                withProviderID: "apple.com",
+                idToken: idTokenString,
+                rawNonce: nonce
+            )
+
+            Auth.auth().signIn(with: credential) { [weak self] authResult, error in
+                if let error = error {
+                    self?.errorMessage = error.localizedDescription
+                    return
+                }
+                self?.errorMessage = nil
+                self?.navigateToHome = true
+            }
+
+        case .failure(let error):
             self.errorMessage = "Apple Sign-In failed: \(error.localizedDescription)"
         }
     }
 
-    // Function to generate a secure nonce for Apple Sign-In authentication
     func generateNonce(length: Int = 32) -> String {
         let charset: [Character] = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
         var result = String()
@@ -98,22 +125,16 @@ class LoginViewController: ObservableObject {
                     }
                 }
             } else {
-                fatalError("❌ Unable to generate secure nonce")
+                fatalError("Unable to generate secure nonce")
             }
         }
 
         return result
     }
 
-    // Function to hash a nonce using SHA256 (required for Apple Sign-In security)
     func sha256(_ input: String) -> String {
         let inputData = Data(input.utf8)
         let hashedData = SHA256.hash(data: inputData)
         return hashedData.map { String(format: "%02x", $0) }.joined()
-    }
-
-
-    func navigateToForgotPassword() {
-        // Handle navigation to forgot password page
     }
 }

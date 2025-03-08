@@ -12,16 +12,16 @@ import GoogleSignIn
 @main
 struct SousChefApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @StateObject private var userSession = UserSession() // Initialize UserSession
+    @StateObject private var userSession = UserSession() 
 
     var body: some Scene {
         WindowGroup {
-            NavigationView {
-                LoginPage()
-            }.environmentObject(userSession)
+            LoginPage()
+                .environmentObject(userSession)
         }
     }
 }
+
 
 //struct SousChefApp: App {
 //    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
@@ -31,11 +31,12 @@ struct SousChefApp: App {
 //        WindowGroup {
 //            if let _ = userSession.token, !userSession.isGuest {
 //                // Navigate to the homepage if authenticated
-//                HomePage().environmentObject(userSession)
+//                HomePage()
 //            } else {
 //                // Show login options
-//                LoginPage().environmentObject(userSession)
+//                LoginPage()
 //            }
+//            .environmentObject(userSession)
 //        }
 //    }
 //}

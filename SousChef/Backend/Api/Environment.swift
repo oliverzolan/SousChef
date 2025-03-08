@@ -7,7 +7,7 @@
 
 import Foundation
 
-class Environment {
+class AppEnvironment {
     static func value(for key: String) -> String {
         guard let path = Bundle.main.path(forResource: "config", ofType: "plist"),
               let plist = NSDictionary(contentsOfFile: path) as? [String: Any],
