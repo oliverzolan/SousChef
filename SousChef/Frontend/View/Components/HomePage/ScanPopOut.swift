@@ -10,28 +10,42 @@ import SwiftUI
 struct ScanOptionsPopout: View {
     @Binding var isShowing: Bool
     @EnvironmentObject var userSession: UserSession
+    @State private var popUpOffset: CGFloat = 100
+    @State private var popUpOpacity: Double = 0
 
     var body: some View {
-        VStack {
-            Spacer() // Push popout to the bottom
-            
-            VStack(spacing: 15) {
-                scanButton(destination: FoodScanPage(), icon: "camera", label: "Scan Ingredients")
-                scanButton(destination: ReceiptPage(), icon: "doc.text.viewfinder", label: "Scan Receipt")
-                scanButton(destination: ScanBarcodePage(userSession: _userSession), icon: "barcode.viewfinder", label: "Scan Barcode")
+        ZStack {
+            // Background Dim Effect
+            if isShowing {
+                Color.black.opacity(0.3)
+                    .edgesIgnoringSafeArea(.all)
+                    .onTapGesture {
+                        closePopup()
+                    }
             }
-            .padding()
-            .background(Color.black.opacity(0.75))
-            .cornerRadius(15)
-            .padding(.horizontal, 20)
-            .padding(.bottom, 90) 
-            .transition(.move(edge: .bottom))
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-        .background(isShowing ? Color.black.opacity(0.3) : Color.clear)
-        .edgesIgnoringSafeArea(.all)
-        .onTapGesture {
-            isShowing = false
+
+            VStack {
+                Spacer() // Push popout to the bottom
+                
+                VStack(spacing: 15) {
+                    scanButton(destination: FoodScanPage(), icon: "camera", label: "Scan Ingredients")
+                    scanButton(destination: ReceiptPage(), icon: "doc.text.viewfinder", label: "Scan Receipt")
+                    scanButton(destination: ScanBarcodePage(userSession: _userSession), icon: "barcode.viewfinder", label: "Scan Barcode")
+                }
+                .padding()
+                .background(Color.black.opacity(0.75))
+                .cornerRadius(15)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 90)
+                .opacity(popUpOpacity)
+                .offset(y: popUpOffset)
+                .onAppear {
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        popUpOffset = 0
+                        popUpOpacity = 1
+                    }
+                }
+            }
         }
     }
 
@@ -47,6 +61,16 @@ struct ScanOptionsPopout: View {
             .padding()
             .background(AppColors.primary2)
             .cornerRadius(10)
+        }
+    }
+
+    private func closePopup() {
+        withAnimation(.easeIn(duration: 0.2)) {
+            popUpOpacity = 0
+            popUpOffset = 100
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            isShowing = false
         }
     }
 }

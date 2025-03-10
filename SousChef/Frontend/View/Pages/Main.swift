@@ -27,7 +27,7 @@ struct MainTabView: View {
     let tabs: [(view: AnyView, icon: String, tag: Int)] = [
         (AnyView(HomePage()), "home_icon", 0),
         (AnyView(PantryPage(userSession: UserSession())), "fridge_icon", 1),
-        (AnyView(HomePage()), "scan_icon", 2),
+        (AnyView(EmptyView()), "scan_icon", 2),
         (AnyView(PantryPage(userSession: UserSession())), "list_icon", 3),
         (AnyView(ChatbotPage(userSession: UserSession())), "chef_hat_icon", 4)
     ]
@@ -54,7 +54,7 @@ struct MainTabView: View {
         .onChange(of: selectedTab) { oldValue, newValue in
             if newValue == 2 {
                 isShowingScanOptions = true
-                selectedTab = 0
+                selectedTab = oldValue
             }
         }
     }
