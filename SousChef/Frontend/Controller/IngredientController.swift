@@ -61,16 +61,33 @@ class IngredientController: ObservableObject {
     }
 
     // MARK: - Add Searched Ingredient
-    func addIngredientToDatabase(_ ingredient: EdamamIngredientModel, completion: @escaping () -> Void) {
-        let awsIngredient = AWSIngredientModel(
-            food: ingredient.label,
-            foodCategory: ingredient.category ?? "Unknown",
-            foodId: ingredient.foodId,
-            measure: "Serving",
-            quantity: 1,
-            text: ingredient.label,
-            weight: ingredient.nutrients?.energy ?? 0.0
-        )
+    func addIngredientToDatabase(_ ingredient: Any, completion: @escaping () -> Void) {
+        let awsIngredient: AWSIngredientModel
+
+        if let edamamIngredient = ingredient as? EdamamIngredientModel {
+            awsIngredient = AWSIngredientModel(
+                food: edamamIngredient.label,
+                foodCategory: edamamIngredient.category ?? "Unknown",
+                foodId: edamamIngredient.foodId,
+                measure: "Serving",
+                quantity: 1,
+                text: edamamIngredient.label,
+                weight: edamamIngredient.nutrients?.energy ?? 0.0
+            )
+        } else if let barcodeIngredient = ingredient as? BarcodeModel {
+            awsIngredient = AWSIngredientModel(
+                food: barcodeIngredient.label,
+                foodCategory: barcodeIngredient.category ?? "Unknown",
+                foodId: barcodeIngredient.foodId,
+                measure: "Serving",
+                quantity: 1,
+                text: barcodeIngredient.label,
+                weight: barcodeIngredient.nutrients?.energy ?? 0.0
+            )
+        } else {
+            print("Error: Unsupported ingredient type.")
+            return
+        }
 
         let ingredientsAPI = AWSIngredientsComponent(userSession: userSession)
 

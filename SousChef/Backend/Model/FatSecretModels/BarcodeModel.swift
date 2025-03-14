@@ -70,3 +70,10 @@ struct EdamamBarcodeNutrient: Decodable {
         case vitaminD = "VITD"
     }
 }
+
+struct EditableIngredient: Identifiable {
+    let id: UUID
+    let foodId: String
+    let label: String
+    var quantity: Double
+}

@@ -1,10 +1,3 @@
-//
-//  BarcodeScannerView.swift
-//  SousChef
-//
-//  Created by Oliver Zolan on 3/7/25.
-//
-
 import SwiftUI
 
 struct BarcodeScannerView: UIViewControllerRepresentable {
@@ -21,81 +14,47 @@ struct BarcodeScannerView: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: BarcodeScannerController, context: Context) {}
 
     func makeCoordinator() -> Coordinator {
-        return Coordinator(self)
+        return Coordinator(parent: self)
     }
 
     class Coordinator: NSObject, BarcodeScannerControllerDelegate {
         var parent: BarcodeScannerView
 
-        init(_ parent: BarcodeScannerView) {
+        init(parent: BarcodeScannerView) {
             self.parent = parent
         }
 
         func didScanBarcode(_ barcode: String) {
+            BarcodeScannerHelper.shared.fetchIngredient(by: barcode) { ingredient in
+                guard let ingredient = ingredient else {
+                    BarcodeScannerHelper.shared.showBarcodeNotRecognizedAlert(
+                        retryHandler: { self.tryAgain() },
+                        searchHandler: { self.navigateToIngredientSearch() }
+                    )
+                    return
+                }
+
+                self.parent.scannedIngredient = ingredient
+                self.parent.isNavigating = true
+            }
+        }
+
+        private func tryAgain() {
             DispatchQueue.main.async {
-                let barcodeAPI = BarcodeAPIComponent()
-                barcodeAPI.fetchFoodByBarcode(upc: barcode) { result in
-                    DispatchQueue.main.async {
-                        switch result {
-                        case .success(let barcodeModel):
-                            if let barcodeModel = barcodeModel {
-                                self.parent.scannedIngredient = barcodeModel
-                                self.parent.isNavigating = true
-                            }
-                        case .failure(let error):
-                            print("Error fetching ingredient: \(error)")
-                        }
-                    }
+                self.parent.scannedIngredient = nil
+                self.parent.isNavigating = false
+                NotificationCenter.default.post(name: NSNotification.Name("RestartScanner"), object: nil)
+            }
+        }
+
+        private func navigateToIngredientSearch() {
+            DispatchQueue.main.async {
+                let searchView = AddIngredientBarcodePage(scannedIngredient: nil, userSession: self.parent.userSession)
+                let hostingController = UIHostingController(rootView: searchView)
+                if let rootVC = UIApplication.shared.windows.first?.rootViewController {
+                    rootVC.present(hostingController, animated: true, completion: nil)
                 }
             }
-        }
-    }
-}
-
-struct BarcodeScannerOverlay: View {
-    @State private var isFlashing = false
-
-    var body: some View {
-        ZStack {
-            Color.black.opacity(0.6)
-                .edgesIgnoringSafeArea(.all)
-                .mask(
-                    Rectangle()
-                        .frame(width: 300, height: 100)
-                        .cornerRadius(10)
-                        .blendMode(.destinationOut)
-                )
-                .compositingGroup()
-
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(isFlashing ? Color.green : Color.white, lineWidth: 4)
-                .frame(width: 300, height: 100)
-                .animation(Animation.easeInOut(duration: 0.7).repeatForever(), value: isFlashing)
-
-            VStack {
-                Spacer()
-                Text("Align the barcode within the frame")
-                    .foregroundColor(.white)
-                    .font(.headline)
-                    .padding(.bottom, 100)
-            }
-        }
-        .onAppear {
-            isFlashing.toggle()
-        }
-    }
-}
-
-struct BarcodeScannerWithOverlay: View {
-    @Binding var scannedIngredient: BarcodeModel?
-    @Binding var isNavigating: Bool
-
-    var body: some View {
-        ZStack {
-            BarcodeScannerView(scannedIngredient: $scannedIngredient, isNavigating: $isNavigating)
-                .edgesIgnoringSafeArea(.all)
-            
-            BarcodeScannerOverlay()
         }
     }
 }
