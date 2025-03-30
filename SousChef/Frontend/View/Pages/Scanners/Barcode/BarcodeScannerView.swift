@@ -51,8 +51,10 @@ struct BarcodeScannerView: UIViewControllerRepresentable {
             DispatchQueue.main.async {
                 let searchView = AddIngredientBarcodePage(scannedIngredient: nil, userSession: self.parent.userSession)
                 let hostingController = UIHostingController(rootView: searchView)
-                if let rootVC = UIApplication.shared.windows.first?.rootViewController {
-                    rootVC.present(hostingController, animated: true, completion: nil)
+                
+                if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                   let window = scene.windows.first(where: { $0.isKeyWindow }) {
+                    window.rootViewController?.present(hostingController, animated: true, completion: nil)
                 }
             }
         }

@@ -1,40 +1,68 @@
-//
-//  BarcodePage.swift
-//  SousChef
-//
-//  Created by Oliver Zolan on 3/7/25.
-//
-
 import SwiftUI
+import AVFoundation
 
 struct ScanBarcodePage: View {
     @EnvironmentObject var userSession: UserSession
     @State private var scannedIngredient: BarcodeModel?
     @State private var showAddIngredientPopup = false
-    @State private var addedIngredients: [String] = []
+    @State private var isFlashlightOn = false
 
     var body: some View {
-        NavigationStack {
+        ZStack {
+            // Barcode scanner with overlay
+            BarcodeScannerWithOverlay(
+                scannedIngredient: $scannedIngredient,
+                isNavigating: $showAddIngredientPopup
+            )
+            .edgesIgnoringSafeArea(.all)
+
+            // Flashlight button
             VStack {
-                BarcodeScannerWithOverlay(
-                    scannedIngredient: $scannedIngredient,
-                    isNavigating: $showAddIngredientPopup
-                )
-                .edgesIgnoringSafeArea(.all)
+                HStack {
+                    flashlightButton()
+                    Spacer()
+                }
+                .padding(.top, 20)
+                .padding(.leading, 20)
+                Spacer()
             }
-            .navigationTitle("Scan a Barcode")
-            .navigationBarTitleDisplayMode(.inline)
-            .onAppear {
-                resetScannerState()
-                setupNavigationBarAppearance()
-            }
-            .navigationDestination(isPresented: $showAddIngredientPopup) {
-                popupContent()
+        }
+        .navigationDestination(isPresented: $showAddIngredientPopup) {
+            popupContent()
+        }
+        .toolbar {
+            ToolbarItem(placement: .bottomBar) {
+                MainTabView()
             }
         }
     }
-    
-    // Sheet content closure - Only renders if `scannedIngredient` exists
+
+    // MARK: - Flashlight Button
+    @ViewBuilder
+    private func flashlightButton() -> some View {
+        Button(action: toggleFlashlight) {
+            Image(systemName: isFlashlightOn ? "flashlight.on.fill" : "flashlight.off.fill")
+                .font(.title)
+                .foregroundColor(.yellow)
+                .padding()
+                .background(Color.black.opacity(0.7))
+                .clipShape(Circle())
+        }
+    }
+
+    private func toggleFlashlight() {
+        guard let device = AVCaptureDevice.default(for: .video), device.hasTorch else { return }
+        do {
+            try device.lockForConfiguration()
+            device.torchMode = isFlashlightOn ? .off : .on
+            isFlashlightOn.toggle()
+            device.unlockForConfiguration()
+        } catch {
+            print("Flashlight could not be toggled: \(error)")
+        }
+    }
+
+    // MARK: - Popup Content
     @ViewBuilder
     private func popupContent() -> some View {
         if let ingredient = scannedIngredient {
@@ -49,24 +77,5 @@ struct ScanBarcodePage: View {
                     .padding()
             }
         }
-    }
-
-    // Handles the dismiss action
-    private func resetScannerState() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            scannedIngredient = nil
-            showAddIngredientPopup = false
-            NotificationCenter.default.post(name: NSNotification.Name("RestartScanner"), object: nil)
-        }
-    }
-    // Configures the navigation bar appearance
-    private func setupNavigationBarAppearance() {
-        let appearance = UINavigationBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = .white
-        appearance.titleTextAttributes = [.foregroundColor: UIColor.black]
-
-        UINavigationBar.appearance().standardAppearance = appearance
-        UINavigationBar.appearance().scrollEdgeAppearance = appearance
     }
 }
