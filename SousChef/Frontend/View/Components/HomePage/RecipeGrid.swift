@@ -9,9 +9,10 @@ import SwiftUI
 
 struct RecipeGrid: View {
     var title: String
-    
+    var recipes: [EdamamRecipeModel]
+
     var body: some View {
-        VStack(spacing: 5) { // Reduce spacing between HStacks
+        VStack(spacing: 5) {
             HStack {
                 Text(title + " Recipes")
                     .font(.title3)
@@ -19,22 +20,26 @@ struct RecipeGrid: View {
                 Spacer()
             }
             .padding(.horizontal)
-            
-            HStack {
-                RecipeGridItem(title: "Button 1", color: .gray, width: 150, height: 160)
-                
-                VStack(spacing: 10) {
-                    RecipeGridItem(title: "Button 2", color: .gray, width: 200, height: 75)
-                    
-                    HStack(spacing: 10) {
-                        RecipeGridItem(title: "Button 3", color: .gray, width: 95, height: 75)
-                        RecipeGridItem(title: "Button 4", color: .gray, width: 95, height: 75)
+
+            if recipes.count >= 3 {
+                HStack(spacing: 10) {
+                    RecipeGridItem(recipe: recipes[0], width: 150, height: 160)
+
+                    VStack(spacing: 10) {
+                        RecipeGridItem(recipe: recipes[1], width: 200, height: 75)
+
+                        HStack(spacing: 10) {
+                            RecipeGridItem(recipe: recipes[2], width: 95, height: 75)
+                            MoreTile(width: 95, height: 75)
+                        }
                     }
                 }
+                .padding(.horizontal)
+            } else {
+                ProgressView()
+                    .padding()
             }
-            
         }
-    .padding(.bottom, 10)
+        .padding(.bottom, 10)
     }
 }
-

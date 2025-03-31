@@ -19,6 +19,7 @@ struct SousChefApp: App {
             NavigationView {
                 LoginPage()
                     .environmentObject(userSession)
+                    .environmentObject(HomepageController())
             }
         }
     }

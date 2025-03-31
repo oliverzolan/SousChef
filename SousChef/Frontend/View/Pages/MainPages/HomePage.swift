@@ -3,6 +3,8 @@ import SwiftUI
 struct HomePage: View {
     
     @EnvironmentObject var userSession: UserSession
+    @EnvironmentObject var homepageController: HomepageController
+    
     @State private var searchText = ""
     @State private var selectedCategory: String? = nil
     @State private var recipes: [EdamamRecipeModel] = []
@@ -21,24 +23,24 @@ struct HomePage: View {
                         searchBar
                         categoryScroll
                         
-                        if isLoading {
-                            ProgressView()
-                                .padding()
-                        } else if let errorMessage = errorMessage {
-                            Text(errorMessage)
-                                .foregroundColor(.red)
-                                .padding()
-                        } else if !recipes.isEmpty {
-                            recipeGrid
-                        } else {
-                            Text("Search for recipes to get started!")
-                                .foregroundColor(.gray)
-                                .padding()
-                        }
-                        
-                        RecipeGrid(title: "Featured")
-                        RecipeGrid(title: "Seasonal")
-                        RecipeGrid(title: "Chicken")
+//                        if isLoading {
+//                            ProgressView()
+//                                .padding()
+//                        } else if let errorMessage = errorMessage {
+//                            Text(errorMessage)
+//                                .foregroundColor(.red)
+//                                .padding()
+//                        } else if !recipes.isEmpty {
+//                            recipeGrid
+//                        } else {
+//                            Text("Search for recipes to get started!")
+//                                .foregroundColor(.gray)
+//                                .padding()
+//                        }
+                        RecipeGrid(title: "Featured", recipes: homepageController.featuredRecipes)
+//                        RecipeGrid(title: "Featured")
+//                        RecipeGrid(title: "Seasonal")
+//                        RecipeGrid(title: "Chicken")
                     }
                     .padding(.top)
                 }
@@ -72,6 +74,9 @@ struct HomePage: View {
             }
             .onChange(of: searchText) { _ in
                 fetchRecipes()
+            }
+            .onAppear {
+                homepageController.fetchFeaturedRecipes()
             }
         }
     }
