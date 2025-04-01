@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct RecipeBoxView: View {
-    let recipe: RecipeModel
+    let recipe: EdamamRecipeModel
 
     var body: some View {
         VStack(alignment: .leading) {

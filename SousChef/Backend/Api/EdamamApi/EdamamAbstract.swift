@@ -7,7 +7,7 @@
 
 import Foundation
 
-class BaseAPIComponent<T: Decodable>: ObservableObject {
+class EdamamAbstract: ObservableObject {
     private(set) var appId: String
     private(set) var appKey: String
     private(set) var baseURL: String
@@ -18,8 +18,9 @@ class BaseAPIComponent<T: Decodable>: ObservableObject {
         self.baseURL = "https://api.edamam.com"
     }
     
-    /// Subclasses must override this method to perform a search.
-    func search(query: String, completion: @escaping (Result<T, Error>) -> Void) {
-        fatalError("search(query:completion:) must be overridden by subclasses")
+    func search(query: String, completion: @escaping (Result<Data, Error>) -> Void) {
+        
     }
 }
+
+

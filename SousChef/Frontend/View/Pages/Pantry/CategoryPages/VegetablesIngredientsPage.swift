@@ -7,7 +7,7 @@ struct VegetablesIngredientsPage: View {
     var body: some View {
         BaseIngredientsPage(
             title: "Vegetables",
-            ingredients: pantryController.pantryItems
+            ingredients: pantryController.pantryItems.map { $0.text }
         )
         .onAppear {
             pantryController.fetchIngredients()

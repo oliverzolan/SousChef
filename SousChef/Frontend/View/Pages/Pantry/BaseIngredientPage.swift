@@ -38,6 +38,7 @@ struct BaseIngredientsPage: View {
     let title: String
     let ingredients: [String]
     
+    @EnvironmentObject var userSession: UserSession
     @State private var showAddIngredientSheet = false
     
     var body: some View {
@@ -69,7 +70,7 @@ struct BaseIngredientsPage: View {
             .background(Color(.systemBackground))
         }
         .sheet(isPresented: $showAddIngredientSheet) {
-            AddIngredientPopup(ingredients: .constant([]))
+            AddIngredientPopup(ingredients: .constant([]), scannedIngredient: nil, userSession: userSession)
         }
     }
 }

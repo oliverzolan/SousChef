@@ -1,3 +1,10 @@
+//
+//  pantryPage.swift
+//  SousChef
+//
+//  Created by Sutter Reynolds on 3/5/25.
+//
+
 import SwiftUI
 
 struct PantryPage: View {
@@ -15,7 +22,7 @@ struct PantryPage: View {
                 SearchComponent(searchText: .constant(""))
                     .frame(maxWidth: .infinity, maxHeight: 55)
 
-                // Display error message
+                // Error message
                 if let errorMessage = pantryController.errorMessage {
                     Text("Error: \(errorMessage)")
                         .foregroundColor(.red)
@@ -26,93 +33,86 @@ struct PantryPage: View {
                 if pantryController.isLoading {
                     ProgressView("Loading...")
                 } else {
-                    // Display category grid
-                    HStack(spacing: 10) {
-                        VStack(spacing: 13) {
-                            NavigationLink(destination: VegetablesIngredientsPage()) {
-                                CategoryButton(imageName: "vegetablesButton")
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: 150)
-
-                            NavigationLink(destination: GrainsIngredientsPage()) {
-                                CategoryButton(imageName: "grainsButton")
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: 150)
-
-                            HStack(spacing: 10) {
-                                NavigationLink(destination: SpicesIngredientsPage()) {
-                                    CategoryButton(imageName: "spicesButton")
-                                }
-                                .frame(maxWidth: .infinity, maxHeight: 100)
-
-                                NavigationLink(destination: CannedIngredientsPage()) {
-                                    CategoryButton(imageName: "cannedButton")
-                                }
-                                .frame(maxWidth: .infinity, maxHeight: 100)
-                            }
-
-                            NavigationLink(destination: DrinksIngredientsPage()) {
-                                CategoryButton(imageName: "drinksButton")
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: 125)
-                        }
-
-                        VStack(spacing: 10) {
-                            NavigationLink(destination: MeatsIngredientsPage()) {
-                                CategoryButton(imageName: "meatsButton")
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: 150)
-                            
-                            NavigationLink(destination: FruitsIngredientsPage()) {
-                                CategoryButton(imageName: "fruitButton")
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: 240)
-
-                            NavigationLink(destination: DairyIngredientsPage()) {
-                                CategoryButton(imageName: "dairyButton")
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: 150)
-                        }
-                    }
-                    .padding(.horizontal, 15)
-
-                    HStack(spacing: 10) {
-                        NavigationLink(destination: CondimentsIngredientsPage()) {
-                            CategoryButton(imageName: "condimentsButton")
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: 200)
-
-                        NavigationLink(destination: AllIngredientsPage(userSession: userSession)) {
-                            CategoryButton(imageName: "allButton")
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: 200)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, 39)
+                    // Display the ingredient categories
+                    ingredientsGrid
                 }
 
                 Spacer()
-
-                // Plus button to show the add ingredient popup.
-//                Button(action: {
-//                    pantryController.showAddIngredientPopup.toggle()
-//                }) {
-//                    Image(systemName: "plus.circle.fill")
-//                        .font(.system(size: 50))
-//                        .foregroundColor(.blue)
-//                }
-                .padding()
             }
             .background(Color(.systemBackground))
             .onAppear {
                 pantryController.fetchIngredients()
             }
-            // add ingredient popup
-//            .sheet(isPresented: $pantryController.showAddIngredientPopup) {
-//                PantryPopupView(isVisible: $pantryController.showAddIngredientPopup, pantryItems: $pantryController.pantryItems)
-//            }
         }
         .navigationBarBackButtonHidden(true)
+    }
+
+    // Grid layout for ingredient categories
+    private var ingredientsGrid: some View {
+        VStack {
+            HStack(spacing: 10) {
+                VStack(spacing: 13) {
+                    NavigationLink(destination: VegetablesIngredientsPage()) {
+                        CategoryButton(imageName: "vegetablesButton")
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: 150)
+
+                    NavigationLink(destination: GrainsIngredientsPage()) {
+                        CategoryButton(imageName: "grainsButton")
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: 150)
+
+                    HStack(spacing: 10) {
+                        NavigationLink(destination: SpicesIngredientsPage()) {
+                            CategoryButton(imageName: "spicesButton")
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: 100)
+
+                        NavigationLink(destination: CannedIngredientsPage()) {
+                            CategoryButton(imageName: "cannedButton")
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: 100)
+                    }
+
+                    NavigationLink(destination: DrinksIngredientsPage()) {
+                        CategoryButton(imageName: "drinksButton")
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: 125)
+                }
+
+                VStack(spacing: 10) {
+                    NavigationLink(destination: MeatsIngredientsPage()) {
+                        CategoryButton(imageName: "meatsButton")
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: 150)
+
+                    NavigationLink(destination: FruitsIngredientsPage()) {
+                        CategoryButton(imageName: "fruitButton")
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: 240)
+
+                    NavigationLink(destination: DairyIngredientsPage()) {
+                        CategoryButton(imageName: "dairyButton")
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: 150)
+                }
+            }
+            .padding(.horizontal, 15)
+
+            HStack(spacing: 10) {
+                NavigationLink(destination: CondimentsIngredientsPage()) {
+                    CategoryButton(imageName: "condimentsButton")
+                }
+                .frame(maxWidth: .infinity, maxHeight: 200)
+
+                NavigationLink(destination: AllIngredientsPage(userSession: userSession)) {
+                    CategoryButton(imageName: "allButton")
+                }
+                .frame(maxWidth: .infinity, maxHeight: 200)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 39)
+        }
     }
 }
 

@@ -5,7 +5,6 @@ class UserSession: ObservableObject {
     @Published var token: String?
     @Published var isGuest: Bool = false
     @Published var fullName: String?
-    @Published var awsUserId: String?  // AWS user id
 
     private var authListener: AuthStateDidChangeListenerHandle?
 
@@ -17,7 +16,6 @@ class UserSession: ObservableObject {
             guard let self = self, let user = user else {
                 self?.token = nil
                 self?.fullName = nil
-                self?.awsUserId = nil
                 return
             }
             
@@ -34,72 +32,9 @@ class UserSession: ObservableObject {
                         self.fullName = displayName
                         KeychainHelper.shared.save(displayName, for: "userFullName")
                     }
-                    
-                    self.fetchAWSUserId { awsUserId in
-                        DispatchQueue.main.async {
-                            self.awsUserId = awsUserId
-                            print("AWS User ID: \(awsUserId ?? "nil")")
-                        }
-                    }
                 }
             }
         }
-    }
-
-    func fetchAWSUserId(completion: @escaping (String?) -> Void) {
-        guard let token = self.token, let email = self.fullName else {
-            print("Token or email not available for fetching AWS user id")
-            completion(nil)
-            return
-        }
-        
-        guard let url = URL(string: "https://souschef.click/users/create") else {
-            print("Invalid URL for AWS user mapping")
-            completion(nil)
-            return
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.addValue(token, forHTTPHeaderField: "Authorization")
-        request.addValue(email, forHTTPHeaderField: "Email")
-        
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            if let error = error {
-                print("Error fetching AWS user id: \(error.localizedDescription)")
-                completion(nil)
-                return
-            }
-            
-            guard let data = data else {
-                print("No data received from AWS user mapping endpoint")
-                completion(nil)
-                return
-            }
-            
-            // for debugging, print the raw response
-            if let rawResponse = String(data: data, encoding: .utf8) {
-                print("Raw Response: \(rawResponse)")
-            }
-            
-            do {
-                if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                    if let awsUserId = json["user_id"] as? String {
-                        completion(awsUserId)
-                    } else if let awsUserIdInt = json["user_id"] as? Int {
-                        completion(String(awsUserIdInt))
-                    } else {
-                        print("Failed to parse AWS user id from response: \(json)")
-                        completion(nil)
-                    }
-                } else {
-                    completion(nil)
-                }
-            } catch {
-                print("JSON decoding error: \(error.localizedDescription)")
-                completion(nil)
-            }
-        }.resume()
     }
 
     func updateFullName(_ name: String) {
@@ -118,7 +53,6 @@ class UserSession: ObservableObject {
         self.token = nil
         self.fullName = nil
         self.isGuest = false
-        self.awsUserId = nil
     }
 
     func refreshToken(completion: @escaping (String?) -> Void) {
@@ -139,12 +73,6 @@ class UserSession: ObservableObject {
                 if let displayName = user.displayName {
                     self?.fullName = displayName
                     KeychainHelper.shared.save(displayName, for: "userFullName")
-                }
-                
-                self?.fetchAWSUserId { awsUserId in
-                    DispatchQueue.main.async {
-                        self?.awsUserId = awsUserId
-                    }
                 }
             }
         }
