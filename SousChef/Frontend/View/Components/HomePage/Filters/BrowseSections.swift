@@ -17,7 +17,7 @@ struct CuisineSection: View {
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
-                    ForEach(["Italian", "Mexican", "Indian", "Chinese", "Japanese", "Mediterranean", "French", "Thai"], id: \.self) { cuisine in
+                    ForEach(["Italian", "Mexican", "Indian", "Chinese", "Japanese", "Mediterranean", "French"], id: \.self) { cuisine in
                         cuisineCard(cuisine)
                     }
                 }
