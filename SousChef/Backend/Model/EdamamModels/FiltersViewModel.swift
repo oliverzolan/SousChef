@@ -2,7 +2,7 @@
 //  FiltersViewModel.swift
 //  SousChef
 //
-//  Created by AI Assistant on 4/10/25.
+//  Created by Oliver Zolan on 3/31/25.
 //
 
 import Foundation

@@ -89,7 +89,7 @@ struct RecipeDetailView: View {
                                 HStack {
                                     Text("• \(ingredient.text)")
                                     Spacer()
-                                    if availableIngredients.contains(ingredient.foodId) {
+                                    if let foodId = ingredient.foodId, availableIngredients.contains(foodId) {
                                         Image(systemName: "checkmark.circle.fill")
                                             .foregroundColor(.green)
                                     } else {
@@ -193,7 +193,7 @@ struct RecipeDetailView: View {
         
         let convertedIngredients = recipe.ingredients.map { ingredient in
             EdamamIngredientModel(
-                foodId: ingredient.foodId,
+                foodId: ingredient.foodId ?? "",
                 label: ingredient.food,
                 category: ingredient.foodCategory,
                 categoryLabel: nil,
@@ -214,11 +214,6 @@ struct RecipeDetailView: View {
             }
         }
     }
-
-
-
-
-
 
     // Nutrition Card Function
     private func nutritionCard(label: String, subtitle: String) -> some View {
