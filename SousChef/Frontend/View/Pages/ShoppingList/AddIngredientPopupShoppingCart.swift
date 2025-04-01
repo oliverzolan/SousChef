@@ -150,3 +150,38 @@ struct AddIngredientPopupShoppingCart: View {
         }
     }
 }
+
+struct EditItemPopup: View {
+    let item: CartItem
+    @Binding var quantity: String
+    var onSave: (String) -> Void
+    var onDelete: () -> Void
+
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("Edit Quantity")) {
+                    Text(item.name)
+                        .font(.headline)
+                    Text("Price: $\(item.price, specifier: "%.2f")")
+                        .foregroundColor(.gray)
+                    TextField("Quantity", text: $quantity)
+                        .keyboardType(.numberPad)
+                }
+
+                Section {
+                    Button("Save Changes") {
+                        onSave(quantity)
+                    }
+                    .foregroundColor(.blue)
+
+                    Button("Delete Item", role: .destructive) {
+                        onDelete()
+                    }
+                }
+            }
+            .navigationTitle("Edit Ingredient")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+}
