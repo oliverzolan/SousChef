@@ -25,14 +25,14 @@ struct MainTabView: View {
     
     //Main Tabs
     var tabs: [(view: AnyView, icon: String, tag: Int)] {
-        [
-            (AnyView(HomePage()), "home_icon", 0),
-            (AnyView(PantryPage(userSession: userSession)), "fridge_icon", 1),
-            (AnyView(EmptyView()), "scan_icon", 2),
-            (AnyView(PantryPage(userSession: userSession)), "list_icon", 3),
-            (AnyView(ChatbotPage(userSession: userSession)), "chef_hat_icon", 4)
-        ]
-    }
+            [
+                (AnyView(HomePage()), "home_icon", 0),
+                (AnyView(PantryPage(userSession: userSession)), "fridge_icon", 1),
+                (AnyView(EmptyView()), "scan_icon", 2),
+                (AnyView(ShoppingListsPage(userSession: _userSession)), "list_icon", 3),
+                (AnyView(ChatbotPage(userSession: userSession)), "chef_hat_icon", 4)
+            ]
+        }
     
     //Navigation bar and associated Views
     var body: some View {
