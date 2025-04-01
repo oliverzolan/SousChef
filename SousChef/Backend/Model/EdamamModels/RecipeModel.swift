@@ -7,15 +7,45 @@
 
 import Foundation
 
-struct EdamamRecipeResponse: Decodable {
+struct EdamamRecipeResponse: Codable {
     let hits: [EdamamRecipeHit]
+    let from: Int?
+    let to: Int?
+    let count: Int?
+    let _links: EdamamLinks?
+    
+    enum CodingKeys: String, CodingKey {
+        case hits, from, to, count
+        case _links = "_links"
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        hits = try container.decode([EdamamRecipeHit].self, forKey: .hits)
+        from = try container.decodeIfPresent(Int.self, forKey: .from)
+        to = try container.decodeIfPresent(Int.self, forKey: .to)
+        count = try container.decodeIfPresent(Int.self, forKey: .count)
+        
+        // Creates empty _link if cannot decode
+        _links = try? container.decodeIfPresent(EdamamLinks.self, forKey: ._links)
+    }
 }
 
-struct EdamamRecipeHit: Decodable {
+struct EdamamLinks: Codable {
+    let next: EdamamLink?
+}
+
+struct EdamamLink: Codable {
+    let href: String
+    let title: String?
+}
+
+struct EdamamRecipeHit: Codable {
     let recipe: EdamamRecipeModel
 }
 
-struct EdamamRecipeModel: Decodable {
+struct EdamamRecipeModel: Codable {
     let label: String
     let image: String
     let url: String
@@ -33,18 +63,50 @@ struct EdamamRecipeModel: Decodable {
     }
 }
 
-struct EdamamRecipeIngredient: Decodable {
+extension EdamamRecipeModel {
+    static func placeholder() -> EdamamRecipeModel {
+        return EdamamRecipeModel(
+            label: "Sample Recipe",
+            image: "https://placehold.co/",
+            url: "https://placehold.co/",
+            ingredients: [],
+            totalNutrients: EdamamRecipeNutrients(
+                energy: nil,
+                fat: nil,
+                saturatedFat: nil,
+                transFat: nil,
+                carbs: nil,
+                fiber: nil,
+                sugar: nil,
+                protein: nil,
+                cholesterol: nil,
+                sodium: nil,
+                calcium: nil,
+                potassium: nil,
+                iron: nil,
+                vitaminD: nil
+            ),
+            calories: 0,
+            totalWeight: 0,
+            cuisineType: ["american"],
+            mealType: ["dinner"],
+            dishType: ["main course"]
+        )
+    }
+}
+
+struct EdamamRecipeIngredient: Codable {
     let text: String
     let quantity: Double
     let measure: String?
     let food: String
     let weight: Double
-    let foodCategory: String
-    let foodId: String
+    let foodCategory: String?
+    let foodId: String?
     let image: String?
 }
 
-struct EdamamRecipeNutrients: Decodable {
+struct EdamamRecipeNutrients: Codable {
     let energy: EdamamRecipeNutrient?
     let fat: EdamamRecipeNutrient?
     let saturatedFat: EdamamRecipeNutrient?
@@ -78,29 +140,29 @@ struct EdamamRecipeNutrients: Decodable {
     }
 }
 
-struct EdamamRecipeNutrient: Decodable {
+struct EdamamRecipeNutrient: Codable {
     let label: String
     let quantity: Double
     let unit: String
 }
 
 
-enum EdamamRecipeCuisineType: String, CaseIterable {
+enum EdamamRecipeCuisineType: String, CaseIterable, Codable {
     case american, asian, british, caribbean, centralEurope = "central europe", chinese, easternEurope = "eastern europe"
     case french, indian, italian, japanese, kosher, mediterranean, mexican, middleEastern = "middle eastern"
     case nordic, southAmerican = "south american", southEastAsian = "south east asian"
 }
 
-enum EdamamRecipeMealType: String, CaseIterable {
+enum EdamamRecipeMealType: String, CaseIterable, Codable {
     case breakfast, dinner, lunch, snack, teatime
 }
 
-enum EdamamRecipeDiet: String, CaseIterable {
+enum EdamamRecipeDiet: String, CaseIterable, Codable {
     case balanced, highFiber = "high-fiber", highProtein = "high-protein"
     case lowCarb = "low-carb", lowFat = "low-fat", lowSodium = "low-sodium"
 }
 
-enum EdamamRecipeHealth: String, CaseIterable {
+enum EdamamRecipeHealth: String, CaseIterable, Codable {
     case alcoholCocktail = "alcohol-cocktail", alcoholFree = "alcohol-free", celeryFree = "celery-free"
     case crustaceanFree = "crustacean-free", dairyFree = "dairy-free", dash = "DASH"
     case eggFree = "egg-free", fishFree = "fish-free", fodmapFree = "fodmap-free"

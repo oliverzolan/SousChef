@@ -24,17 +24,19 @@ struct MainTabView: View {
     }
     
     //Main Tabs
-    let tabs: [(view: AnyView, icon: String, tag: Int)] = [
-        (AnyView(HomePage()), "home_icon", 0),
-        (AnyView(PantryPage(userSession: UserSession())), "fridge_icon", 1),
-        (AnyView(EmptyView()), "scan_icon", 2),
-        (AnyView(PantryPage(userSession: UserSession())), "list_icon", 3),
-        (AnyView(ChatbotPage(userSession: UserSession())), "chef_hat_icon", 4)
-    ]
+    var tabs: [(view: AnyView, icon: String, tag: Int)] {
+        [
+            (AnyView(HomePage()), "home_icon", 0),
+            (AnyView(PantryPage(userSession: userSession)), "fridge_icon", 1),
+            (AnyView(EmptyView()), "scan_icon", 2),
+            (AnyView(PantryPage(userSession: userSession)), "list_icon", 3),
+            (AnyView(ChatbotPage(userSession: userSession)), "chef_hat_icon", 4)
+        ]
+    }
     
     //Navigation bar and associated Views
     var body: some View {
-        ZStack{
+        ZStack {
             TabView(selection: $selectedTab) {
                 ForEach(tabs, id: \.tag) { tab in
                     NavigationStack {
@@ -47,13 +49,25 @@ struct MainTabView: View {
                 }
             }
             .accentColor(.black)
+            
+            // Show the scan options when scan tab is selected
             if isShowingScanOptions {
-                ScanOptionsPopout(isShowing: $isShowingScanOptions)
+                Color.black.opacity(0.4)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        isShowingScanOptions = false
+                    }
+                
+                ScanPopOut(isShowing: $isShowingScanOptions)
+                    .transition(.move(edge: .bottom))
+                    .animation(.spring(), value: isShowingScanOptions)
             }
         }
         .onChange(of: selectedTab) { oldValue, newValue in
             if newValue == 2 {
-                isShowingScanOptions = true
+                withAnimation(.spring()) {
+                    isShowingScanOptions = true
+                }
                 selectedTab = oldValue
             }
         }

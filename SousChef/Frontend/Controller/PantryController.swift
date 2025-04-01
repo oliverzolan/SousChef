@@ -14,6 +14,9 @@ class PantryController: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
     
+    // Callback for when pantry items change, to notify HomepageController
+    var onPantryItemsChanged: (() -> Void)?
+    
     private var userSession: UserSession
     private var ingredientsComponent: AWSIngredientsComponent
 
@@ -36,7 +39,12 @@ class PantryController: ObservableObject {
                 self?.isLoading = false
                 switch result {
                 case .success(let ingredients):
+                    let oldCount = self?.pantryItems.count ?? 0
                     self?.pantryItems = ingredients
+                    // Call the callback if items changed
+                    if oldCount != ingredients.count {
+                        self?.onPantryItemsChanged?()
+                    }
                 case .failure(let error):
                     self?.errorMessage = "Failed to fetch ingredients: \(error.localizedDescription)"
                 }
