@@ -25,7 +25,8 @@ class EdamamIngredientsComponent: EdamamAbstract {
         urlComponents?.queryItems = [
             URLQueryItem(name: "app_id", value: appId),
             URLQueryItem(name: "app_key", value: appKey),
-            URLQueryItem(name: "ingr", value: encodedQuery)
+            URLQueryItem(name: "ingr", value: encodedQuery),
+            URLQueryItem(name: "category", value: "generic-foods")
         ]
         
         guard let url = urlComponents?.url else {
