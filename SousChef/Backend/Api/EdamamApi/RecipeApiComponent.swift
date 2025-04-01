@@ -188,4 +188,50 @@ class EdamamRecipeComponent: EdamamAbstract {
             }
         }.resume()
     }
+    
+    func compareRecipeIngredientsWithPantry(recipeIngredients: [EdamamIngredientModel], completion: @escaping (Result<Set<String>, Error>) -> Void) {
+        let awsComponent = AWSIngredientsComponent(userSession: UserSession()) // Create UserSession appropriately
+
+        awsComponent.fetchIngredients { [weak self] result in
+            guard let self = self else { return }
+
+            switch result {
+            case .success(let pantryIngredients):
+                let pantryKeywords = Set(pantryIngredients.flatMap { self.simplifyIngredientName($0.food).split(separator: " ").map { String($0) } })
+
+                let matchedIngredients = Set(recipeIngredients.filter { recipeIngredient in
+                    let simplifiedRecipeName = self.simplifyIngredientName(recipeIngredient.label)
+                    let recipeKeywords = Set(simplifiedRecipeName.split(separator: " ").map { String($0) })
+
+                    return !pantryKeywords.isDisjoint(with: recipeKeywords)
+                }.map { $0.foodId })
+                
+                DispatchQueue.main.async {
+                    print("Matched Ingredients: \(matchedIngredients)")
+                    completion(.success(matchedIngredients))
+                }
+
+            case .failure(let error):
+                print("Error fetching pantry ingredients: \(error)")
+                completion(.failure(error))
+            }
+        }
+    }
+
+
+
+    private func simplifyIngredientName(_ name: String) -> String {
+        let lowercasedName = name.lowercased()
+        
+        let wordsToRemove = ["breast", "thigh", "boneless", "skinless", "organic", "fresh", "ground", "cooked", "raw", "diced", "sliced"]
+        var simplifiedName = lowercasedName
+
+        for word in wordsToRemove {
+            simplifiedName = simplifiedName.replacingOccurrences(of: word, with: "")
+        }
+
+        return simplifiedName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+
 }
