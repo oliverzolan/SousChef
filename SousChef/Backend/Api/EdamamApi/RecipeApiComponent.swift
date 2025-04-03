@@ -191,54 +191,84 @@ class EdamamRecipeComponent: EdamamAbstract {
     
     func compareRecipeIngredientsWithPantry(recipeIngredients: [EdamamIngredientModel], completion: @escaping (Result<Set<String>, Error>) -> Void) {
         let awsComponent = AWSIngredientsComponent(userSession: UserSession())
-        print("🔍 Comparing Recipe Ingredients with Pantry...")
 
         awsComponent.fetchIngredients { [weak self] result in
             guard let self = self else {
-                print("⚠️ Self is no longer available. Skipping comparison.")
                 return
             }
 
             switch result {
             case .success(let pantryIngredients):
-                print("✅ Fetched Pantry Ingredients: \(pantryIngredients.count) items")
                 pantryIngredients.forEach { ingredient in
-                    print("📝 Pantry Ingredient: \(ingredient.food)")
+                    print("Pantry Ingredient: \(ingredient.food)")
                 }
 
-                // Extract all keywords from pantry ingredients
+                // Extract pantry ingredients as full items for exact matching
+                let pantryFullNames = Set(pantryIngredients.map { $0.food.lowercased() })
+                
+                // Extract all keywords from pantry ingredients for partial matching
                 let pantryKeywords = Set(pantryIngredients.flatMap { ingredient in
                     self.extractKeywords(from: ingredient.food)
                 })
 
-                print("🔑 Pantry Keywords: \(pantryKeywords)")
+                
 
-                // Compare each pantry keyword with every recipe ingredient word
+                // Compare each recipe ingredient with pantry
                 var matchedIngredients = Set<String>()
                 for recipeIngredient in recipeIngredients {
                     let recipeText = recipeIngredient.label.lowercased()
                     let recipeKeywords = self.extractKeywords(from: recipeText)
-
-                    print("🔍 Matching Recipe Ingredient: \(recipeText) -> Keywords: \(recipeKeywords)")
-
+                    
+                    
+                    if pantryFullNames.contains(recipeText) {
+                        matchedIngredients.insert(recipeIngredient.foodId)
+                        continue
+                    }
+                    
+                    let specialCompoundIngredients = [
+                        "broth", "stock", "sauce", "paste", "oil", "milk", "cream", "yogurt", "butter",
+                        "juice", "vinegar", "wine", "beer", "liquor", "extract"
+                    ]
+                    
+                    let isCompoundIngredient = specialCompoundIngredients.contains { recipeText.contains($0) }
+                    
+                    if isCompoundIngredient {
+                        let hasMatchingCompoundInPantry = pantryFullNames.contains { pantryName in
+                            return recipeText == pantryName || 
+                                   specialCompoundIngredients.contains { compound in
+                                       recipeText.contains(compound) && pantryName.contains(compound)
+                                   }
+                        }
+                        
+                        if hasMatchingCompoundInPantry {
+                            matchedIngredients.insert(recipeIngredient.foodId)
+                        }
+                        continue
+                    }
+                    
+                    // For regular ingredients, use keyword matching
+                    var foundMatch = false
                     for recipeWord in recipeKeywords {
                         for pantryWord in pantryKeywords {
-                            if recipeWord.contains(pantryWord) || pantryWord.contains(recipeWord) {
-                                print("✅ Match Found: Pantry '\(pantryWord)' matches Recipe '\(recipeWord)'")
+                            // Only match if the pantry word fully contains the recipe word
+                            // or they are exactly the same
+                            if recipeWord == pantryWord || 
+                               (pantryWord.contains(recipeWord) && 
+                                Double(recipeWord.count) / Double(pantryWord.count) > 0.7) {
                                 matchedIngredients.insert(recipeIngredient.foodId)
+                                foundMatch = true
                                 break
                             }
                         }
+                        if foundMatch { break }
                     }
                 }
 
-                print("✅ Matched Ingredients: \(matchedIngredients)")
                 DispatchQueue.main.async {
                     completion(.success(matchedIngredients))
                 }
 
             case .failure(let error):
-                print("❌ Failed to fetch pantry ingredients: \(error)")
                 DispatchQueue.main.async {
                     completion(.failure(error))
                 }
@@ -246,14 +276,20 @@ class EdamamRecipeComponent: EdamamAbstract {
         }
     }
 
-
-
-
-
-    // Helper function to extract meaningful keywords from an ingredient name
     private func extractKeywords(from name: String) -> Set<String> {
         // Convert to lowercase to ensure case-insensitive matching
         let lowercasedName = name.lowercased()
+        
+        let specialCompoundIngredients = [
+            "broth", "stock", "sauce", "paste", "oil", "milk", "cream", "yogurt", "butter",
+            "juice", "vinegar", "wine", "beer", "liquor", "extract"
+        ]
+        
+        for compound in specialCompoundIngredients {
+            if lowercasedName.contains(compound) {
+                return [lowercasedName]
+            }
+        }
         
         // List of words to ignore in ingredient names
         let wordsToRemove = [
@@ -266,16 +302,9 @@ class EdamamRecipeComponent: EdamamAbstract {
             "packed", "jarred", "bottled", "dried", "fresh", "can", "package", "container", "bag", "box"
         ]
         
-        // Split the ingredient name into words and filter out unnecessary words
         let words = lowercasedName.split(separator: " ").map { String($0) }
         let filteredWords = words.filter { !wordsToRemove.contains($0) }
 
-        print("🔍 Extracted Keywords from '\(name)': \(Set(filteredWords))")
         return Set(filteredWords)
     }
-
-
-
-
-
 }

@@ -22,6 +22,7 @@ struct EdamamIngredientModel: Decodable, Identifiable, Hashable {
     let categoryLabel: String?
     let image: String?
     let nutrients: EdamamIngredientNutrients?
+    let parsed: [EdamamParsedFood]?
     
     func hash(into hasher: inout Hasher) {
         hasher.combine(foodId)

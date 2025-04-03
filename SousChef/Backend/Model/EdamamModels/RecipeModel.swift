@@ -56,12 +56,16 @@ struct EdamamRecipeModel: Codable {
     let cuisineType: [String]?
     let mealType: [String]?
     let dishType: [String]?
-    
+    let dietLabels: [String]?       
+    let healthLabels: [String]?
+
     private enum CodingKeys: String, CodingKey {
         case label, image, url, ingredients = "ingredients"
         case totalNutrients, calories, totalWeight, cuisineType, mealType, dishType
+        case dietLabels, healthLabels  // New fields
     }
 }
+
 
 extension EdamamRecipeModel {
     static func placeholder() -> EdamamRecipeModel {
@@ -90,10 +94,13 @@ extension EdamamRecipeModel {
             totalWeight: 0,
             cuisineType: ["american"],
             mealType: ["dinner"],
-            dishType: ["main course"]
+            dishType: ["main course"],
+            dietLabels: ["Balanced"],
+            healthLabels: ["Gluten-Free"]
         )
     }
 }
+
 
 struct EdamamRecipeIngredient: Codable {
     let text: String
@@ -104,6 +111,15 @@ struct EdamamRecipeIngredient: Codable {
     let foodCategory: String?
     let foodId: String?
     let image: String?
+    let parsed: [EdamamParsedFood]?
+}
+
+struct EdamamParsedFood: Codable {
+    let food: String
+    let foodId: String
+    let measure: String?
+    let quantity: Double?
+    let weight: Double?
 }
 
 struct EdamamRecipeNutrients: Codable {
