@@ -60,13 +60,14 @@ struct HomePage: View {
                                 VStack(spacing: 20) {
                                     // Recipe Grids
                                     SimpleRecipeGrid(title: "From Pantry", recipes: homepageController.pantryRecipes)
-                                    SimpleRecipeGrid(title: "Featured", recipes: homepageController.featuredRecipes)
+                                    
+                                    // Browse by Meal Type
+                                    MealTypeSection()
                                     
                                     // Browse by Cuisine
                                     CuisineSection()
                                     
-                                    // Browse by Meal Type
-                                    MealTypeSection()
+                                    SimpleRecipeGrid(title: "Featured", recipes: homepageController.featuredRecipes)
                                 }
                             }
                         }

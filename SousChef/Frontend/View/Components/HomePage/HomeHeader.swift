@@ -44,24 +44,51 @@ struct HomeHeader: View {
 
 struct HomeSearchBar: View {
     @Binding var searchText: String
+    @State private var navigateToSearch = false
     
     var body: some View {
-        HStack {
-            TextField("Search", text: $searchText)
-                .padding(10)
-                .background(Color(.systemGray6))
-                .cornerRadius(10)
-                
+        HStack(spacing: 12) {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(.gray)
+                .font(.system(size: 18))
+            
+            TextField("Search recipes...", text: $searchText)
+                .font(.system(size: 16))
+                .foregroundColor(.black)
+                .submitLabel(.search)
+                .tint(.blue)
+                .onSubmit {
+                    if !searchText.isEmpty {
+                        navigateToSearch = true
+                    }
+                }
+            
             if !searchText.isEmpty {
-                NavigationLink(destination: RecipeListView(title: "Search Results", searchQuery: searchText)) {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.primary)
-                        .padding(10)
-                        .background(AppColors.secondary3)
-                        .cornerRadius(10)
+                Button(action: {
+                    searchText = ""
+                }) {
+                    Image(systemName: "xmark")
+                        .foregroundColor(.gray)
+                        .font(.system(size: 12))
+                        .padding(5)
+                        .background(Color.gray.opacity(0.1))
+                        .clipShape(Circle())
                 }
             }
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color.gray.opacity(0.1))
+        .cornerRadius(12)
         .padding(.horizontal)
+        .padding(.vertical, 8)
+        .overlay(
+            NavigationLink(
+                destination: RecipeListView(title: "Search Results", searchQuery: searchText),
+                isActive: $navigateToSearch
+            ) {
+                EmptyView()
+            }
+        )
     }
-} 
+}

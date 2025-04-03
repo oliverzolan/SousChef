@@ -12,29 +12,33 @@ struct MainTabView: View {
     @State private var isShowingScanOptions = false
     @State private var selectedTab = 0
     
-    //UI Adjustment
+    // UI Adjustment
     init() {
         let tabBarAppearance = UITabBar.appearance()
         tabBarAppearance.backgroundColor = UIColor.white
         
         tabBarAppearance.layer.shadowColor = UIColor.black.cgColor
-        tabBarAppearance.layer.shadowOpacity = 0.1
-        tabBarAppearance.layer.shadowOffset = CGSize(width: 0, height: -3)
-        tabBarAppearance.layer.shadowRadius = 5
+        tabBarAppearance.layer.shadowOpacity = 0.15
+        tabBarAppearance.layer.shadowOffset = CGSize(width: 0, height: -2)
+        tabBarAppearance.layer.shadowRadius = 6
+        
+        // Removes default top border
+        tabBarAppearance.standardAppearance.shadowColor = nil
+        tabBarAppearance.scrollEdgeAppearance = tabBarAppearance.standardAppearance
     }
     
-    //Main Tabs
-    var tabs: [(view: AnyView, icon: String, tag: Int)] {
-            [
-                (AnyView(HomePage()), "home_icon", 0),
-                (AnyView(PantryPage(userSession: userSession)), "fridge_icon", 1),
-                (AnyView(EmptyView()), "scan_icon", 2),
-                (AnyView(ShoppingListsPage(userSession: _userSession)), "list_icon", 3),
-                (AnyView(ChatbotPage(userSession: userSession)), "chef_hat_icon", 4)
-            ]
-        }
+    // Tab configuration with labels
+    var tabs: [(view: AnyView, icon: String, label: String, tag: Int)] {
+        [
+            (AnyView(HomePage()), "house.fill", "Home", 0),
+            (AnyView(PantryPage(userSession: userSession)), "refrigerator.fill", "Pantry", 1),
+            (AnyView(EmptyView()), "barcode.viewfinder", "Scan", 2),
+            (AnyView(ShoppingListsPage(userSession: _userSession)), "cart.fill", "Shopping", 3),
+            (AnyView(ChatbotPage(userSession: userSession)), "person.crop.circle", "Chef", 4)
+        ]
+    }
     
-    //Navigation bar and associated Views
+    // Navigation bar and associated Views
     var body: some View {
         ZStack {
             TabView(selection: $selectedTab) {
@@ -43,14 +47,14 @@ struct MainTabView: View {
                         tab.view
                     }
                     .tabItem {
-                        Image(tab.icon)
+                        Label(tab.label, systemImage: tab.icon)
                     }
                     .tag(tab.tag)
                 }
             }
             .accentColor(.black)
             
-            // Show the scan options when scan tab is selected
+            // Show the scan options
             if isShowingScanOptions {
                 Color.black.opacity(0.4)
                     .ignoresSafeArea()

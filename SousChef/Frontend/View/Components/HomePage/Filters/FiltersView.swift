@@ -94,23 +94,20 @@ struct FiltersView: View {
         .frame(height: 450)
     }
     
-    var timeFilterView: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Maximum Cooking Time")
-                .font(.headline)
-            
-            HStack(spacing: 10) {
-                ForEach(cookTimes, id: \.self) { time in
-                    Button(action: {
-                        selectedMaxTime = selectedMaxTime == time ? nil : time
-                    }) {
-                        Text("\(time) min")
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 12)
-                            .background(selectedMaxTime == time ? AppColors.secondary3 : Color.gray.opacity(0.15))
-                            .cornerRadius(8)
-                            .foregroundColor(selectedMaxTime == time ? .white : .black)
-                    }
+    private var timeFilterView: some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 10) {
+            ForEach(cookTimes, id: \.self) { time in
+                Button(action: {
+                    selectedMaxTime = (selectedMaxTime == time) ? nil : time
+                }) {
+                    Text("< \(time) min")
+                        .font(.system(size: 14))
+                        .foregroundColor(selectedMaxTime == time ? .white : .black)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+                        .frame(maxWidth: .infinity)
+                        .background(selectedMaxTime == time ? AppColors.primary1 : Color.gray.opacity(0.1))
+                        .cornerRadius(8)
                 }
             }
         }
