@@ -190,48 +190,121 @@ class EdamamRecipeComponent: EdamamAbstract {
     }
     
     func compareRecipeIngredientsWithPantry(recipeIngredients: [EdamamIngredientModel], completion: @escaping (Result<Set<String>, Error>) -> Void) {
-        let awsComponent = AWSIngredientsComponent(userSession: UserSession()) // Create UserSession appropriately
+        let awsComponent = AWSIngredientsComponent(userSession: UserSession())
 
         awsComponent.fetchIngredients { [weak self] result in
-            guard let self = self else { return }
+            guard let self = self else {
+                return
+            }
 
             switch result {
             case .success(let pantryIngredients):
-                let pantryKeywords = Set(pantryIngredients.flatMap { self.simplifyIngredientName($0.food).split(separator: " ").map { String($0) } })
+                pantryIngredients.forEach { ingredient in
+                    print("Pantry Ingredient: \(ingredient.food)")
+                }
 
-                let matchedIngredients = Set(recipeIngredients.filter { recipeIngredient in
-                    let simplifiedRecipeName = self.simplifyIngredientName(recipeIngredient.label)
-                    let recipeKeywords = Set(simplifiedRecipeName.split(separator: " ").map { String($0) })
-
-                    return !pantryKeywords.isDisjoint(with: recipeKeywords)
-                }.map { $0.foodId })
+                // Extract pantry ingredients as full items for exact matching
+                let pantryFullNames = Set(pantryIngredients.map { $0.food.lowercased() })
                 
+                // Extract all keywords from pantry ingredients for partial matching
+                let pantryKeywords = Set(pantryIngredients.flatMap { ingredient in
+                    self.extractKeywords(from: ingredient.food)
+                })
+
+                
+
+                // Compare each recipe ingredient with pantry
+                var matchedIngredients = Set<String>()
+                for recipeIngredient in recipeIngredients {
+                    let recipeText = recipeIngredient.label.lowercased()
+                    let recipeKeywords = self.extractKeywords(from: recipeText)
+                    
+                    
+                    if pantryFullNames.contains(recipeText) {
+                        matchedIngredients.insert(recipeIngredient.foodId)
+                        continue
+                    }
+                    
+                    let specialCompoundIngredients = [
+                        "broth", "stock", "sauce", "paste", "oil", "milk", "cream", "yogurt", "butter",
+                        "juice", "vinegar", "wine", "beer", "liquor", "extract"
+                    ]
+                    
+                    let isCompoundIngredient = specialCompoundIngredients.contains { recipeText.contains($0) }
+                    
+                    if isCompoundIngredient {
+                        let hasMatchingCompoundInPantry = pantryFullNames.contains { pantryName in
+                            return recipeText == pantryName || 
+                                   specialCompoundIngredients.contains { compound in
+                                       recipeText.contains(compound) && pantryName.contains(compound)
+                                   }
+                        }
+                        
+                        if hasMatchingCompoundInPantry {
+                            matchedIngredients.insert(recipeIngredient.foodId)
+                        }
+                        continue
+                    }
+                    
+                    // For regular ingredients, use keyword matching
+                    var foundMatch = false
+                    for recipeWord in recipeKeywords {
+                        for pantryWord in pantryKeywords {
+                            // Only match if the pantry word fully contains the recipe word
+                            // or they are exactly the same
+                            if recipeWord == pantryWord || 
+                               (pantryWord.contains(recipeWord) && 
+                                Double(recipeWord.count) / Double(pantryWord.count) > 0.7) {
+                                matchedIngredients.insert(recipeIngredient.foodId)
+                                foundMatch = true
+                                break
+                            }
+                        }
+                        if foundMatch { break }
+                    }
+                }
+
                 DispatchQueue.main.async {
-                    print("Matched Ingredients: \(matchedIngredients)")
                     completion(.success(matchedIngredients))
                 }
 
             case .failure(let error):
-                print("Error fetching pantry ingredients: \(error)")
-                completion(.failure(error))
+                DispatchQueue.main.async {
+                    completion(.failure(error))
+                }
             }
         }
     }
 
-
-
-    private func simplifyIngredientName(_ name: String) -> String {
+    private func extractKeywords(from name: String) -> Set<String> {
+        // Convert to lowercase to ensure case-insensitive matching
         let lowercasedName = name.lowercased()
         
-        let wordsToRemove = ["breast", "thigh", "boneless", "skinless", "organic", "fresh", "ground", "cooked", "raw", "diced", "sliced"]
-        var simplifiedName = lowercasedName
-
-        for word in wordsToRemove {
-            simplifiedName = simplifiedName.replacingOccurrences(of: word, with: "")
+        let specialCompoundIngredients = [
+            "broth", "stock", "sauce", "paste", "oil", "milk", "cream", "yogurt", "butter",
+            "juice", "vinegar", "wine", "beer", "liquor", "extract"
+        ]
+        
+        for compound in specialCompoundIngredients {
+            if lowercasedName.contains(compound) {
+                return [lowercasedName]
+            }
         }
+        
+        // List of words to ignore in ingredient names
+        let wordsToRemove = [
+            "breast", "thigh", "boneless", "skinless", "organic", "fresh", "ground", "cooked", "raw", "diced",
+            "sliced", "whole", "fillet", "pieces", "chunks", "strips", "steak", "loin", "chopped", "minced",
+            "grilled", "roasted", "boiled", "fried", "baked", "smoked", "shredded", "frozen", "canned",
+            "powdered", "dry", "dehydrated", "salted", "unsalted", "low-fat", "fat-free", "crushed",
+            "finely", "coarse", "freshly", "thinly", "thick", "lean", "light", "free-range",
+            "farm-raised", "wild-caught", "large", "small", "medium", "whole", "fillets", "pieces", "slices",
+            "packed", "jarred", "bottled", "dried", "fresh", "can", "package", "container", "bag", "box"
+        ]
+        
+        let words = lowercasedName.split(separator: " ").map { String($0) }
+        let filteredWords = words.filter { !wordsToRemove.contains($0) }
 
-        return simplifiedName.trimmingCharacters(in: .whitespacesAndNewlines)
+        return Set(filteredWords)
     }
-
-
 }
