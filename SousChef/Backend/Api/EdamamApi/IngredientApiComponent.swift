@@ -16,23 +16,38 @@ class EdamamIngredientsComponent: EdamamAbstract {
     }
     
     func searchIngredients(query: String, completion: @escaping (Result<EdamamIngredientResponse, Error>) -> Void) {
-        guard let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else {
+        // Ensure query is not empty and properly formatted
+        let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedQuery.isEmpty else {
+            completion(.failure(NSError(domain: "Empty Query", code: 0, userInfo: nil)))
+            return
+        }
+        
+        // Use percentEncoding for proper URL encoding
+        guard let encodedQuery = trimmedQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else {
             completion(.failure(NSError(domain: "Invalid Query", code: 0, userInfo: nil)))
             return
         }
+        
+        // Log the actual query being sent for debugging
+        print("Searching for term: '\(trimmedQuery)'")
         
         var urlComponents = URLComponents(string: baseURL + INGREDIENTS_ENDPOINT)
         urlComponents?.queryItems = [
             URLQueryItem(name: "app_id", value: appId),
             URLQueryItem(name: "app_key", value: appKey),
             URLQueryItem(name: "ingr", value: encodedQuery),
-            URLQueryItem(name: "category", value: "generic-foods")
+            URLQueryItem(name: "category", value: "generic-foods"),
+            URLQueryItem(name: "categoryLabel", value: "food"),
+            URLQueryItem(name: "pageSize", value: "50")  // Request more results
         ]
         
         guard let url = urlComponents?.url else {
             completion(.failure(NSError(domain: "Invalid URL", code: 0, userInfo: nil)))
             return
         }
+        
+        print("Search URL: \(url.absoluteString)")
         
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
@@ -49,10 +64,17 @@ class EdamamIngredientsComponent: EdamamAbstract {
                 }
                 return
             }
+            
             do {
+                // Print the raw JSON for debugging purposes
+                if let jsonString = String(data: data, encoding: .utf8) {
+                    print("Raw JSON response: \(jsonString.prefix(200))...") // Log first 200 chars for debugging
+                }
+                
                 let decodedResponse = try JSONDecoder().decode(EdamamIngredientResponse.self, from: data)
                 DispatchQueue.main.async { completion(.success(decodedResponse)) }
             } catch {
+                print("JSON Decoding Error: \(error)")
                 DispatchQueue.main.async { completion(.failure(error)) }
             }
         }.resume()

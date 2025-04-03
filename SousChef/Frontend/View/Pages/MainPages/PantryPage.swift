@@ -10,6 +10,10 @@ import SwiftUI
 struct PantryPage: View {
     @StateObject private var pantryController: PantryController
     @EnvironmentObject var userSession: UserSession
+    @State private var searchText: String = ""
+    @State private var showAddIngredientSheet = false
+    @State private var isSearchActive = false
+    @FocusState private var isSearchFieldFocused: Bool
 
     init(userSession: UserSession) {
         _pantryController = StateObject(wrappedValue: PantryController(userSession: userSession))
@@ -17,107 +21,190 @@ struct PantryPage: View {
 
     var body: some View {
         NavigationView {
-            VStack(spacing: 10) {
-                HeaderComponent(title: "Pantry")
-                SearchComponent(searchText: .constant(""))
-                    .frame(maxWidth: .infinity, maxHeight: 55)
+            VStack(spacing: 0) {
+                // Header
+                VStack(spacing: 12) {
+                    HStack {
+                        Text("Your Pantry")
+                            .font(.system(size: 28, weight: .bold))
+                        
+                        Spacer()
+                        
+                        // Add ingredients button
+                        Button(action: {
+                            showAddIngredientSheet = true
+                        }) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(.green)
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+                    
+                    // Search bar
+                    HStack {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(.gray)
+                            .padding(.leading, 8)
+                        
+                        TextField("Search ingredients...", text: $searchText)
+                            .font(.system(size: 16))
+                            .padding(10)
+                            .focused($isSearchFieldFocused)
+                            .submitLabel(.search)
+                            .onSubmit {
+                                isSearchFieldFocused = false
+                            }
+                        
+                        if !searchText.isEmpty || isSearchFieldFocused {
+                            Button(action: {
+                                searchText = ""
+                                isSearchFieldFocused = false
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(.gray)
+                            }
+                            .padding(.trailing, 8)
+                        }
+                    }
+                    .background(Color(.systemGray6))
+                    .cornerRadius(10)
+                    .padding(.horizontal)
+                }
+                .padding(.bottom, 10)
+                .background(Color.white)
+                .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 3)
 
                 // Error message
                 if let errorMessage = pantryController.errorMessage {
-                    Text("Error: \(errorMessage)")
+                    Text(errorMessage)
+                        .font(.system(size: 15))
                         .foregroundColor(.red)
                         .padding()
+                        .background(Color.red.opacity(0.1))
+                        .cornerRadius(8)
+                        .padding(.horizontal)
+                        .padding(.top, 10)
                 }
 
                 // Loading indicator
                 if pantryController.isLoading {
-                    ProgressView("Loading...")
+                    Spacer()
+                    ProgressView()
+                        .scaleEffect(1.5)
+                        .padding()
+                    Text("Loading your ingredients...")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.gray)
+                        .padding(.top, 16)
+                    Spacer()
+                } else if isSearchFieldFocused {
+                    // Search results view
+                    VStack {
+                        Text("Type to search ingredients...")
+                            .foregroundColor(.gray)
+                            .padding(.top, 40)
+                        Spacer()
+                    }
                 } else {
-                    // Display the ingredient categories
-                    ingredientsGrid
-                }
+                    // Main content
+                    GeometryReader { geo in
+                        let availableHeight = geo.size.height
+                        let screenWidth = geo.size.width
+                        
+                        ScrollView(.vertical, showsIndicators: false) {
+                            VStack(spacing: 20) {
+                                HStack(spacing: 10) {
+                                    // Left column
+                                    VStack(spacing: 20) {
+                                        NavigationLink(destination: VegetablesIngredientsPage()) {
+                                            CategoryButton(imageName: "vegetablesButton", fillMode: .fill)
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: availableHeight * 0.20)
 
-                Spacer()
+                                        NavigationLink(destination: GrainsIngredientsPage()) {
+                                            CategoryButton(imageName: "grainsButton", fillMode: .fill)
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: availableHeight * 0.20)
+
+                                        HStack(spacing: 10) {
+                                            NavigationLink(destination: SpicesIngredientsPage()) {
+                                                CategoryButton(imageName: "spicesButton", fillMode: .fill)
+                                            }
+                                            .frame(maxWidth: .infinity, maxHeight: availableHeight * 0.14)
+
+                                            NavigationLink(destination: CannedIngredientsPage()) {
+                                                CategoryButton(imageName: "cannedButton", fillMode: .fill)
+                                            }
+                                            .frame(maxWidth: .infinity, maxHeight: availableHeight * 0.14)
+                                        }
+
+                                        NavigationLink(destination: DrinksIngredientsPage()) {
+                                            CategoryButton(imageName: "drinksButton", fillMode: .fill)
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: availableHeight * 0.16)
+                                    }
+                                    .frame(maxWidth: .infinity)
+
+                                    // Right column
+                                    VStack(spacing: 37) {
+                                        NavigationLink(destination: MeatsIngredientsPage()) {
+                                            CategoryButton(imageName: "meatsButton", fillMode: .fill)
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: availableHeight * 0.20)
+
+                                        NavigationLink(destination: FruitsIngredientsPage()) {
+                                            CategoryButton(imageName: "fruitButton", fillMode: .fill)
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: availableHeight * 0.30)
+
+                                        NavigationLink(destination: DairyIngredientsPage()) {
+                                            CategoryButton(imageName: "dairyButton", fillMode: .fill)
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: availableHeight * 0.20)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                }
+
+                                // Bottom row with 60/40 split
+                                HStack(spacing: 10) {
+                                    NavigationLink(destination: CondimentsIngredientsPage()) {
+                                        CategoryButton(imageName: "condimentsButton", fillMode: .fill)
+                                    }
+                                    .frame(width: screenWidth * 0.6 - 16)
+
+                                    NavigationLink(destination: AllIngredientsPage(userSession: userSession)) {
+                                        CategoryButton(imageName: "allButton", fillMode: .fill)
+                                    }
+                                    .frame(width: screenWidth * 0.4 - 16)
+                                }
+                                .frame(height: availableHeight * 0.12)
+                            }
+                            .padding(8)
+                        }
+                        .scrollDisabled(true)
+                    }
+                }
             }
-            .background(Color(.systemBackground))
+            .background(Color(.systemGray6).opacity(0.5))
             .onAppear {
                 pantryController.fetchIngredients()
             }
-        }
-        .navigationBarBackButtonHidden(true)
-    }
-
-    // Grid layout for ingredient categories
-    private var ingredientsGrid: some View {
-        VStack {
-            HStack(spacing: 10) {
-                VStack(spacing: 13) {
-                    NavigationLink(destination: VegetablesIngredientsPage()) {
-                        CategoryButton(imageName: "vegetablesButton")
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: 150)
-
-                    NavigationLink(destination: GrainsIngredientsPage()) {
-                        CategoryButton(imageName: "grainsButton")
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: 150)
-
-                    HStack(spacing: 10) {
-                        NavigationLink(destination: SpicesIngredientsPage()) {
-                            CategoryButton(imageName: "spicesButton")
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: 100)
-
-                        NavigationLink(destination: CannedIngredientsPage()) {
-                            CategoryButton(imageName: "cannedButton")
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: 100)
-                    }
-
-                    NavigationLink(destination: DrinksIngredientsPage()) {
-                        CategoryButton(imageName: "drinksButton")
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: 125)
-                }
-
-                VStack(spacing: 10) {
-                    NavigationLink(destination: MeatsIngredientsPage()) {
-                        CategoryButton(imageName: "meatsButton")
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: 150)
-
-                    NavigationLink(destination: FruitsIngredientsPage()) {
-                        CategoryButton(imageName: "fruitButton")
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: 240)
-
-                    NavigationLink(destination: DairyIngredientsPage()) {
-                        CategoryButton(imageName: "dairyButton")
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: 150)
-                }
+            .onChange(of: isSearchFieldFocused) { isFocused in
+                isSearchActive = isFocused
             }
-            .padding(.horizontal, 15)
-
-            HStack(spacing: 10) {
-                NavigationLink(destination: CondimentsIngredientsPage()) {
-                    CategoryButton(imageName: "condimentsButton")
-                }
-                .frame(maxWidth: .infinity, maxHeight: 200)
-
-                NavigationLink(destination: AllIngredientsPage(userSession: userSession)) {
-                    CategoryButton(imageName: "allButton")
-                }
-                .frame(maxWidth: .infinity, maxHeight: 200)
+            .sheet(isPresented: $showAddIngredientSheet) {
+                AddIngredientPopup(ingredients: .constant([]), scannedIngredient: nil, userSession: userSession)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.horizontal, 39)
         }
+        .navigationBarHidden(true)
     }
 }
 
 struct CategoryButton: View {
     var imageName: String
+    var fillMode: ContentMode = .fill
     var action: (() -> Void)? = nil
     
     var body: some View {
@@ -135,10 +222,10 @@ struct CategoryButton: View {
     private var imageView: some View {
         Image(imageName)
             .resizable()
-            .scaledToFill()
+            .aspectRatio(contentMode: fillMode)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .clipShape(RoundedRectangle(cornerRadius: 10))
-            .shadow(color: Color.black.opacity(0.35), radius: 5, x: 0, y: 5)
+            .shadow(color: Color.black.opacity(0.25), radius: 3, x: 0, y: 3)
     }
 }
 
