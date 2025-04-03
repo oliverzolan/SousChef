@@ -34,7 +34,7 @@ struct FilterModel {
         "South American", "South East Asian"
     ]
     
-    static let mealTypes = ["Breakfast", "Brunch", "Lunch/Dinner", "Snack", "Teatime"]
+    static let mealTypes = ["Breakfast", "Brunch", "Lunch/Dinner", "Snack"]
     
     static let dietTypes = [
         "Balanced", "High-Fiber", "High-Protein", "Low-Carb", 
