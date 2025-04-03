@@ -71,9 +71,16 @@ struct EdamamBarcodeNutrient: Decodable {
     }
 }
 
-struct EditableIngredient: Identifiable {
+struct EditableIngredient: Identifiable, Equatable {
     let id: UUID
     let foodId: String
     let label: String
+    let category: String?
+    let brand: String?
+    let image: String?
     var quantity: Double
+    
+    static func == (lhs: EditableIngredient, rhs: EditableIngredient) -> Bool {
+        return lhs.id == rhs.id
+    }
 }

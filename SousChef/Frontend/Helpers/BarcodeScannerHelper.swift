@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SwiftUI
 
 class BarcodeScannerHelper {
     static let shared = BarcodeScannerHelper()
@@ -38,8 +39,16 @@ class BarcodeScannerHelper {
             alert.addAction(UIAlertAction(title: "Try Again", style: .default, handler: { _ in retryHandler() }))
             alert.addAction(UIAlertAction(title: "Search Manually", style: .default, handler: { _ in searchHandler() }))
 
-            if let rootVC = UIApplication.shared.windows.first?.rootViewController {
-                rootVC.present(alert, animated: true, completion: nil)
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let window = windowScene.windows.first(where: { $0.isKeyWindow }),
+               let rootVC = window.rootViewController {
+                
+                var topVC = rootVC
+                while let presentedVC = topVC.presentedViewController {
+                    topVC = presentedVC
+                }
+                
+                topVC.present(alert, animated: true, completion: nil)
             }
         }
     }

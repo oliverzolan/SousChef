@@ -19,6 +19,8 @@ class BarcodeScannerController: UIViewController, AVCaptureMetadataOutputObjects
     var previewLayer: AVCaptureVideoPreviewLayer!
     weak var delegate: BarcodeScannerControllerDelegate?
     private let userSession: UserSession
+    private var recentlyScannedCodes = Set<String>()
+    private let scanCooldown: TimeInterval = 3.0
 
     init(userSession: UserSession) {
         self.userSession = userSession
@@ -73,29 +75,28 @@ class BarcodeScannerController: UIViewController, AVCaptureMetadataOutputObjects
     ) {
         guard let metadataObject = metadataObjects.first as? AVMetadataMachineReadableCodeObject,
               let scannedValue = metadataObject.stringValue else { return }
+              
+        // Prevent duplicate scans in quick succession
+        if recentlyScannedCodes.contains(scannedValue) {
+            return
+        }
+        
+        // Add to recently scanned list
+        recentlyScannedCodes.insert(scannedValue)
+        
+        // Clear from recently scanned after cooldown period
+        DispatchQueue.main.asyncAfter(deadline: .now() + scanCooldown) {
+            self.recentlyScannedCodes.remove(scannedValue)
+        }
 
+        // Temporarily pause scanning while processing
         captureSession.stopRunning()
 
-        BarcodeScannerHelper.shared.fetchIngredient(by: scannedValue) { ingredient in
-            guard let ingredient = ingredient else {
-                BarcodeScannerHelper.shared.showBarcodeNotRecognizedAlert(
-                    retryHandler: { self.restartScanner() },
-                    searchHandler: { self.navigateToIngredientSearch() }
-                )
-                return
-            }
-
-            self.presentAddIngredientPage(ingredient: ingredient)
-        }
+        // Inform delegate about the scanned barcode
+        delegate?.didScanBarcode(scannedValue)
     }
 
-    private func presentAddIngredientPage(ingredient: BarcodeModel) {
-        let addIngredientPage = AddIngredientBarcodePage(scannedIngredient: ingredient, userSession: self.userSession)
-        let hostingController = UIHostingController(rootView: addIngredientPage)
-        self.present(hostingController, animated: true, completion: nil)
-    }
-
-    @objc private func restartScanner() {
+    @objc func restartScanner() {
         DispatchQueue.global(qos: .userInitiated).async {
             if !self.captureSession.isRunning {
                 self.captureSession.startRunning()
@@ -103,17 +104,13 @@ class BarcodeScannerController: UIViewController, AVCaptureMetadataOutputObjects
         }
     }
 
-    private func navigateToIngredientSearch() {
-        DispatchQueue.main.async {
-            let searchView = AddIngredientBarcodePage(scannedIngredient: nil, userSession: self.userSession)
-            let hostingController = UIHostingController(rootView: searchView)
-            self.present(hostingController, animated: true, completion: nil)
-        }
-    }
-
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("RestartScanner"), object: nil)
+        stopScanning()
+    }
+    
+    func stopScanning() {
         DispatchQueue.global(qos: .userInitiated).async {
             if self.captureSession.isRunning {
                 self.captureSession.stopRunning()

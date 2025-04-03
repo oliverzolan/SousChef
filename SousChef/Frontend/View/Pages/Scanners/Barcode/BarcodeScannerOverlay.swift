@@ -42,13 +42,18 @@ struct BarcodeScannerOverlay: View {
 }
 
 struct BarcodeScannerWithOverlay: View {
-    @Binding var scannedIngredient: BarcodeModel?
-    @Binding var isNavigating: Bool
+    @Binding var scannedItems: [ScannedItem]
+    @Binding var showToast: Bool
+    @Binding var toastMessage: String
 
     var body: some View {
         ZStack {
-            BarcodeScannerView(scannedIngredient: $scannedIngredient, isNavigating: $isNavigating)
-                .edgesIgnoringSafeArea(.all)
+            BarcodeScannerView(
+                scannedItems: $scannedItems,
+                showToast: $showToast,
+                toastMessage: $toastMessage
+            )
+            .edgesIgnoringSafeArea(.all)
             
             BarcodeScannerOverlay()
         }

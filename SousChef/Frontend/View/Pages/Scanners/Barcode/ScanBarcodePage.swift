@@ -1,11 +1,18 @@
 import SwiftUI
 import AVFoundation
 
+struct ScannedItem: Identifiable {
+    var id = UUID()
+    var ingredient: BarcodeModel
+}
+
 struct ScanBarcodePage: View {
     @EnvironmentObject var userSession: UserSession
-    @State private var scannedIngredient: BarcodeModel?
+    @State private var scannedItems: [ScannedItem] = []
     @State private var showAddIngredientPopup = false
     @State private var isFlashlightOn = false
+    @State private var showToast: Bool = false
+    @State private var toastMessage: String = ""
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -33,22 +40,41 @@ struct ScanBarcodePage: View {
                 }
                 
                 Spacer()
+                
+                // Only show finish button if items have been scanned
+                if !scannedItems.isEmpty {
+                    Button(action: {
+                        showAddIngredientPopup = true
+                    }) {
+                        Text("Finish Scanning (\(scannedItems.count))")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding()
+                            .background(Color.green)
+                            .cornerRadius(10)
+                            .padding(.bottom, 30)
+                    }
+                }
             }
             .zIndex(1)
             
             // Barcode scanner with overlay
             BarcodeScannerWithOverlay(
-                scannedIngredient: $scannedIngredient,
-                isNavigating: $showAddIngredientPopup
+                scannedItems: $scannedItems,
+                showToast: $showToast,
+                toastMessage: $toastMessage
             )
             .edgesIgnoringSafeArea(.all)
         }
         .navigationBarHidden(true)
         .fullScreenCover(isPresented: $showAddIngredientPopup) {
-            if let ingredient = scannedIngredient {
-                AddIngredientBarcodePage(scannedIngredient: ingredient, userSession: userSession)
-            }
+            AddIngredientBarcodePage(
+                scannedIngredient: nil,
+                userSession: userSession,
+                preloadedIngredients: scannedItems.map { $0.ingredient }
+            )
         }
+        .toast(isPresented: $showToast, message: toastMessage)
     }
 
     // MARK: - Flashlight Button
