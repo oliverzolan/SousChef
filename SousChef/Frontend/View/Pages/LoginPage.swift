@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct LoginPage: View {
+    @EnvironmentObject var userSession: UserSession
+    
     var body: some View {
         NavigationView {
             ZStack {
@@ -24,7 +26,7 @@ struct LoginPage: View {
                         //to login
                         NavigationLink(
                             destination: LoginView()
-                            // use this to hide apple automatic back button
+                                .environmentObject(userSession)
                                 .navigationBarBackButtonHidden(true)
                         ) {
                             Text("Sign In")
@@ -67,6 +69,7 @@ struct LoginPage: View {
     struct profile_activity_Previews: PreviewProvider {
         static var previews: some View {
             LoginPage()
+                .environmentObject(UserSession())
                 .previewDevice("iPhone 12")
         }
     }

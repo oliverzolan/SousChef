@@ -152,6 +152,7 @@ struct LoginView: View {
                 .ignoresSafeArea(.keyboard, edges: .bottom)
                 .navigationDestination(isPresented: $viewModel.navigateToHome) {
                     MainTabView()
+                        .environmentObject(userSession)
                         .navigationBarBackButtonHidden(true)
                 }
             }
