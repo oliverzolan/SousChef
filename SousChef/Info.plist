@@ -43,8 +43,6 @@
 	</dict>
 	<key>NSAppleIDUsageDescription</key>
 	<string>This app uses Sign in with Apple to authenticate users securely.</string>
-	<key>OpenAIKey</key>
-	<string>$(OpenAIKey)</string>
 	<key>UIAppFonts</key>
 	<array/>
 </dict>

@@ -7,6 +7,7 @@ struct RecipeDetailView: View {
     @State private var isAddedToShoppingList = false
     @State private var availableIngredients: Set<String> = []
     @StateObject private var recipeApiComponent = EdamamRecipeComponent()
+    @State private var navigateToChat = false
 
 
     var body: some View {
@@ -27,12 +28,22 @@ struct RecipeDetailView: View {
                     .padding(.top)
                 }
                 bottomFixedButtons()
+                
+                NavigationLink(
+                    destination: ChatbotPage(recipeURL: recipe.url),
+                    isActive: $navigateToChat
+                ) {
+                    EmptyView()
+                }
             }
             .background(Color(.systemBackground).edgesIgnoringSafeArea(.all))
             .navigationBarHidden(true)
             .onAppear {
                 loadPantryIngredients()
             }
+            
+            
+
         }
     }
 
@@ -300,7 +311,7 @@ struct RecipeDetailView: View {
             .frame(width: UIScreen.main.bounds.width * 0.65)
 
             Button(action: {
-                print("Ask AI tapped")
+                navigateToChat = true
             }) {
                 Text("Ask AI")
                     .font(.title3)
@@ -314,6 +325,7 @@ struct RecipeDetailView: View {
                     )
             }
             .frame(width: UIScreen.main.bounds.width * 0.3)
+
         }
         .padding(.horizontal)
         .padding(.vertical, 10)
