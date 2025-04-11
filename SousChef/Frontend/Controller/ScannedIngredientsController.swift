@@ -114,6 +114,6 @@ struct ScannedIngredientsPreview: UIViewControllerRepresentable {
 struct ScannedIngredientsViewController_Previews: PreviewProvider {
     static var previews: some View {
         ScannedIngredientsPreview()
-            .previewDevice("iPhone 14")
+            .previewDevice("iPhone 16 Pro")
     }
 }

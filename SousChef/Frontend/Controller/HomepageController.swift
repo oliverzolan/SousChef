@@ -254,8 +254,8 @@ class HomepageController: ObservableObject {
                     UserDefaults.standard.set(encoded, forKey: self.pantryRecipesCacheKey)
                 }
             } else {
-                // Use placeholders as last resort
-                self.pantryRecipes = Array(repeating: EdamamRecipeModel.placeholder(), count: 3)
+                // Use empty array
+                self.pantryRecipes = []
             }
         }
         
@@ -281,7 +281,8 @@ class HomepageController: ObservableObject {
            let decoded = try? JSONDecoder().decode([EdamamRecipeModel].self, from: data) {
             self.featuredRecipes = decoded
         } else {
-            self.featuredRecipes = Array(repeating: EdamamRecipeModel.placeholder(), count: 3)
+            // Use empty array instead of placeholders
+            self.featuredRecipes = []
         }
     }
 

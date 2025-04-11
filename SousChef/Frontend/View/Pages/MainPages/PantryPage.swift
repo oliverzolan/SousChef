@@ -11,6 +11,7 @@ struct PantryPage: View {
     @StateObject private var pantryController: PantryController
     @EnvironmentObject var userSession: UserSession
     @State private var searchText: String = ""
+    @State private var searchQuery: String = "ingredients"
     @State private var showAddIngredientSheet = false
     @State private var isSearchActive = false
     @FocusState private var isSearchFieldFocused: Bool
@@ -75,18 +76,6 @@ struct PantryPage: View {
                 .padding(.bottom, 10)
                 .background(Color.white)
                 .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 3)
-
-                // Error message
-                if let errorMessage = pantryController.errorMessage {
-                    Text(errorMessage)
-                        .font(.system(size: 15))
-                        .foregroundColor(.red)
-                        .padding()
-                        .background(Color.red.opacity(0.1))
-                        .cornerRadius(8)
-                        .padding(.horizontal)
-                        .padding(.top, 10)
-                }
 
                 // Loading indicator
                 if pantryController.isLoading {

@@ -41,6 +41,7 @@ struct AddIngredientPopup: View {
                                 viewModel.searchText = finalText
                                 viewModel.performSearch()
                             }
+                            isSearching = false
                         }
                     
                     if !searchText.isEmpty {
@@ -64,6 +65,23 @@ struct AddIngredientPopup: View {
                         viewModel.performSearch()
                     }
                 }
+                .toolbar {
+                    ToolbarItemGroup(placement: .keyboard) {
+                        Spacer()
+                        Button("Done") {
+                            isSearching = false
+                        }
+                    }
+                }
+                .gesture(
+                    DragGesture(minimumDistance: 20, coordinateSpace: .global)
+                        .onEnded { value in
+                            if value.translation.height > 0 && abs(value.translation.width) < abs(value.translation.height) {
+                                // Swiped down
+                                isSearching = false
+                            }
+                        }
+                )
                 
                 // Main Content
                 ScrollView {

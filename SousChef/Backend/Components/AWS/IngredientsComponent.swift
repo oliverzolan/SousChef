@@ -21,7 +21,7 @@ class AWSIngredientsComponent: AWSAbstract {
             return
         }
 
-        var urlComponents = URLComponents(string: baseURL + route + "/all")
+        let urlComponents = URLComponents(string: baseURL + route + "/all")
         
         guard let url = urlComponents?.url else {
             completion(.failure(NSError(domain: "", code: 400, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))

@@ -102,6 +102,6 @@ struct ForgotPasswordView: View {
 struct ForgotPasswordView_Previews: PreviewProvider {
     static var previews: some View {
         ForgotPasswordView()
-            .previewDevice(PreviewDevice(rawValue: "iPhone 12"))
+            .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro"))
     }
 }

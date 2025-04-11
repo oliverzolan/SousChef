@@ -35,31 +35,29 @@ class FilterController: ObservableObject {
         filteredRecipes = []
         currentPage = 0
         
-        // Default query that is used if there are no filters
-        let defaultQuery = filters.cuisineType?.lowercased() ?? "recipes"
+        // Use search query if available, otherwise use cuisine type or default to "recipes"
+        let queryToUse = filters.searchQuery ?? filters.cuisineType?.lowercased() ?? "recipes"
         
         let api = EdamamRecipeComponent()
         api.searchRecipes(
-            query: defaultQuery,
+            query: queryToUse,
             cuisineType: filters.cuisineType?.lowercased(),
             mealType: filters.mealType?.lowercased(),
             dietType: filters.dietType?.lowercased(),
             healthType: filters.healthType?.lowercased(),
             maxTime: filters.maxTime
         ) { [weak self] result in
-            guard let self = self else { return }
-            
             DispatchQueue.main.async {
-                self.isLoading = false
+                self?.isLoading = false
                 
                 switch result {
                 case .success(let response):
-                    self.filteredRecipes = response.hits.map { $0.recipe }
-                    self.nextPageUrl = response._links?.next?.href
-                    self.hasMoreRecipes = self.nextPageUrl != nil && 
-                                       !(self.nextPageUrl?.isEmpty ?? true)
+                    self?.filteredRecipes = response.hits.map { $0.recipe }
+                    self?.nextPageUrl = response._links?.next?.href
+                    self?.hasMoreRecipes = self?.nextPageUrl != nil && 
+                                         !(self?.nextPageUrl?.isEmpty ?? true)
                 case .failure(let error):
-                    self.errorMessage = error.localizedDescription
+                    self?.errorMessage = error.localizedDescription
                 }
             }
         }

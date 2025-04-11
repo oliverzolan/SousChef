@@ -6,13 +6,15 @@ struct FilterModel {
     var dietType: String?
     var healthType: String?
     var maxTime: Int?
+    var searchQuery: String?
     
     var isEmpty: Bool {
         return cuisineType == nil && 
                mealType == nil && 
                dietType == nil && 
                healthType == nil && 
-               maxTime == nil
+               maxTime == nil &&
+               searchQuery == nil
     }
     
     mutating func reset() {
@@ -21,6 +23,7 @@ struct FilterModel {
         dietType = nil
         healthType = nil
         maxTime = nil
+        searchQuery = nil
     }
     
     // Filter categories for UI

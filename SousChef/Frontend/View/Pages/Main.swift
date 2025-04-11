@@ -9,6 +9,8 @@ import SwiftUI
 
 struct MainTabView: View {
     @EnvironmentObject var userSession: UserSession
+    @EnvironmentObject var homepageController: HomepageController
+    @EnvironmentObject var pantryController: PantryController
     @State private var isShowingScanOptions = false
     @State private var selectedTab = 0
     
@@ -45,6 +47,9 @@ struct MainTabView: View {
                 ForEach(tabs, id: \.tag) { tab in
                     NavigationStack {
                         tab.view
+                            .environmentObject(userSession)
+                            .environmentObject(homepageController)
+                            .environmentObject(pantryController)
                     }
                     .tabItem {
                         Label(tab.label, systemImage: tab.icon)
@@ -81,7 +86,13 @@ struct MainTabView: View {
 // Preview
 struct MainTabView_Previews: PreviewProvider {
     static var previews: some View {
+        let userSession = UserSession()
+        let pantryController = PantryController(userSession: userSession)
+        let homepageController = HomepageController(pantryController: pantryController)
+        
         MainTabView()
-            .environmentObject(UserSession())
+            .environmentObject(userSession)
+            .environmentObject(pantryController)
+            .environmentObject(homepageController)
     }
 }
