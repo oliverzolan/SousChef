@@ -11,12 +11,29 @@ class ChatService {
     private let apiURL = "https://api.openai.com/v1/chat/completions"
     
     private init() {
-        if let key = Bundle.main.object(forInfoDictionaryKey: "OpenAIKey") as? String, !key.isEmpty {
+        // Try to load API key from environment variable (Info.plist or XCConfig)
+        if let key = ProcessInfo.processInfo.environment["OPENAI_API_KEY"] {
             self.apiKey = key
-        } else {
-            fatalError("Error: OpenAI API Key is missing or empty in Info.plist")
+            return
         }
+
+        // Or try loading from .env file in dev (optional)
+        if let envPath = Bundle.main.path(forResource: ".env", ofType: nil),
+           let envContents = try? String(contentsOfFile: envPath, encoding: .utf8) {
+            let lines = envContents.components(separatedBy: .newlines)
+            for line in lines {
+                let parts = line.components(separatedBy: "=")
+                if parts.count == 2 && parts[0].trimmingCharacters(in: .whitespaces) == "OPENAI_API_KEY" {
+                    self.apiKey = parts[1].trimmingCharacters(in: .whitespaces)
+                    return
+                }
+            }
+        }
+
+        // Final fallback
+        fatalError("OPENAI_API_KEY not found. Please set it in environment variables or .env file.")
     }
+
 
     private var messageHistory: [[String: String]] = []  // Stores previous interactions
 
@@ -37,7 +54,6 @@ class ChatService {
         self.systemPrompt = newPrompt
     }
 
-    /// Sends a message to the OpenAI API with optional role and tracks history.
     func sendMessage(_ message: String, role: String = "user", completion: @escaping (String) -> Void) {
         guard let url = URL(string: apiURL) else {
             completion("Invalid API URL")
@@ -49,10 +65,8 @@ class ChatService {
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
 
-        // Add current user message to the conversation history
         messageHistory.append(["role": role, "content": message])
         
-        // Build the full messages array, always starting with the system prompt
         var messages: [[String: String]] = [
             ["role": "system", "content": systemPrompt]
         ]
@@ -119,7 +133,6 @@ class ChatService {
         task.resume()
     }
 
-    /// Clears all stored messages in the session
     func resetConversation() {
         messageHistory.removeAll()
     }

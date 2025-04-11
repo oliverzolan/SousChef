@@ -43,7 +43,13 @@
 	</dict>
 	<key>NSAppleIDUsageDescription</key>
 	<string>This app uses Sign in with Apple to authenticate users securely.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>SousChef needs access to your microphone to enable voice commands for the AI assistant.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>SousChef needs speech recognition to convert your voice commands into text for the AI assistant.</string>
 	<key>UIAppFonts</key>
 	<array/>
+	<key>OpenAIKey</key>
+	<string>YOUR_OPENAI_API_KEY_HERE</string>
 </dict>
 </plist>

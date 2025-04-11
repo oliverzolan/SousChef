@@ -6,10 +6,12 @@
 //
 
 import SwiftUI
+import Speech
 
 struct ChatbotPage: View {
     @EnvironmentObject var userSession: UserSession
     @StateObject private var chatbotController = ChatbotController()
+    @StateObject private var speechRecognizer = SpeechRecognizer()
     @State private var userInput: String = ""
     @State private var isTyping: Bool = false
     @Namespace private var bottomID
@@ -102,14 +104,14 @@ struct ChatbotPage: View {
 
                 // Microphone button
                 Button(action: {
-                    hideKeyboardWithAnimation()
+                    toggleSpeechRecognition()
                 }) {
-                    Image(systemName: "mic.fill")
+                    Image(systemName: speechRecognizer.isRecording ? "mic.fill" : "mic")
                         .resizable()
                         .scaledToFit()
                         .frame(width: 24, height: 24)
                         .padding(8)
-                        .background(Color.gray.opacity(0.2))
+                        .background(speechRecognizer.isRecording ? Color.red.opacity(0.2) : Color.gray.opacity(0.2))
                         .clipShape(Circle())
                 }
 
@@ -161,6 +163,16 @@ struct ChatbotPage: View {
     private func hideKeyboardWithAnimation() {
         withAnimation(.easeInOut(duration: 0.2)) {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        }
+    }
+    
+    private func toggleSpeechRecognition() {
+        if speechRecognizer.isRecording {
+            speechRecognizer.stopRecording()
+        } else {
+            speechRecognizer.startRecording { transcribedText in
+                userInput = transcribedText
+            }
         }
     }
 }
