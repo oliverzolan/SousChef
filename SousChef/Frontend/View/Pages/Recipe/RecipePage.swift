@@ -250,12 +250,12 @@ struct RecipeDetailView: View {
         }
     }
 
-    // Helper to add missing ingredients to a shopping list
     private func addMissingIngredients(to shoppingList: ShoppingList) {
         for ingredient in recipe.ingredients {
             if let foodId = ingredient.foodId, !availableIngredients.contains(foodId) {
-                // Create a CartItem with default values (update as needed)
-                let cartItem = CartItem(name: ingredient.text, price: 0.0, quantity: 1)
+                // Use the generic name from the parsed ingredient if available; fallback to ingredient.food
+                let genericName = ingredient.parsed?.first?.food ?? ingredient.food
+                let cartItem = CartItem(name: genericName, price: 0.0, quantity: 1)
                 shoppingList.items.append(cartItem)
             }
         }

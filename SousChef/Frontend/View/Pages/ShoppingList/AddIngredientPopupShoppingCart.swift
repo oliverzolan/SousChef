@@ -8,7 +8,6 @@ struct AddIngredientPopupShoppingCart: View {
     var scannedIngredient: BarcodeModel?
     @State private var selectedIngredient: IngredientResult? = nil
     @State private var quantityText: String = ""
-    @State private var priceText: String = ""
     
     init(items: Binding<[CartItem]>, scannedIngredient: BarcodeModel?, userSession: UserSession) {
         self._items = items
@@ -37,6 +36,7 @@ struct AddIngredientPopupShoppingCart: View {
                                 .foregroundColor(.gray)
                         }
                         Button(action: {
+                            // New item with price set to 0.0, quantity default to 1
                             let newItem = CartItem(name: scanned.label, price: 0.0, quantity: 1)
                             items.append(newItem)
                             dismiss()
@@ -80,14 +80,11 @@ struct AddIngredientPopupShoppingCart: View {
                             TextField("Quantity", text: $quantityText)
                                 .keyboardType(.numberPad)
                                 .textFieldStyle(RoundedBorderTextFieldStyle())
-                            TextField("Price", text: $priceText)
-                                .keyboardType(.decimalPad)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
                             
                             Button(action: {
-                                guard let qty = Int(quantityText),
-                                      let pr = Double(priceText) else { return }
-                                let newItem = CartItem(name: selected.label, price: pr, quantity: qty)
+                                guard let qty = Int(quantityText) else { return }
+                                // New item with price removed (set to 0.0)
+                                let newItem = CartItem(name: selected.label, price: 0.0, quantity: qty)
                                 items.append(newItem)
                                 dismiss()
                             }) {
@@ -119,7 +116,6 @@ struct AddIngredientPopupShoppingCart: View {
                                 Button {
                                     selectedIngredient = IngredientResult(foodId: ingredient.foodId, label: ingredient.label, category: ingredient.category)
                                     quantityText = ""
-                                    priceText = ""
                                 } label: {
                                     VStack(alignment: .leading) {
                                         Text(ingredient.label)
@@ -151,6 +147,7 @@ struct AddIngredientPopupShoppingCart: View {
     }
 }
 
+
 struct EditItemPopup: View {
     let item: CartItem
     @Binding var quantity: String
@@ -163,8 +160,7 @@ struct EditItemPopup: View {
                 Section(header: Text("Edit Quantity")) {
                     Text(item.name)
                         .font(.headline)
-                    Text("Price: $\(item.price, specifier: "%.2f")")
-                        .foregroundColor(.gray)
+                    // Removed the Price display field
                     TextField("Quantity", text: $quantity)
                         .keyboardType(.numberPad)
                 }
