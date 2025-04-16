@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import Combine
 
 struct IdentifiableTuple: Identifiable {
     let id = UUID()
@@ -14,11 +15,13 @@ struct IdentifiableTuple: Identifiable {
 
 struct HomeHeader: View {
     @Binding var showMenu: Bool
+    @EnvironmentObject var userSession: UserSession
     
     var body: some View {
         HStack {
-            Text("Chef John Paul Gaultier")
+            Text(userSession.fullName ?? "Chef")
                 .font(.custom("Inter-Bold", size: 28))
+                .lineLimit(1)
             Spacer()
             HStack(spacing: 16) {
                 Button(action: {
@@ -178,7 +181,7 @@ struct HomePage: View {
                     
                     HStack {
                         Spacer()
-                        SideMenuView(userName: "John Paul Gaultier") {
+                        SideMenuView(userName: userSession.fullName ?? "Chef") {
                             withAnimation(.easeOut(duration: 0.3)) {
                                 showMenu = false
                             }
@@ -245,6 +248,11 @@ struct HomePage: View {
             .onDisappear {
                 selectedFilterCategory = nil
                 showFilters = false
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("UserDisplayNameChanged"))) { notification in
+                if let displayName = notification.userInfo?["displayName"] as? String {
+                    userSession.updateFullName(displayName)
+                }
             }
         }
     }
