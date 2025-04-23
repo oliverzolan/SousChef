@@ -62,45 +62,9 @@ struct EdamamRecipeModel: Codable {
     private enum CodingKeys: String, CodingKey {
         case label, image, url, ingredients = "ingredients"
         case totalNutrients, calories, totalWeight, cuisineType, mealType, dishType
-        case dietLabels, healthLabels  // New fields
+        case dietLabels, healthLabels
     }
 }
-
-
-extension EdamamRecipeModel {
-    static func placeholder() -> EdamamRecipeModel {
-        return EdamamRecipeModel(
-            label: "Sample Recipe",
-            image: "https://placehold.co/",
-            url: "https://placehold.co/",
-            ingredients: [],
-            totalNutrients: EdamamRecipeNutrients(
-                energy: nil,
-                fat: nil,
-                saturatedFat: nil,
-                transFat: nil,
-                carbs: nil,
-                fiber: nil,
-                sugar: nil,
-                protein: nil,
-                cholesterol: nil,
-                sodium: nil,
-                calcium: nil,
-                potassium: nil,
-                iron: nil,
-                vitaminD: nil
-            ),
-            calories: 0,
-            totalWeight: 0,
-            cuisineType: ["american"],
-            mealType: ["dinner"],
-            dishType: ["main course"],
-            dietLabels: ["Balanced"],
-            healthLabels: ["Gluten-Free"]
-        )
-    }
-}
-
 
 struct EdamamRecipeIngredient: Codable {
     let text: String

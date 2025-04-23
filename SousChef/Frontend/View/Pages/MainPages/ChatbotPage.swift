@@ -1,136 +1,190 @@
+//
+//  ChatbotPage.swift
+//  SousChef
+//
+//  Created by Bennet Rau on 4/3/25.
+//
+
 import SwiftUI
+import Speech
 
 struct ChatbotPage: View {
-    @StateObject private var chatbotController: ChatbotController
-    @State private var userInput: String = ""
-    @StateObject private var speechRecognitionController = SpeechHelper()
     @EnvironmentObject var userSession: UserSession
-
-    init(userSession: UserSession) {
-        _chatbotController = StateObject(wrappedValue: ChatbotController(userSession: userSession))
-    }
+    @StateObject private var chatbotController = ChatbotController()
+    @StateObject private var speechRecognizer = SpeechRecognizer()
+    @State private var userInput: String = ""
+    @State private var isTyping: Bool = false
+    @Namespace private var bottomID
+    var recipeURL: String? = nil
 
     var body: some View {
-        VStack {
-            HeaderComponent(title: "Chatbot")
+        VStack(spacing: 0) {
+            // Header
+            ChatHeader(onNewChat: startNewChat)
+                .zIndex(1)
 
-            // Chat log
-            ScrollView {
+            // Chat content
+            ZStack {
+                Color.white
+                    .edgesIgnoringSafeArea(.all)
+
+                // Empty state
+                if chatbotController.messages.isEmpty {
+                    VStack(spacing: 8) {
+                        Spacer()
+
+                        Image("chef_hat_icon")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 50, height: 50)
+                            .padding(.bottom, 6)
+
+                        Text("Hello, I am SousChef")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.black)
+                            .padding(.bottom, 2)
+
+                        Text("How can I help you, Chef?")
+                            .font(.body)
+                            .foregroundColor(.gray.opacity(0.7))
+
+                        Spacer()
+                    }
+                }
+
+                // Chat log
                 ScrollViewReader { proxy in
-                    VStack(spacing: 10) {
-                        if chatbotController.messages.isEmpty {
-                            Text("Say hello to your assistant!")
-                                .foregroundColor(.gray)
-                                .padding(.top, 50)
-                        } else {
-                            ForEach(chatbotController.messages) { message in
-                                ChatBubble(message: message)
-                            }
+                    List {
+                        ForEach(chatbotController.messages) { message in
+                            ChatBubble(message: message)
+                                .listRowSeparator(.hidden)
+                                .listRowInsets(EdgeInsets())
+                                .background(Color.clear)
+                                .padding(.vertical, 2)
                         }
+
+                        if isTyping {
+                            ChatBubble(message: Message(text: "...", isUser: false, isTyping: true))
+                                .listRowSeparator(.hidden)
+                                .listRowInsets(EdgeInsets())
+                                .background(Color.clear)
+                                .padding(.vertical, 2)
+                        }
+
+                        // Auto-scroll anchor
+                        Color.clear
+                            .frame(height: 1)
+                            .id(bottomID)
                     }
-                    .padding()
-                    .frame(maxWidth: .infinity, minHeight: 100)
-                    .onChange(of: chatbotController.messages.count) { oldValue, newValue in
-                        if newValue > oldValue, let lastMessage = chatbotController.messages.last {
-                            proxy.scrollTo(lastMessage.id, anchor: .bottom)
+                    .listStyle(PlainListStyle())
+                    .background(Color.clear)
+                    .scrollContentBackground(.hidden)
+                    .listRowBackground(Color.clear)
+                    .onChange(of: chatbotController.messages.count) { _ in
+                        withAnimation {
+                            proxy.scrollTo(bottomID, anchor: .bottom)
                         }
                     }
                 }
             }
-            .background(Color(UIColor.systemGroupedBackground))
 
-            // User input, microphone, and send button
-            HStack {
-                TextField("Type a message...", text: $userInput)
-                    .padding()
-                    .background(Color(UIColor.secondarySystemBackground))
-                    .cornerRadius(10)
-                    .padding(.leading)
+            // Input bar
+            HStack(spacing: 6) {
+                HStack {
+                    TextField("ASK AI", text: $userInput)
+                        .padding(.horizontal, 10)
+                        .frame(height: 40)
+                        .onSubmit {
+                            sendMessage()
+                        }
+                }
+                .background(Color.gray.opacity(0.2))
+                .cornerRadius(20)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                )
 
-                // Microphone Button (Speech-to-Text)
+                // Microphone button
                 Button(action: {
-                    if speechRecognitionController.recognizedText.isEmpty {
-                        speechRecognitionController.startListening()
-                    } else {
-                        speechRecognitionController.stopListening()
-                        userInput = speechRecognitionController.recognizedText
-                    }
+                    toggleSpeechRecognition()
                 }) {
-                    Image(systemName: speechRecognitionController.recognizedText.isEmpty ? "mic" : "mic.fill")
-                        .font(.system(size: 20))
-                        .padding()
-                        .background(speechRecognitionController.recognizedText.isEmpty ? Color.gray : Color.red)
-                        .foregroundColor(.white)
+                    Image(systemName: speechRecognizer.isRecording ? "mic.fill" : "mic")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 24, height: 24)
+                        .padding(8)
+                        .background(speechRecognizer.isRecording ? Color.red.opacity(0.2) : Color.gray.opacity(0.2))
                         .clipShape(Circle())
                 }
 
-                // Send Button
+                // Send button
                 Button(action: {
-                    chatbotController.sendMessage(userInput)
-                    userInput = ""
+                    sendMessage()
                 }) {
-                    Image(systemName: "paperplane.fill")
-                        .font(.system(size: 20))
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
+                    Image("chef_hat_icon")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 24, height: 24)
+                        .padding(8)
+                        .background(Color.gray.opacity(0.2))
                         .clipShape(Circle())
                 }
-                .padding(.trailing)
-                .disabled(userInput.isEmpty || chatbotController.isLoading)
+                .disabled(userInput.isEmpty)
             }
-            .padding()
-            
-//            CustomNavigationBar()
+            .padding(.top, 4)
+            .padding(.horizontal)
+            .padding(.bottom, 8)
         }
-        .navigationBarBackButtonHidden(true)
-    }
-}
-
-
-// ChatBubble and Message remain the same
-struct ChatBubble: View {
-    var message: Message
-
-    var body: some View {
-        HStack {
-            if message.isUser {
-                Spacer()
-                Text(message.text)
-                    .padding()
-                    .background(Color.blue.opacity(0.7))
-                    .foregroundColor(.white)
-                    .cornerRadius(15)
-                    .frame(maxWidth: 300, alignment: .trailing)
-            } else {
-                Text(message.text)
-                    .padding()
-                    .background(Color.gray.opacity(0.2))
-                    .foregroundColor(.black)
-                    .cornerRadius(15)
-                    .frame(maxWidth: 300, alignment: .leading)
-                Spacer()
+        .background(Color.white)
+        .onAppear {
+            if let url = recipeURL, chatbotController.messages.isEmpty {
+                let introMessage = """
+                Here's a recipe I'm interested in: \(url).
+                Can you help me understand it better or suggest similar dishes?
+                """
+                chatbotController.sendMessage(introMessage)
             }
         }
-        .padding(.horizontal)
     }
-}
 
-// Model for Messages
-struct Message: Identifiable {
-    let id: UUID
-    let text: String
-    let isUser: Bool
-}
+    // Resets chat state
+    private func startNewChat() {
+        chatbotController.messages.removeAll()
+        userInput = ""
+        if speechRecognizer.isRecording {
+            speechRecognizer.stopRecording()
+        }
+    }
 
-// Preview Struct with Mock Data
-struct ChatbotPage_Previews: PreviewProvider {
-    static var previews: some View {
-        let mockSession = UserSession()
-        mockSession.token = "mock_token"
+    // Sends message to AI
+    private func sendMessage() {
+        guard !userInput.isEmpty else { return }
+        if speechRecognizer.isRecording {
+            speechRecognizer.stopRecording()
+        }
+        chatbotController.sendMessage(userInput)
+        userInput = ""
+        hideKeyboardWithAnimation()
+    }
 
-        return ChatbotPage(userSession: mockSession)
-            .environmentObject(mockSession)
-            .previewDevice("iPhone 16 Pro")
+    private func hideKeyboardWithAnimation() {
+        withAnimation(.easeInOut(duration: 0.2)) {
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        }
+        if speechRecognizer.isRecording {
+            speechRecognizer.stopRecording()
+        }
+    }
+    
+    private func toggleSpeechRecognition() {
+        if speechRecognizer.isRecording {
+            speechRecognizer.stopRecording()
+        } else {
+            speechRecognizer.startRecording { transcribedText in
+                userInput = transcribedText
+            }
+        }
     }
 }

@@ -129,16 +129,18 @@ class UserSession: ObservableObject {
     }
     
     func updateFullName(_ name: String) {
+        let displayName = name.isEmpty ? "SousChef" : name
+        
         DispatchQueue.main.async {
-            self.fullName = name
-            KeychainHelper.shared.save(name, for: "userFullName")
+            self.fullName = displayName
+            KeychainHelper.shared.save(displayName, for: "userFullName")
         }
     }
     
     func loginAsGuest() {
         DispatchQueue.main.async {
             self.isGuest = true
-            self.fullName = "Guest"
+            self.fullName = "SousChef"
         }
     }
     

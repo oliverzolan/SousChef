@@ -70,7 +70,7 @@ struct LoginPage: View {
         static var previews: some View {
             LoginPage()
                 .environmentObject(UserSession())
-                .previewDevice("iPhone 12")
+                .previewDevice("iPhone 16 Pro")
         }
     }
 

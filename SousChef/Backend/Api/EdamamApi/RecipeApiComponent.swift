@@ -93,11 +93,6 @@ class EdamamRecipeComponent: EdamamAbstract {
             queryItems.append(URLQueryItem(name: "time", value: "1-\(maxTime)"))
         }
         
-        // Optional calories filter
-//        if let calorieNum = calorieNum {
-//            queryItems.append(URLQueryItem(name: "calories", value: "0-\(calorieNum)"))
-//        }
-        
         urlComponents?.queryItems = queryItems
         
         // URL Validator and unwrapper

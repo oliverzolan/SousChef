@@ -8,6 +8,9 @@
 import SwiftUI
 
 struct CuisineSection: View {
+    var filterController: FilterController
+    var onSelectCuisine: (String) -> Void
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Browse by Cuisine")
@@ -28,7 +31,9 @@ struct CuisineSection: View {
     }
     
     private func cuisineCard(_ cuisine: String) -> some View {
-        NavigationLink(destination: RecipeListView(title: "\(cuisine) Cuisine", searchQuery: cuisine, cuisineType: cuisine)) {
+        Button(action: {
+            onSelectCuisine(cuisine)
+        }) {
             VStack {
                 Image(cuisine.lowercased())
                     .resizable()
@@ -45,10 +50,17 @@ struct CuisineSection: View {
             }
             .frame(width: 100)
         }
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(filterController.filters.cuisineType == cuisine ? AppColors.secondary3 : Color.clear, lineWidth: 3)
+        )
     }
 }
 
 struct MealTypeSection: View {
+    var filterController: FilterController
+    var onSelectMealType: (String) -> Void
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Browse by Meal")
@@ -58,7 +70,9 @@ struct MealTypeSection: View {
                 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
                 ForEach(["Breakfast", "Lunch", "Dinner", "Dessert"], id: \.self) { mealType in
-                    NavigationLink(destination: RecipeListView(title: mealType, searchQuery: mealType)) {
+                    Button(action: {
+                        onSelectMealType(mealType)
+                    }) {
                         ZStack(alignment: .bottomLeading) {
                             Image(mealType.lowercased())
                                 .resizable()
@@ -80,6 +94,10 @@ struct MealTypeSection: View {
                                 .padding(12)
                         }
                     }
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 15)
+                            .stroke(filterController.filters.mealType == mealType ? AppColors.secondary3 : Color.clear, lineWidth: 3)
+                    )
                 }
             }
             .padding(.horizontal)

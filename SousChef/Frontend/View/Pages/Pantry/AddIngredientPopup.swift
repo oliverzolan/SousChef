@@ -28,7 +28,8 @@ struct AddIngredientPopup: View {
                 // Search Bar
                 HStack {
                     Image(systemName: "magnifyingglass")
-                        .foregroundColor(.gray)
+                        .foregroundColor(.gray.opacity(0.7))
+                        .padding(.leading, 8)
                     
                     TextField("Search for ingredient...", text: $searchText)
                         .focused($isSearching)
@@ -41,6 +42,7 @@ struct AddIngredientPopup: View {
                                 viewModel.searchText = finalText
                                 viewModel.performSearch()
                             }
+                            isSearching = false
                         }
                     
                     if !searchText.isEmpty {
@@ -51,13 +53,15 @@ struct AddIngredientPopup: View {
                         }) {
                             Image(systemName: "xmark.circle.fill")
                                 .foregroundColor(.gray)
+                                .padding(.trailing, 8)
                         }
                     }
                 }
                 .padding(10)
-                .background(Color(.systemGray6))
+                .background(Color.gray.opacity(0.1))
                 .cornerRadius(10)
                 .padding(.horizontal)
+                .padding(.top, 10)
                 .onChange(of: searchText) { _, newValue in
                     DispatchQueue.main.async {
                         viewModel.searchText = newValue
@@ -67,7 +71,7 @@ struct AddIngredientPopup: View {
                 
                 // Main Content
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(spacing: 0) {
                         // Scanned ingredient if available
                         if let ingredient = scannedIngredient {
                             VStack(alignment: .leading, spacing: 10) {
@@ -76,38 +80,11 @@ struct AddIngredientPopup: View {
                                     .padding(.horizontal)
                                     .padding(.top, 8)
 
-                                Button {
-                                    addScannedIngredientToList(ingredient)
-                                } label: {
-                                    HStack {
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text(ingredient.label)
-                                                .font(.headline)
-                                                .lineLimit(1)
-                                            
-                                            if let category = ingredient.category {
-                                                Text(category)
-                                                    .font(.subheadline)
-                                                    .foregroundColor(.secondary)
-                                            }
-                                        }
-                                        
-                                        Spacer()
-                                        
-                                        if isIngredientSelected(BarcodeModel(foodId: ingredient.foodId, label: ingredient.label, brand: ingredient.brand, category: ingredient.category, image: ingredient.image, nutrients: nil)) {
-                                            Image(systemName: "checkmark.circle.fill")
-                                                .foregroundColor(.green)
-                                                .font(.title3)
-                                        } else {
-                                            Image(systemName: "plus.circle.fill")
-                                                .foregroundColor(.green)
-                                                .font(.title3)
-                                        }
-                                    }
-                                    .padding()
-                                    .contentShape(Rectangle())
-                                }
-                                .buttonStyle(PlainButtonStyle())
+                                IngredientCard(
+                                    name: ingredient.label,
+                                    category: categoryForIngredient(ingredient)
+                                )
+                                .padding(.horizontal)
                                 
                                 Divider()
                             }
@@ -141,24 +118,25 @@ struct AddIngredientPopup: View {
                                     .padding(.horizontal)
                                     .padding(.top, 8)
                                     
-                                    LazyVStack(spacing: 0) {
+                                    LazyVGrid(columns: [
+                                        GridItem(.flexible(), spacing: 10),
+                                        GridItem(.flexible(), spacing: 10),
+                                        GridItem(.flexible(), spacing: 10)
+                                    ], spacing: 10) {
                                         ForEach(viewModel.searchResults.prefix(5)) { ingredient in
-                                            VStack(spacing: 0) {
-                                                IngredientSearchResultView(
-                                                    ingredient: ingredient,
-                                                    onSelect: {
-                                                        currentIngredient = ingredient
-                                                        tempQuantity = 1.0
-                                                        showQuantitySheet = true
-                                                    },
-                                                    isSelected: isIngredientSelected(ingredient)
+                                            Button(action: {
+                                                currentIngredient = ingredient
+                                                tempQuantity = 1.0
+                                                showQuantitySheet = true
+                                            }) {
+                                                IngredientCard(
+                                                    name: ingredient.label,
+                                                    category: categoryForIngredient(ingredient)
                                                 )
-                                                
-                                                Divider()
                                             }
-                                            .padding(.horizontal)
                                         }
                                     }
+                                    .padding()
                                     
                                     if viewModel.searchResults.count > 5 {
                                         Button(action: {
@@ -183,13 +161,31 @@ struct AddIngredientPopup: View {
                                     .padding(.horizontal)
                                     .padding(.top, 16)
                                 
-                                ForEach(selectedIngredients) { ingredient in
-                                    SelectedIngredientItemView(
-                                        ingredient: ingredient,
-                                        selectedIngredients: $selectedIngredients,
-                                        removeAction: removeIngredientFromList
-                                    )
+                                LazyVGrid(columns: [
+                                    GridItem(.flexible(), spacing: 10),
+                                    GridItem(.flexible(), spacing: 10),
+                                    GridItem(.flexible(), spacing: 10)
+                                ], spacing: 10) {
+                                    ForEach(selectedIngredients) { ingredient in
+                                        IngredientCard(
+                                            name: ingredient.label,
+                                            category: categoryForIngredient(ingredient)
+                                        )
+                                        .overlay(
+                                            Button(action: {
+                                                removeIngredientFromList(ingredient)
+                                            }) {
+                                                Image(systemName: "xmark.circle.fill")
+                                                    .foregroundColor(.red)
+                                                    .background(Color.white)
+                                                    .clipShape(Circle())
+                                            }
+                                            .padding(5),
+                                            alignment: .topTrailing
+                                        )
+                                    }
                                 }
+                                .padding()
                             }
                         } else if viewModel.searchResults.isEmpty && !viewModel.isLoading && searchText.isEmpty && scannedIngredient == nil {
                             VStack(spacing: 20) {
@@ -212,38 +208,25 @@ struct AddIngredientPopup: View {
                     .padding(.bottom, 100)
                 }
             }
-            .overlay(
-                // Add to Pantry Button
-                VStack {
-                    Spacer()
-                    
-                    if !selectedIngredients.isEmpty {
-                        Button(action: submitIngredientsFromList) {
-                            Text("Add \(selectedIngredients.count) Ingredient\(selectedIngredients.count > 1 ? "s" : "") to Pantry")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.green)
-                                .cornerRadius(10)
-                                .padding(.horizontal)
-                                .padding(.bottom, 8)
-                        }
-                        .background(
-                            Rectangle()
-                                .fill(Color(.systemBackground))
-                                .edgesIgnoringSafeArea(.bottom)
-                                .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: -5)
-                        )
-                    }
-                }
-            )
             .navigationTitle("Add Ingredients")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
                         dismiss()
+                    }
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    if !selectedIngredients.isEmpty {
+                        Button(action: submitIngredientsFromList) {
+                            Text("Add")
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(Color.green)
+                                .cornerRadius(8)
+                        }
                     }
                 }
             }
@@ -274,6 +257,30 @@ struct AddIngredientPopup: View {
                 }
             }
             .toast(isPresented: $showToast, message: toastMessage)
+        }
+    }
+    
+    // Helper function to determine category for ingredient
+    private func categoryForIngredient(_ ingredient: Any) -> IngredientCategory {
+        if let edamamIngredient = ingredient as? EdamamIngredientModel {
+            return categoryFromString(edamamIngredient.category ?? "")
+        } else if let barcodeIngredient = ingredient as? BarcodeModel {
+            return categoryFromString(barcodeIngredient.category ?? "")
+        } else if let editableIngredient = ingredient as? EditableIngredient {
+            return categoryFromString(editableIngredient.category ?? "")
+        }
+        return .vegetable // Default category
+    }
+    
+    private func categoryFromString(_ category: String) -> IngredientCategory {
+        switch category.lowercased() {
+        case "vegetable", "vegetables": return .vegetable
+        case "fruit", "fruits": return .fruit
+        case "grain", "grains": return .grain
+        case "protein", "meat", "meats": return .protein
+        case "dairy": return .dairy
+        case "condiment", "spice", "spices": return .condiment
+        default: return .vegetable
         }
     }
     

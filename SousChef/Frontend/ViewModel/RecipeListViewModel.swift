@@ -22,7 +22,7 @@ class RecipeListViewModel: ObservableObject {
     
     private var usedFeaturedIngredients: [String] = []
     
-    func fetchRecipes(query: String) {
+    func fetchRecipes(query: String, limit: Int = 20) {
         guard !query.isEmpty else {
             self.recipes = []
             return
@@ -44,9 +44,11 @@ class RecipeListViewModel: ObservableObject {
                 
                 switch result {
                 case .success(let response):
-                    self?.recipes = response.hits.map { $0.recipe }
+                    // Limit recipes to the specified count
+                    let allRecipes = response.hits.map { $0.recipe }
+                    self?.recipes = Array(allRecipes.prefix(limit))
                     self?.nextPageUrl = response._links?.next?.href
-                    self?.hasMoreRecipes = self?.nextPageUrl != nil
+                    self?.hasMoreRecipes = (self?.nextPageUrl != nil) || (allRecipes.count > limit)
                 case .failure(let error):
                     self?.errorMessage = error.localizedDescription
                 }
@@ -54,7 +56,7 @@ class RecipeListViewModel: ObservableObject {
         }
     }
     
-    func fetchRecipesByCuisine(cuisineType: String) {
+    func fetchRecipesByCuisine(cuisineType: String, limit: Int = 20) {
         currentQuery = ""
         currentCuisineType = cuisineType
         isFeaturedQuery = false
@@ -71,9 +73,11 @@ class RecipeListViewModel: ObservableObject {
                 
                 switch result {
                 case .success(let response):
-                    self?.recipes = response.hits.map { $0.recipe }
+                    // Limit recipes to the specified count
+                    let allRecipes = response.hits.map { $0.recipe }
+                    self?.recipes = Array(allRecipes.prefix(limit))
                     self?.nextPageUrl = response._links?.next?.href
-                    self?.hasMoreRecipes = self?.nextPageUrl != nil
+                    self?.hasMoreRecipes = (self?.nextPageUrl != nil) || (allRecipes.count > limit)
                 case .failure(let error):
                     self?.errorMessage = error.localizedDescription
                 }
@@ -81,7 +85,7 @@ class RecipeListViewModel: ObservableObject {
         }
     }
     
-    func fetchFeaturedRecipes() {
+    func fetchFeaturedRecipes(limit: Int = 20) {
         currentQuery = ""
         currentCuisineType = nil
         isFeaturedQuery = true
@@ -89,16 +93,17 @@ class RecipeListViewModel: ObservableObject {
         recipes = []
         usedFeaturedIngredients = []
         
-        let ingredientsToUse = getRandomIngredients(count: 3)
+        // Use more ingredients for greater variety
+        let ingredientsToUse = getRandomIngredients(count: 5)
         usedFeaturedIngredients.append(contentsOf: ingredientsToUse)
         
-        fetchRecipesForIngredients(ingredientsToUse)
+        fetchRecipesForIngredients(ingredientsToUse, limit: limit, shouldShuffle: true)
     }
     
     private func getRandomIngredients(count: Int) -> [String] {
         var available = allIngredients.filter { !usedFeaturedIngredients.contains($0) }
         if available.count < count {
-            available = allIngredients // Reset if we've used all or nearly all
+            available = allIngredients.shuffled() // Reset and shuffle if we've used all or nearly all
         }
         
         var selectedIngredients: [String] = []
@@ -112,7 +117,7 @@ class RecipeListViewModel: ObservableObject {
         return selectedIngredients
     }
     
-    private func fetchRecipesForIngredients(_ ingredients: [String]) {
+    private func fetchRecipesForIngredients(_ ingredients: [String], limit: Int = 20, shouldShuffle: Bool = false) {
         isLoading = true
         errorMessage = nil
         
@@ -129,9 +134,16 @@ class RecipeListViewModel: ObservableObject {
                 
                 switch result {
                 case .success(let response):
-                    // Take 3-4 recipes per ingredient for variety
-                    let recipes = response.hits.prefix(4).map { $0.recipe }
-                    fetchedRecipes.append(contentsOf: recipes)
+                    // Take recipes per ingredient but respect overall limit
+                    let recipesPerIngredient = min(limit / ingredients.count + 1, 5)
+                    
+                    // Create array of recipes with valid images
+                    let validRecipes = response.hits
+                        .map { $0.recipe }
+                        .filter { !$0.image.isEmpty }
+                        .prefix(recipesPerIngredient)
+                    
+                    fetchedRecipes.append(contentsOf: validRecipes)
                     
                     if let self = self {
                         self.nextPageUrl = response._links?.next?.href
@@ -143,26 +155,34 @@ class RecipeListViewModel: ObservableObject {
         }
         
         group.notify(queue: .main) { [weak self] in
-            self?.isLoading = false
+            guard let self = self else { return }
             
-            if hasError && fetchedRecipes.isEmpty {
-                self?.errorMessage = "Failed to load featured recipes."
+            self.isLoading = false
+            
+            if fetchedRecipes.isEmpty && hasError {
+                self.errorMessage = "Failed to load recipes. Please try again."
             } else {
-                self?.recipes = fetchedRecipes
-                self?.hasMoreRecipes = true // Always allow loading more featured recipes
+                // Shuffle recipes if requested for better randomization
+                let finalRecipes = shouldShuffle ? fetchedRecipes.shuffled() : fetchedRecipes
+                
+                // Limit to specified count
+                self.recipes = Array(finalRecipes.prefix(limit))
+                
+                // Set if there are more recipes available
+                self.hasMoreRecipes = fetchedRecipes.count > self.recipes.count
             }
         }
     }
     
     func loadMoreRecipes() {
-        guard !isLoading else { return }
+        guard !isLoading, hasMoreRecipes else { return }
         
         isLoading = true
         currentPage += 1
         
         if isFeaturedQuery {
             // For featured recipes, load more random ingredients
-            let newIngredients = getRandomIngredients(count: 2)
+            let newIngredients = getRandomIngredients(count: 3)
             usedFeaturedIngredients.append(contentsOf: newIngredients)
             
             let group = DispatchGroup()
@@ -176,14 +196,28 @@ class RecipeListViewModel: ObservableObject {
                     defer { group.leave() }
                     
                     if case .success(let response) = result {
-                        let recipes = response.hits.prefix(4).map { $0.recipe }
+                        // Filter to only include recipes with valid images
+                        let recipes = response.hits
+                            .map { $0.recipe }
+                            .filter { !$0.image.isEmpty }
+                            .prefix(4)
+                        
                         newRecipes.append(contentsOf: recipes)
                     }
                 }
             }
             
             group.notify(queue: .main) { [weak self] in
-                self?.recipes.append(contentsOf: newRecipes)
+                if newRecipes.isEmpty {
+                    // Instead of adding placeholders, just mark loading as complete
+                    self?.isLoading = false
+                    self?.hasMoreRecipes = false
+                    // Optionally, set an error message 
+                    self?.errorMessage = "No recipes found. Try different filters."
+                } else {
+                    // Shuffle for better randomization
+                    self?.recipes.append(contentsOf: newRecipes.shuffled())
+                }
                 self?.isLoading = false
             }
         } else if let nextUrl = nextPageUrl, !nextUrl.isEmpty {
@@ -195,8 +229,19 @@ class RecipeListViewModel: ObservableObject {
                     
                     switch result {
                     case .success(let response):
-                        let newRecipes = response.hits.map { $0.recipe }
-                        self?.recipes.append(contentsOf: newRecipes)
+                        // Filter out recipes with empty image URLs
+                        let newRecipes = response.hits
+                            .map { $0.recipe }
+                            .filter { !$0.image.isEmpty }
+                        
+                        if newRecipes.isEmpty {
+                            // Instead of adding placeholders, just update state
+                            self?.hasMoreRecipes = false
+                            self?.errorMessage = "No more recipes found."
+                        } else {
+                            self?.recipes.append(contentsOf: newRecipes)
+                        }
+                        
                         self?.nextPageUrl = response._links?.next?.href
                         self?.hasMoreRecipes = (self?.nextPageUrl != nil && !(self?.nextPageUrl?.isEmpty ?? true))
                     case .failure(let error):
@@ -224,8 +269,19 @@ class RecipeListViewModel: ObservableObject {
                             // No more results
                             self?.hasMoreRecipes = false
                         } else {
-                            let newRecipes = response.hits.map { $0.recipe }
-                            self?.recipes.append(contentsOf: newRecipes)
+                            // Filter out recipes with empty image URLs
+                            let newRecipes = response.hits
+                                .map { $0.recipe }
+                                .filter { !$0.image.isEmpty }
+                            
+                            if newRecipes.isEmpty {
+                                // Instead of adding placeholders, update state
+                                self?.hasMoreRecipes = false
+                                self?.errorMessage = "No recipes found with images."
+                            } else {
+                                self?.recipes.append(contentsOf: newRecipes)
+                            }
+                            
                             self?.nextPageUrl = response._links?.next?.href
                             self?.hasMoreRecipes = (self?.nextPageUrl != nil && !(self?.nextPageUrl?.isEmpty ?? true))
                                 || response.hits.count >= 20 // If we got a full page of results, assume there's more

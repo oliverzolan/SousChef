@@ -3,6 +3,7 @@ import Firebase
 
 struct SettingView: View {
     @StateObject private var viewModel = SettingsViewModel()
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationView {
@@ -11,11 +12,23 @@ struct SettingView: View {
 
                 VStack(spacing: 30) {
                     // Header
-                    Text("Settings")
-                        .font(.title)
-                        .fontWeight(.medium)
-                        .foregroundColor(.black)
-                        .padding(.top, 40)
+                    HStack {
+                        Text("Settings")
+                            .font(.title)
+                            .fontWeight(.medium)
+                            .foregroundColor(.black)
+                        
+                        Spacer()
+                        
+                        Button(action: {
+                            dismiss()
+                        }) {
+                            Image(systemName: "xmark")
+                                .font(.title3)
+                                .foregroundColor(.black)
+                        }
+                    }
+                    .padding(.top, 40)
 
                     // Input Fields
                     VStack(spacing: 16) {
@@ -34,7 +47,9 @@ struct SettingView: View {
                     }
 
                     // Save Button
-                    Button(action: viewModel.updateUserInfo) {
+                    Button(action: {
+                        viewModel.updateUserInfo()
+                    }) {
                         Text("Save Changes")
                             .fontWeight(.bold)
                             .frame(maxWidth: .infinity)
@@ -51,6 +66,11 @@ struct SettingView: View {
         }
         .onAppear {
             viewModel.loadUserData()
+        }
+        .onChange(of: viewModel.updateSuccess) { success in
+            if success {
+                dismiss()
+            }
         }
     }
 }

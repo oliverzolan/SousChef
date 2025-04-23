@@ -163,7 +163,7 @@ struct LoginView: View {
 struct LoginView_Previews: PreviewProvider {
     static var previews: some View {
         LoginView()
-            .previewDevice(PreviewDevice(rawValue: "iPhone 12"))
+            .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro"))
             .environmentObject(UserSession())
     }
 }

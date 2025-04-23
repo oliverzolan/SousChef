@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import Combine
 
 struct IdentifiableTuple: Identifiable {
     let id = UUID()
@@ -9,6 +10,43 @@ struct IdentifiableTuple: Identifiable {
     init(_ tuple: (String, String)) {
         self.item1 = tuple.0
         self.item2 = tuple.1
+    }
+}
+
+struct HomeHeader: View {
+    @Binding var showMenu: Bool
+    @EnvironmentObject var userSession: UserSession
+    
+    var body: some View {
+        HStack {
+            Text(userSession.fullName ?? "Chef")
+                .font(.custom("Inter-Bold", size: 28))
+                .lineLimit(1)
+            Spacer()
+            HStack(spacing: 16) {
+                Button(action: {
+                    // Notifications action
+                }) {
+                    Image(systemName: "bell")
+                        .foregroundColor(.black)
+                        .overlay(
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 10, height: 10)
+                                .offset(x: 6, y: -6)
+                        )
+                }
+                Button(action: {
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        showMenu.toggle()
+                    }
+                }) {
+                    Image(systemName: "line.horizontal.3")
+                        .foregroundColor(.black)
+                }
+            }
+        }
+        .padding(.horizontal)
     }
 }
 
@@ -25,6 +63,8 @@ struct HomePage: View {
     @State private var navigateToFilteredResults = false
     @State private var filtersViewModel: FiltersViewModel?
     @State private var selectedFilterCategory: String? = nil
+    @State private var scrollToTop = false
+    @FocusState private var isSearchFieldFocused: Bool
     
     // Filter selections
     @State private var selectedCuisineType: String? = nil
@@ -36,46 +76,89 @@ struct HomePage: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                ScrollView {
-                    VStack(spacing: 20) {
-                        HomeHeader(showMenu: $showMenu)
-                        HomeSearchBar(searchText: $searchText)
-                        HomeFilterBar(
-                            selectedFilterCategory: $selectedFilterCategory,
-                            showFilters: $showFilters,
-                            selectedCuisineType: $selectedCuisineType,
-                            selectedMealType: $selectedMealType,
-                            selectedDietType: $selectedDietType,
-                            selectedHealthType: $selectedHealthType,
-                            selectedMaxTime: $selectedMaxTime,
-                            filterController: filterController,
-                            onApplyFilters: applyFilters
-                        )
-                        
-                        if hasActiveFilters {
-                            FilteredRecipesSection(filterController: filterController)
-                        } else {
-                            // Scrollable content
-                            ScrollView {
-                                VStack(spacing: 20) {
-                                    // Recipe Grids
-                                    SimpleRecipeGrid(title: "From Pantry", recipes: homepageController.pantryRecipes)
+                ScrollViewReader { scrollProxy in
+                    ScrollView {
+                        VStack(spacing: 20) {
+                            HomeHeader(showMenu: $showMenu)
+                            
+                            SearchComponent(
+                                searchText: $searchText,
+                                searchQuery: .constant("recipes"),
+                                onSubmit: performSearch,
+                                isSearchFieldFocused: _isSearchFieldFocused
+                            )
+                            
+                            HomeFilterBar(
+                                selectedFilterCategory: $selectedFilterCategory,
+                                showFilters: $showFilters,
+                                selectedCuisineType: $selectedCuisineType,
+                                selectedMealType: $selectedMealType,
+                                selectedDietType: $selectedDietType,
+                                selectedHealthType: $selectedHealthType,
+                                selectedMaxTime: $selectedMaxTime,
+                                filterController: filterController,
+                                onApplyFilters: applyFilters
+                            )
+                            
+                            if hasActiveFilters {
+                                VStack(spacing: 16) {
+                                    HStack {
+                                        Text("Results")
+                                            .font(.title3)
+                                            .fontWeight(.bold)
+                                        
+                                        Spacer()
+                                        
+                                        Button(action: {
+                                            clearFilters()
+                                        }) {
+                                            Text("Clear All")
+                                                .font(.system(size: 14, weight: .medium))
+                                                .foregroundColor(AppColors.secondary3)
+                                        }
+                                    }
+                                    .padding(.horizontal)
                                     
-                                    // Browse by Meal Type
-                                    MealTypeSection()
-                                    
-                                    // Browse by Cuisine
-                                    CuisineSection()
-                                    
-                                    SimpleRecipeGrid(title: "Featured", recipes: homepageController.featuredRecipes)
+                                    FilteredRecipesSection(filterController: filterController)
+                                }
+                            } else {
+                                // Scrollable content
+                                ScrollView {
+                                    VStack(spacing: 20) {
+                                        // Recipe Grids
+                                        SimpleRecipeGrid(title: "From Pantry", recipes: homepageController.pantryRecipes)
+                                        
+                                        // Browse by Meal Type
+                                        MealTypeSection(
+                                            filterController: filterController,
+                                            onSelectMealType: selectMealType
+                                        )
+                                        
+                                        // Browse by Cuisine
+                                        CuisineSection(
+                                            filterController: filterController,
+                                            onSelectCuisine: selectCuisine
+                                        )
+                                        
+                                        SimpleRecipeGrid(title: "Featured", recipes: homepageController.featuredRecipes)
+                                    }
                                 }
                             }
                         }
+                        .padding(.top)
+                        .id("top")
                     }
-                    .padding(.top)
+                    .blur(radius: showMenu || showFilters ? 5 : 0)
+                    .ignoresSafeArea(.keyboard, edges: .bottom)
+                    .onChange(of: scrollToTop) { newValue in
+                        if newValue {
+                            withAnimation(.smooth) {
+                                scrollProxy.scrollTo("top", anchor: .top)
+                            }
+                            scrollToTop = false
+                        }
+                    }
                 }
-                .blur(radius: showMenu || showFilters ? 5 : 0)
-                .ignoresSafeArea(.keyboard, edges: .bottom)
                 
                 if navigateToFilteredResults, 
                    let filters = filtersViewModel {
@@ -98,7 +181,7 @@ struct HomePage: View {
                     
                     HStack {
                         Spacer()
-                        SideMenuView(userName: "John Paul Gaultier") {
+                        SideMenuView(userName: userSession.fullName ?? "Chef") {
                             withAnimation(.easeOut(duration: 0.3)) {
                                 showMenu = false
                             }
@@ -166,6 +249,11 @@ struct HomePage: View {
                 selectedFilterCategory = nil
                 showFilters = false
             }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("UserDisplayNameChanged"))) { notification in
+                if let displayName = notification.userInfo?["displayName"] as? String {
+                    userSession.updateFullName(displayName)
+                }
+            }
         }
     }
 
@@ -193,5 +281,69 @@ struct HomePage: View {
         withAnimation(.spring()) {
             showFilters = false
         }
+        
+        // Scroll to top when filters are applied
+        scrollToTop = true
+    }
+    
+    private func selectMealType(_ mealType: String) {
+        // Reset other filters
+        selectedCuisineType = nil
+        selectedDietType = nil
+        selectedHealthType = nil
+        selectedMaxTime = nil
+        
+        // Set meal type filter
+        selectedMealType = mealType
+        
+        // Apply filters
+        applyFilters()
+    }
+    
+    private func selectCuisine(_ cuisine: String) {
+        // Reset other filters
+        selectedMealType = nil
+        selectedDietType = nil
+        selectedHealthType = nil
+        selectedMaxTime = nil
+        
+        // Set cuisine type filter
+        selectedCuisineType = cuisine
+        
+        // Apply filters
+        applyFilters()
+    }
+    
+    private func clearFilters() {
+        // Reset all selections
+        selectedCuisineType = nil
+        selectedMealType = nil
+        selectedDietType = nil
+        selectedHealthType = nil
+        selectedMaxTime = nil
+        
+        // Clear search text
+        searchText = ""
+        
+        // Reset controller filters
+        filterController.resetFilters()
+    }
+    
+    private func performSearch(_ query: String) {
+        // Reset all filter selections
+        selectedCuisineType = nil
+        selectedMealType = nil
+        selectedDietType = nil
+        selectedHealthType = nil
+        selectedMaxTime = nil
+        
+        // Reset controller filters
+        filterController.resetFilters()
+        
+        // Set up a general search
+        filterController.filters.searchQuery = query
+        
+        // Apply the search filter
+        filterController.applyFilters()
     }
 }
