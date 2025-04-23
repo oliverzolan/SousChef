@@ -29,7 +29,6 @@ class AppleAuthViewModel: NSObject, ObservableObject, ASAuthorizationControllerD
         authorizationController.performRequests()
     }
 
-    // MARK: - ASAuthorizationControllerDelegate
     func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
         if let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential {
             guard let identityToken = appleIDCredential.identityToken,
@@ -67,7 +66,6 @@ class AppleAuthViewModel: NSObject, ObservableObject, ASAuthorizationControllerD
         }
     }
 
-    // MARK: - Nonce Generator for Secure Authentication
     private func generateNonce(length: Int = 32) -> String {
         let charset: [Character] = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
         var result = String()
@@ -111,24 +109,23 @@ class AppleAuthViewModel: NSObject, ObservableObject, ASAuthorizationControllerD
 
         Auth.auth().signIn(with: firebaseCredential) { authResult, error in
             if let error = error {
-                print("🔥 Firebase Sign-In with Apple failed: \(error.localizedDescription)")
+                print("Firebase Sign-In with Apple failed: \(error.localizedDescription)")
                 return
             }
 
             guard let user = authResult?.user else {
-                print("⚠️ Apple Sign-In succeeded but no user data was returned.")
+                print("Apple Sign-In succeeded but no user data was returned.")
                 return
             }
 
-            print("✅ Successfully signed in with Apple! User ID: \(user.uid)")
+            print("Successfully signed in with Apple! User ID: \(user.uid)")
 
-            // Optionally, update user display name
             if let fullName = credential.fullName {
                 let changeRequest = user.createProfileChangeRequest()
                 changeRequest.displayName = "\(fullName.givenName ?? "") \(fullName.familyName ?? "")".trimmingCharacters(in: .whitespaces)
                 changeRequest.commitChanges { error in
                     if let error = error {
-                        print("⚠️ Failed to update display name: \(error.localizedDescription)")
+                        print(" Failed to update display name: \(error.localizedDescription)")
                     }
                 }
             }

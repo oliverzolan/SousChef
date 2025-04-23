@@ -1,16 +1,10 @@
-//
-//  LoginView.swift
-//  SousChef
-//
-//  Created by Zachary Waiksnoris on 12/5/24.
-//
-
 import SwiftUI
 import AuthenticationServices
 
 struct LoginView: View {
     @StateObject private var viewModel = LoginViewController()
     @EnvironmentObject var userSession: UserSession
+    @State private var showSignUp = false
 
     var body: some View {
         NavigationStack {
@@ -23,18 +17,24 @@ struct LoginView: View {
                         Text("Welcome Back!")
                             .font(.title)
                             .fontWeight(.medium)
-                            .foregroundColor(Color.black)
+                            .foregroundColor(.black)
                             .padding(.top, 50)
 
-                        // Input Fields
                         VStack(spacing: 16) {
-                            CustomTextField(label: "Email", placeholder: "Enter your email", text: $viewModel.email)
-                                .padding(.horizontal, 24)
+                            CustomTextField(
+                                label: "Email",
+                                placeholder: "Enter your email",
+                                text: $viewModel.email
+                            )
+                            .padding(.horizontal, 24)
 
-                            CustomSecureField(label: "Password", placeholder: "Enter your password", text: $viewModel.password)
-                                .padding(.horizontal, 24)
+                            CustomSecureField(
+                                label: "Password",
+                                placeholder: "Enter your password",
+                                text: $viewModel.password
+                            )
+                            .padding(.horizontal, 24)
 
-                            // Log In Button
                             Button(action: viewModel.logIn) {
                                 Text("Sign In")
                                     .fontWeight(.bold)
@@ -47,72 +47,54 @@ struct LoginView: View {
                                     )
                             }
                             .padding(.horizontal, 24)
+                        }
 
-                            // Navigation to Create Account View
-                            VStack(spacing: 8) {
-                                NavigationLink(
-                                    destination: CreateAccountView()
-                                        .navigationBarBackButtonHidden(true)
-                                ) {
-                                    HStack {
-                                        Text("Don't have an account?")
-                                            .foregroundColor(.black)
-
-                                        Text("Sign up")
-                                            .foregroundColor(.blue)
-                                            .fontWeight(.bold)
-                                    }
-                                }
-
-                                NavigationLink(
-                                    destination: ForgotPasswordView()
-                                        .navigationBarBackButtonHidden(false)
-                                ) {
-                                    Text("Forgot Password?")
-                                        .foregroundColor(.blue)
+                        // Sign up & Forgot password on separate lines
+                        VStack(spacing: 8) {
+                            Button {
+                                showSignUp = true
+                            } label: {
+                                HStack {
+                                    Text("Don't have an account?")
+                                    Text("Sign up")
                                         .fontWeight(.bold)
                                 }
+                                .foregroundColor(.blue)
                             }
+
+                            NavigationLink("Forgot Password?", destination: ForgotPasswordView())
+                                .fontWeight(.bold)
+                                .foregroundColor(.blue)
                         }
+                        .padding(.horizontal, 24)
 
                         HStack {
                             Divider()
-                                .frame(maxWidth: .infinity, maxHeight: 1)
-                                .background(Color.gray.opacity(0.5))
-
                             Text("Or With")
-                                .font(.headline)
-                                .foregroundColor(.gray)
-                                .padding(.horizontal, 10)
-
                             Divider()
-                                .frame(maxWidth: .infinity, maxHeight: 1)
-                                .background(Color.gray.opacity(0.5))
                         }
-                        .frame(height: 20)
+                        .font(.headline)
+                        .foregroundColor(.gray)
                         .padding(.horizontal, 40)
 
-                        if let errorMessage = viewModel.errorMessage {
-                            Text(errorMessage)
+                        if let error = viewModel.errorMessage {
+                            Text(error)
                                 .foregroundColor(.red)
                                 .padding()
                         }
 
-                        // Google Sign-In Button
                         Button(action: viewModel.signInWithGoogle) {
                             HStack {
                                 Image("google-logo")
                                     .resizable()
                                     .scaledToFit()
                                     .frame(width: 24, height: 24)
-
                                 Text("Sign in with Google")
                                     .fontWeight(.bold)
                                     .foregroundColor(.black)
                             }
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.clear)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 10)
                                     .stroke(Color.black, lineWidth: 1)
@@ -120,7 +102,6 @@ struct LoginView: View {
                         }
                         .padding(.horizontal, 24)
 
-                        // Apple Sign-In Button
                         SignInWithAppleButton(
                             onRequest: viewModel.handleAppleRequest,
                             onCompletion: viewModel.handleAppleCompletion
@@ -128,18 +109,18 @@ struct LoginView: View {
                         .frame(height: 50)
                         .padding(.horizontal, 24)
 
-                        // Guest Login Button
-                        Button(action: {
+                        Button {
                             userSession.loginAsGuest()
                             viewModel.navigateToHome = true
-                        }) {
+                        } label: {
                             Text("Continue as Guest")
                                 .fontWeight(.bold)
                                 .frame(maxWidth: .infinity)
                                 .padding()
                                 .foregroundColor(.black)
                                 .background(
-                                    RoundedRectangle(cornerRadius: 30).fill(.white)
+                                    RoundedRectangle(cornerRadius: 30)
+                                        .fill(.white)
                                 )
                         }
                         .padding(.horizontal, 24)
@@ -150,20 +131,17 @@ struct LoginView: View {
                     .padding(.vertical, 40)
                 }
                 .ignoresSafeArea(.keyboard, edges: .bottom)
-                .navigationDestination(isPresented: $viewModel.navigateToHome) {
-                    MainTabView()
-                        .environmentObject(userSession)
-                        .navigationBarBackButtonHidden(true)
-                }
+            }
+            .navigationDestination(isPresented: $showSignUp) {
+                CreateAccountView()
+                    .environmentObject(userSession)
+                    .navigationBarBackButtonHidden(true)
+            }
+            .navigationDestination(isPresented: $viewModel.navigateToHome) {
+                MainTabView()
+                    .environmentObject(userSession)
+                    .navigationBarBackButtonHidden(true)
             }
         }
-    }
-}
-
-struct LoginView_Previews: PreviewProvider {
-    static var previews: some View {
-        LoginView()
-            .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro"))
-            .environmentObject(UserSession())
     }
 }
