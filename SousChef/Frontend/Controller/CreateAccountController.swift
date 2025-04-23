@@ -1,10 +1,3 @@
-//
-//  CreateAccountViewController.swift
-//  SousChef
-//
-//  Created by Zachary Waiksnoris on 2/1/25.
-//
-
 import SwiftUI
 import FirebaseAuth
 import GoogleSignIn
@@ -12,95 +5,89 @@ import AuthenticationServices
 import CryptoKit
 
 class CreateAccountViewController: ObservableObject {
-    @Published var email: String = ""
-    @Published var fullName: String = ""
-    @Published var displayName: String = ""
-    @Published var password: String = ""
+    @Published var email = ""
+    @Published var displayName = ""
+    @Published var password = ""
     @Published var errorMessage: String?
-    @Published var isLoggedIn: Bool = false
+    @Published var successMessage: String?
+    @Published var isLoading = false
+    @Published var navigateToHome = false
+
     private var currentNonce: String?
 
-    
     func signUp() {
-        Auth.auth().createUser(withEmail: email, password: password) { result, error in
-            if let error = error {
-                DispatchQueue.main.async {
-                    self.errorMessage = error.localizedDescription
-                }
-            } else if let user = result?.user {
-                self.updateUserDisplayName(user: user)
+        guard !isLoading else { return }
+        isLoading = true
+        errorMessage = nil
+        successMessage = nil
 
-                user.getIDToken { token, error in
+        Auth.auth().createUser(withEmail: email, password: password) { result, error in
+            DispatchQueue.main.async {
+                self.isLoading = false
+                if let error = error {
+                    self.errorMessage = error.localizedDescription
+                    return
+                }
+                guard let user = result?.user else { return }
+
+                let changeReq = user.createProfileChangeRequest()
+                changeReq.displayName = self.displayName
+                changeReq.commitChanges { _ in }
+
+                user.getIDToken { token, _ in
                     if let token = token {
                         self.sendToServer(email: self.email, token: token, displayName: self.displayName)
-                    } else {
-                        DispatchQueue.main.async {
-                            self.errorMessage = "Failed to retrieve token."
-                        }
                     }
                 }
+
+                self.successMessage = "Account created successfully."
+                self.navigateToHome = true
             }
         }
     }
 
-    private func updateUserDisplayName(user: User) {
-        let changeRequest = user.createProfileChangeRequest()
-        changeRequest.displayName = self.displayName // Set Display Name
-        changeRequest.commitChanges { error in
-            if let error = error {
-                DispatchQueue.main.async {
-                    self.errorMessage = "Failed to update display name: \(error.localizedDescription)"
-                }
-            }
-        }
-    }
-
-    
     func signUpWithGoogle() {
-        guard let rootViewController = UIApplication.shared.windows.first?.rootViewController else {
-            self.errorMessage = "Unable to get root view controller."
+        guard let rootVC = UIApplication.shared.connectedScenes
+                .compactMap({ ($0 as? UIWindowScene)?.keyWindow })
+                .first?.rootViewController else {
+            DispatchQueue.main.async { self.errorMessage = "Unable to get root view controller." }
             return
         }
 
-        GIDSignIn.sharedInstance.signIn(withPresenting: rootViewController) { result, error in
+        GIDSignIn.sharedInstance.signIn(withPresenting: rootVC) { result, error in
             if let error = error {
-                DispatchQueue.main.async {
-                    self.errorMessage = error.localizedDescription
-                }
+                DispatchQueue.main.async { self.errorMessage = error.localizedDescription }
                 return
             }
-
-            guard let authentication = result?.user,
-                  let idToken = authentication.idToken?.tokenString else {
-                DispatchQueue.main.async {
-                    self.errorMessage = "Google authentication failed."
-                }
+            guard
+                let authUser = result?.user,
+                let idToken = authUser.idToken?.tokenString
+            else {
+                DispatchQueue.main.async { self.errorMessage = "Google authentication failed." }
                 return
             }
-
-            let credential = GoogleAuthProvider.credential(withIDToken: idToken, accessToken: authentication.accessToken.tokenString)
-
+            let credential = GoogleAuthProvider.credential(
+                withIDToken: idToken,
+                accessToken: authUser.accessToken.tokenString
+            )
             Auth.auth().signIn(with: credential) { authResult, error in
-                if let error = error {
-                    DispatchQueue.main.async {
-                        self.errorMessage = error.localizedDescription
-                    }
-                    return
-                }
-
-               
-                if let user = authResult?.user {
-                    self.updateUserDisplayName(user: user)
-                }
-
                 DispatchQueue.main.async {
-                    self.isLoggedIn = true
+                    if let error = error {
+                        self.errorMessage = error.localizedDescription
+                        return
+                    }
+                    if let user = authResult?.user {
+                        let req = user.createProfileChangeRequest()
+                        req.displayName = self.displayName
+                        req.commitChanges { _ in }
+                    }
+                    self.successMessage = "Account created successfully."
+                    self.navigateToHome = true
                 }
             }
         }
     }
 
-    
     func handleAppleRequest(_ request: ASAuthorizationAppleIDRequest) {
         let nonce = generateNonce()
         currentNonce = nonce
@@ -111,103 +98,74 @@ class CreateAccountViewController: ObservableObject {
     func handleAppleCompletion(_ result: Result<ASAuthorization, Error>) {
         switch result {
         case .success(let authorization):
-            if let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential,
-               let identityToken = appleIDCredential.identityToken,
-               let tokenString = String(data: identityToken, encoding: .utf8) {
-                
-                guard let nonce = currentNonce else {
-                    self.errorMessage = "Nonce is missing."
-                    return
-                }
-
-                let credential = OAuthProvider.credential(withProviderID: "apple.com", idToken: tokenString, rawNonce: nonce)
-                
-                Auth.auth().signIn(with: credential) { authResult, error in
+            guard
+                let appleCred = authorization.credential as? ASAuthorizationAppleIDCredential,
+                let tokenData = appleCred.identityToken,
+                let tokenString = String(data: tokenData, encoding: .utf8),
+                let nonce = currentNonce
+            else {
+                DispatchQueue.main.async { self.errorMessage = "Apple Sign-In failed." }
+                return
+            }
+            let credential = OAuthProvider.credential(
+                withProviderID: "apple.com",
+                idToken: tokenString,
+                rawNonce: nonce
+            )
+            Auth.auth().signIn(with: credential) { authResult, error in
+                DispatchQueue.main.async {
                     if let error = error {
-                        DispatchQueue.main.async {
-                            self.errorMessage = error.localizedDescription
-                        }
+                        self.errorMessage = error.localizedDescription
                         return
                     }
-
-                    
-                    if let user = authResult?.user, let fullName = appleIDCredential.fullName {
-                        let displayName = "\(fullName.givenName ?? "") \(fullName.familyName ?? "")".trimmingCharacters(in: .whitespaces)
-                        self.displayName = displayName
-                        self.updateUserDisplayName(user: user)
+                    if let user = authResult?.user {
+                        let name = appleCred.fullName
+                        self.displayName = "\(name?.givenName ?? "") \(name?.familyName ?? "")".trimmingCharacters(in: .whitespaces)
+                        let req = user.createProfileChangeRequest()
+                        req.displayName = self.displayName
+                        req.commitChanges { _ in }
                     }
-
-                    DispatchQueue.main.async {
-                        self.isLoggedIn = true
-                    }
+                    self.successMessage = "Account created successfully."
+                    self.navigateToHome = true
                 }
             }
         case .failure(let error):
-            DispatchQueue.main.async {
-                self.errorMessage = "Apple Sign-In failed: \(error.localizedDescription)"
-            }
+            DispatchQueue.main.async { self.errorMessage = error.localizedDescription }
         }
     }
 
-    
     func generateNonce(length: Int = 32) -> String {
-        let charset: [Character] = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
-        var result = String()
-        var remainingLength = length
-
-        while remainingLength > 0 {
-            var randomBytes = [UInt8](repeating: 0, count: 16)
-            let status = SecRandomCopyBytes(kSecRandomDefault, randomBytes.count, &randomBytes)
-
-            if status == errSecSuccess {
-                randomBytes.forEach { byte in
-                    if remainingLength == 0 { return }
-                    if byte < charset.count {
-                        result.append(charset[Int(byte)])
-                        remainingLength -= 1
-                    }
+        let charset = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
+        var result = "", remaining = length
+        while remaining > 0 {
+            var bytes = [UInt8](repeating: 0, count: 16)
+            _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+            for b in bytes where remaining > 0 {
+                if b < charset.count {
+                    result.append(charset[Int(b)])
+                    remaining -= 1
                 }
-            } else {
-                fatalError("Unable to generate secure nonce")
             }
         }
-
         return result
     }
 
     func sha256(_ input: String) -> String {
-        let inputData = Data(input.utf8)
-        let hashedData = SHA256.hash(data: inputData)
-        return hashedData.map { String(format: "%02x", $0) }.joined()
+        let hash = SHA256.hash(data: Data(input.utf8))
+        return hash.map { String(format: "%02x", $0) }.joined()
     }
 
-    
     private func sendToServer(email: String, token: String, displayName: String) {
-        guard let url = URL(string: "https://souschef.click/users/create") else {
-            print("Invalid URL")
-            return
-        }
-
+        guard let url = URL(string: "https://souschef.click/users/create") else { return }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue(token, forHTTPHeaderField: "Authorization")
-        request.addValue(email, forHTTPHeaderField: "Email")
-        request.addValue(displayName, forHTTPHeaderField: "Display-Name")
-
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(token, forHTTPHeaderField: "Authorization")
+        request.setValue(email, forHTTPHeaderField: "Email")
+        request.setValue(displayName, forHTTPHeaderField: "Display-Name")
+        URLSession.shared.dataTask(with: request) { _, response, error in
             if let error = error {
-                print("Error sending data to server: \(error.localizedDescription)")
-                return
-            }
-
-            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
-                print("Successfully sent data to server.")
-                DispatchQueue.main.async {
-                    self.isLoggedIn = true
-                }
-            } else {
-                print("Server responded with an error.")
+                print(error.localizedDescription)
             }
         }.resume()
     }
