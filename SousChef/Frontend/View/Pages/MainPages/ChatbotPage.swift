@@ -18,10 +18,12 @@ struct ChatbotPage: View {
     var recipeURL: String? = nil
 
     var body: some View {
-        VStack {
+        VStack(spacing: 0) {
             // Header
             ChatHeader(onNewChat: startNewChat)
+                .zIndex(1)
 
+            // Chat content
             ZStack {
                 Color.white
                     .edgesIgnoringSafeArea(.all)
@@ -77,6 +79,8 @@ struct ChatbotPage: View {
                     }
                     .listStyle(PlainListStyle())
                     .background(Color.clear)
+                    .scrollContentBackground(.hidden)
+                    .listRowBackground(Color.clear)
                     .onChange(of: chatbotController.messages.count) { _ in
                         withAnimation {
                             proxy.scrollTo(bottomID, anchor: .bottom)
@@ -118,7 +122,6 @@ struct ChatbotPage: View {
                 // Send button
                 Button(action: {
                     sendMessage()
-                    hideKeyboardWithAnimation()
                 }) {
                     Image("chef_hat_icon")
                         .resizable()
@@ -150,11 +153,17 @@ struct ChatbotPage: View {
     private func startNewChat() {
         chatbotController.messages.removeAll()
         userInput = ""
+        if speechRecognizer.isRecording {
+            speechRecognizer.stopRecording()
+        }
     }
 
     // Sends message to AI
     private func sendMessage() {
         guard !userInput.isEmpty else { return }
+        if speechRecognizer.isRecording {
+            speechRecognizer.stopRecording()
+        }
         chatbotController.sendMessage(userInput)
         userInput = ""
         hideKeyboardWithAnimation()
@@ -163,6 +172,9 @@ struct ChatbotPage: View {
     private func hideKeyboardWithAnimation() {
         withAnimation(.easeInOut(duration: 0.2)) {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        }
+        if speechRecognizer.isRecording {
+            speechRecognizer.stopRecording()
         }
     }
     

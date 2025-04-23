@@ -204,7 +204,7 @@ struct BaseIngredientsPage: View {
                     .fontWeight(.semibold)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.blue)
+                    .background(AppColors.primary2)
                     .foregroundColor(.white)
                     .cornerRadius(10)
                     .padding(.horizontal)

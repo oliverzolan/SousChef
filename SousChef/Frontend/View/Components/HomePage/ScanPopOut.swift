@@ -277,6 +277,7 @@ struct ScanPopOut: View {
         
         let hostingController = UIHostingController(rootView: scannerView)
         hostingController.modalPresentationStyle = .fullScreen
+        hostingController.modalTransitionStyle = .crossDissolve
         
         // Dismiss the scan popup first
         isShowing = false
@@ -312,6 +313,7 @@ struct ScanPopOut: View {
         
         let hostingController = UIHostingController(rootView: receiptView)
         hostingController.modalPresentationStyle = .fullScreen
+        hostingController.modalTransitionStyle = .crossDissolve
         
         // Dismiss the scan popup first
         isShowing = false
