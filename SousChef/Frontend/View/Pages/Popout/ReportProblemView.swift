@@ -1,41 +1,66 @@
 import SwiftUI
+import FirebaseAuth
+import FirebaseFirestore
+
+import SwiftUI
+import FirebaseAuth
 import FirebaseFirestore
 
 class ReportProblemViewModel: ObservableObject {
-    @Published var subject = ""
-    @Published var description = ""
-    @Published var isLoading = false
+    @Published var subject        = ""
+    @Published var description    = ""
+    @Published var isLoading      = false
     @Published var errorMessage: String?
     @Published var successMessage: String?
-    @Published var navigateBack = false
+    @Published var navigateBack   = false
 
     private let db = Firestore.firestore()
 
     func submitReport() {
+        // 1) must be logged in
+        guard let user = Auth.auth().currentUser else {
+            errorMessage = "You must be logged in to submit a report."
+            return
+        }
+
+        // 2) validate inputs
         guard !subject.trimmingCharacters(in: .whitespaces).isEmpty,
               !description.trimmingCharacters(in: .whitespaces).isEmpty else {
             errorMessage = "Please fill out all fields."
             return
         }
-        isLoading = true
+
+        isLoading    = true
         errorMessage = nil
+
+        // 3) build payload
         let data: [String: Any] = [
-            "subject": subject,
+            "subject":     subject,
             "description": description,
-            "createdAt": FieldValue.serverTimestamp()
+            "createdAt":   FieldValue.serverTimestamp(),
+            "reportedBy":  user.uid
         ]
+
+        // 4) submit to Firestore
         db.collection("reports")
-            .addDocument(data: data) { [weak self] error in
-                DispatchQueue.main.async {
-                    self?.isLoading = false
-                    if let error = error {
-                        self?.errorMessage = error.localizedDescription
+          .addDocument(data: data) { [weak self] error in
+            DispatchQueue.main.async {
+                self?.isLoading = false
+
+                if let nsErr = error as NSError? {
+                    // map the nested Code enum
+                    if let code = FirestoreErrorCode.Code(rawValue: nsErr.code),
+                       code == .permissionDenied {
+                        self?.errorMessage = "You don’t have permission to submit a report."
                     } else {
-                        self?.successMessage = "Report sent. Thank you!"
-                        self?.navigateBack = true
+                        self?.errorMessage = nsErr.localizedDescription
                     }
+                } else {
+                    self?.successMessage = "Report sent. Thank you!"
+                    self?.navigateBack = true
                 }
             }
+        }
     }
 }
 
@@ -117,6 +142,7 @@ struct ReportProblemView: View {
                     .padding(.vertical, 20)
                 }
             }
+            .navigationBarTitleDisplayMode(.inline)
         }
         .onChange(of: viewModel.navigateBack) { shouldDismiss in
             if shouldDismiss {
