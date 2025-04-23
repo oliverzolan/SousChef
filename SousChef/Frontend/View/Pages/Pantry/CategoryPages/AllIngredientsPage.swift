@@ -10,8 +10,9 @@ struct AllIngredientsPage: View {
     
     var body: some View {
         BaseIngredientsPage(
-            title: "Ingredients",
-            ingredients: pantryController.pantryItems.map { $0.text }
+            title: "All Ingredients",
+            ingredients: pantryController.pantryItems.map { $0.text },
+            category: .vegetable // Default color, could be changed based on UI preference
         )
         .onAppear {
             pantryController.fetchIngredients()
