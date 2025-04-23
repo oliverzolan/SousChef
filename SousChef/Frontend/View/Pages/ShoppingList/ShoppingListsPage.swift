@@ -5,19 +5,37 @@ struct ShoppingListsPage: View {
     @State private var isShowingAddPopup = false
     @State private var newListName = ""
     
+    private var dateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "M/dd/yyyy"
+        return formatter
+    }
+    
     var body: some View {
         ZStack {
             NavigationView {
                 List {
                     ForEach(userSession.shoppingLists) { list in
                         NavigationLink(destination: ShoppingCartPage(shoppingList: list)) {
-                            Text(list.name)
+                            HStack(spacing: 8) {
+                                Text(list.name)
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                
+                                Text("Created \(dateFormatter.string(from: list.createdDate))")
+                                    .font(.subheadline)
+                                    .foregroundColor(Color.white.opacity(0.85))
+                            }
+                            .padding(.vertical, 4)
                         }
+                        .listRowBackground(AppColors.secondary3)
                     }
                     .onDelete(perform: deleteLists)
                 }
                 .navigationTitle("Shopping Lists")
             }
+            .navigationViewStyle(StackNavigationViewStyle())
+            .accentColor(.white)
             
             VStack {
                 Spacer()
@@ -60,7 +78,7 @@ struct ShoppingListsPage: View {
                         Button("Add") {
                             let trimmedName = newListName.trimmingCharacters(in: .whitespaces)
                             guard !trimmedName.isEmpty else { return }
-                            let newList = ShoppingList(name: trimmedName)
+                            let newList = ShoppingList(name: trimmedName, items: [], createdDate: Date())
                             userSession.shoppingLists.append(newList)
                             newListName = ""
                             isShowingAddPopup = false
@@ -87,10 +105,9 @@ struct ShoppingListsPage_Previews: PreviewProvider {
     static var previews: some View {
         let mockSession = UserSession()
         mockSession.shoppingLists = [
-            ShoppingList(name: "Weekly Groceries", items: [
-                CartItem(name: "Tomatoes", price: 1.99, quantity: 2)
-            ]),
-            ShoppingList(name: "Party Supplies")
+            ShoppingList(name: "Walmart", createdDate: Date()),
+            ShoppingList(name: "Target", createdDate: Date()),
+            ShoppingList(name: "Trader Joe's", createdDate: Date())
         ]
         
         return ShoppingListsPage()
