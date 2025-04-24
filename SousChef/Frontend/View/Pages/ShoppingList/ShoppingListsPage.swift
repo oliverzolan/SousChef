@@ -4,13 +4,13 @@ struct ShoppingListsPage: View {
     @EnvironmentObject var userSession: UserSession
     @State private var isShowingAddPopup = false
     @State private var newListName = ""
-    
+
     private var dateFormatter: DateFormatter {
         let formatter = DateFormatter()
         formatter.dateFormat = "M/dd/yyyy"
         return formatter
     }
-    
+
     var body: some View {
         ZStack {
             NavigationView {
@@ -21,7 +21,7 @@ struct ShoppingListsPage: View {
                                 Text(list.name)
                                     .font(.headline)
                                     .foregroundColor(.white)
-                                
+
                                 Text("Created \(dateFormatter.string(from: list.createdDate))")
                                     .font(.subheadline)
                                     .foregroundColor(Color.white.opacity(0.85))
@@ -32,11 +32,12 @@ struct ShoppingListsPage: View {
                     }
                     .onDelete(perform: deleteLists)
                 }
+                .scrollDisabled(true)        // ← disable scrolling but keep the exact same look
                 .navigationTitle("Shopping Lists")
             }
             .navigationViewStyle(StackNavigationViewStyle())
             .accentColor(.white)
-            
+
             VStack {
                 Spacer()
                 Button(action: {
@@ -52,14 +53,14 @@ struct ShoppingListsPage: View {
                 }
                 .padding()
             }
-            
+
             if isShowingAddPopup {
                 Color.black.opacity(0.4)
                     .edgesIgnoringSafeArea(.all)
                     .onTapGesture {
                         isShowingAddPopup = false
                     }
-                
+
                 VStack(spacing: 20) {
                     Text("New Shopping List")
                         .font(.headline)
@@ -72,9 +73,9 @@ struct ShoppingListsPage: View {
                             newListName = ""
                         }
                         .padding()
-                        
+
                         Spacer()
-                        
+
                         Button("Add") {
                             let trimmedName = newListName.trimmingCharacters(in: .whitespaces)
                             guard !trimmedName.isEmpty else { return }
@@ -95,7 +96,7 @@ struct ShoppingListsPage: View {
             }
         }
     }
-    
+
     private func deleteLists(at offsets: IndexSet) {
         userSession.shoppingLists.remove(atOffsets: offsets)
     }
@@ -109,8 +110,9 @@ struct ShoppingListsPage_Previews: PreviewProvider {
             ShoppingList(name: "Target", createdDate: Date()),
             ShoppingList(name: "Trader Joe's", createdDate: Date())
         ]
-        
+
         return ShoppingListsPage()
             .environmentObject(mockSession)
     }
 }
+

@@ -1,30 +1,20 @@
-//
-//  Main.swift
-//  SousChef
-//
-//  Created by Sutter Reynolds on 3/2/25.
-//
-
 import SwiftUI
 
 struct MainTabView: View {
     @EnvironmentObject var userSession: UserSession
     @EnvironmentObject var homepageController: HomepageController
     @EnvironmentObject var pantryController: PantryController
-    @State private var isShowingScanOptions = false
+
     @State private var selectedTab = 0
-    
-    // UI Adjustment
+    @State private var isShowingScanOptions = false
+
     init() {
         let tabBarAppearance = UITabBar.appearance()
-        tabBarAppearance.backgroundColor = UIColor.white
-        
+        tabBarAppearance.backgroundColor = .white
         tabBarAppearance.layer.shadowColor = UIColor.black.cgColor
         tabBarAppearance.layer.shadowOpacity = 0.15
         tabBarAppearance.layer.shadowOffset = CGSize(width: 0, height: -2)
         tabBarAppearance.layer.shadowRadius = 6
-        
-        // Removes default top border
         tabBarAppearance.standardAppearance.shadowColor = nil
         tabBarAppearance.scrollEdgeAppearance = tabBarAppearance.standardAppearance
     }
@@ -42,42 +32,56 @@ struct MainTabView: View {
     
     // Navigation bar and associated Views
     var body: some View {
-        ZStack {
-            TabView(selection: $selectedTab) {
-                ForEach(tabs, id: \.tag) { tab in
-                    NavigationStack {
-                        tab.view
-                            .environmentObject(userSession)
-                            .environmentObject(homepageController)
-                            .environmentObject(pantryController)
+        NavigationStack {
+            ZStack {
+                // Intercept the Scan tab tap via a custom Binding
+                TabView(selection: Binding(
+                    get: { selectedTab },
+                    set: { newValue in
+                        if newValue == 2 {
+                            // Instead of switching to tab 2, show the pop-up
+                            withAnimation(.spring()) {
+                                isShowingScanOptions = true
+                            }
+                        } else {
+                            selectedTab = newValue
+                        }
                     }
-                    .tabItem {
-                        Label(tab.label, systemImage: tab.icon)
-                    }
-                    .tag(tab.tag)
+                )) {
+                    HomePage()
+                        .tabItem { Label("Home",   systemImage: "house.fill") }
+                        .tag(0)
+
+                    PantryPage(userSession: userSession)
+                        .tabItem { Label("Pantry", systemImage: "refrigerator.fill") }
+                        .tag(1)
+
+                    // Empty placeholder — the user never actually lands here
+                    Color.clear
+                        .tabItem { Label("Scan",   systemImage: "barcode.viewfinder") }
+                        .tag(2)
+
+                    ShoppingListsPage(userSession: _userSession)
+                        .tabItem { Label("Shopping", systemImage: "cart.fill") }
+                        .tag(3)
+
+                    ChatbotPage()
+                        .tabItem { Label("Chef",    systemImage: "person.crop.circle") }
+                        .tag(4)
                 }
-            }
-            .accentColor(.black)
-            
-            // Show the scan options
-            if isShowingScanOptions {
-                Color.black.opacity(0.4)
-                    .ignoresSafeArea()
-                    .onTapGesture {
-                        isShowingScanOptions = false
-                    }
-                
-                ScanPopOut(isShowing: $isShowingScanOptions)
-                    .transition(.move(edge: .bottom))
-                    .animation(.spring(), value: isShowingScanOptions)
-            }
-        }
-        .onChange(of: selectedTab) { oldValue, newValue in
-            if newValue == 2 {
-                withAnimation(.spring()) {
-                    isShowingScanOptions = true
+                .accentColor(.black)
+
+                // Your scan-options overlay
+                if isShowingScanOptions {
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+                        .onTapGesture { isShowingScanOptions = false }
+
+                    ScanPopOut(isShowing: $isShowingScanOptions)
+                        .transition(.move(edge: .bottom))
+                        .animation(.spring(), value: isShowingScanOptions)
+                        .zIndex(1)
                 }
-                selectedTab = oldValue
             }
         }
     }
