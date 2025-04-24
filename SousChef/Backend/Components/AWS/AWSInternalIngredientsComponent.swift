@@ -15,7 +15,7 @@ class AWSInternalIngredientsComponent: AWSAbstract {
     }
 
     /// Search ingredients by name
-    func searchIngredients(query: String, limit: Int = 50, completion: @escaping (Result<[AWSIngredientModel], Error>) -> Void) {
+    @MainActor func searchIngredients(query: String, limit: Int = 50, completion: @escaping (Result<[AWSIngredientModel], Error>) -> Void) {
         var urlComponents = URLComponents(string: baseURL + route + "/search")
         urlComponents?.queryItems = [
             URLQueryItem(name: "q", value: query),

@@ -15,7 +15,7 @@ class AWSUserIngredientsComponent: AWSAbstract {
     }
     
     /// Fetch all ingredients
-    func fetchIngredients(completion: @escaping (Result<[AWSIngredientModel], Error>) -> Void) {
+    @MainActor func fetchIngredients(completion: @escaping (Result<[AWSIngredientModel], Error>) -> Void) {
         guard let token = userSession.token else {
             DispatchQueue.main.async {
                 completion(.failure(NSError(domain: "", code: 401, userInfo: [NSLocalizedDescriptionKey: "User is not authenticated"])))
@@ -81,7 +81,7 @@ class AWSUserIngredientsComponent: AWSAbstract {
     }
     
     /// Add new ingredients
-    func addIngredients(ingredients: [AWSIngredientModel], completion: @escaping (Result<Void, Error>) -> Void) {
+    @MainActor func addIngredients(ingredients: [AWSIngredientModel], completion: @escaping (Result<Void, Error>) -> Void) {
         guard let token = userSession.token else {
             DispatchQueue.main.async {
                 completion(.failure(NSError(domain: "", code: 401, userInfo: [NSLocalizedDescriptionKey: "User is not authenticated"])))

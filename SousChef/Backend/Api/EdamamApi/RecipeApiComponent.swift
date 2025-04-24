@@ -184,7 +184,7 @@ class EdamamRecipeComponent: EdamamAbstract {
         }.resume()
     }
     
-    func compareRecipeIngredientsWithPantry(recipeIngredients: [EdamamIngredientModel], completion: @escaping (Result<Set<String>, Error>) -> Void) {
+    @MainActor func compareRecipeIngredientsWithPantry(recipeIngredients: [EdamamIngredientModel], completion: @escaping (Result<Set<String>, Error>) -> Void) {
         let awsComponent = AWSUserIngredientsComponent(userSession: UserSession())
 
         awsComponent.fetchIngredients { [weak self] (result: Result<[AWSIngredientModel], Error>) in
