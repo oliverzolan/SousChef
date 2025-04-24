@@ -22,20 +22,18 @@ struct SousChefApp: App {
             let pantryController = PantryController(userSession: userSession)
             let homepageController = HomepageController(pantryController: pantryController)
 
-            NavigationView {
-                if !userSession.isAuthResolved {
-                    LoadingView() // ⏳ While Firebase is checking
-                } else if userSession.isSignedIn {
-                    HomePage()
-                        .environmentObject(userSession)
-                        .environmentObject(pantryController)
-                        .environmentObject(homepageController)
-                } else {
-                    LoginPage()
-                        .environmentObject(userSession)
-                        .environmentObject(pantryController)
-                        .environmentObject(homepageController)
-                }
+            if !userSession.isAuthResolved {
+                LoadingView()
+            } else if userSession.isSignedIn {
+                MainTabView()
+                    .environmentObject(userSession)
+                    .environmentObject(pantryController)
+                    .environmentObject(homepageController)
+            } else {
+                LoginPage()
+                    .environmentObject(userSession)
+                    .environmentObject(pantryController)
+                    .environmentObject(homepageController)
             }
         }
     }
