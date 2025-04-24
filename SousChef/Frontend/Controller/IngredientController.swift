@@ -213,15 +213,6 @@ class IngredientController: ObservableObject {
         
         return score + orderBonus
     }
-    
-    // MARK: - Add Recognized Food from FatSecret
-    func addRecognizedFood(_ food: EdamamIngredientModel) {
-        DispatchQueue.main.async {
-            if !self.searchResults.contains(food) {
-                self.searchResults.append(food)
-            }
-        }
-    }
 
     // MARK: - Add Searched Ingredient
     func addIngredientToDatabase(_ ingredient: Any, completion: @escaping () -> Void) {
