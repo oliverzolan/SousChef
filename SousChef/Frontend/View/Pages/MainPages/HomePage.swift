@@ -15,7 +15,9 @@ struct IdentifiableTuple: Identifiable {
 
 struct HomeHeader: View {
     @Binding var showMenu: Bool
+    @Binding var showNotifications: Bool
     @EnvironmentObject var userSession: UserSession
+    @StateObject private var notificationController = NotificationController()
     
     var body: some View {
         HStack {
@@ -25,15 +27,19 @@ struct HomeHeader: View {
             Spacer()
             HStack(spacing: 16) {
                 Button(action: {
-                    // Notifications action
+                    showNotifications = true
                 }) {
                     Image(systemName: "bell")
                         .foregroundColor(.black)
                         .overlay(
-                            Circle()
-                                .fill(Color.red)
-                                .frame(width: 10, height: 10)
-                                .offset(x: 6, y: -6)
+                            Group {
+                                if notificationController.unreadCount > 0 {
+                                    Circle()
+                                        .fill(Color.red)
+                                        .frame(width: 10, height: 10)
+                                        .offset(x: 6, y: -6)
+                                }
+                            }
                         )
                 }
                 Button(action: {
@@ -60,6 +66,7 @@ struct HomePage: View {
     @State private var errorMessage: String?
     @State private var showMenu = false
     @State private var showFilters = false
+    @State private var showNotifications = false
     @State private var navigateToFilteredResults = false
     @State private var filtersViewModel: FiltersViewModel?
     @State private var selectedFilterCategory: String? = nil
@@ -79,7 +86,7 @@ struct HomePage: View {
                 ScrollViewReader { scrollProxy in
                     ScrollView {
                         VStack(spacing: 20) {
-                            HomeHeader(showMenu: $showMenu)
+                            HomeHeader(showMenu: $showMenu, showNotifications: $showNotifications)
                             
                             SearchComponent(
                                 searchText: $searchText,
@@ -238,6 +245,10 @@ struct HomePage: View {
                     }
                     .zIndex(2)
                 }
+            }
+            .sheet(isPresented: $showNotifications) {
+                NotificationPopup()
+                    .environmentObject(userSession)
             }
             .onAppear {
                 // Reset filter category selection on appearing

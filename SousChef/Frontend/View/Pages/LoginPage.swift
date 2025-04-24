@@ -18,51 +18,59 @@ struct LoginPage: View {
                 
                 VStack(spacing: 30) {
                     Spacer()
-                        Text("SousChef")
-                            .font(.title)
-                            .fontWeight(.medium)
-                            .foregroundColor(Color.black)
-                            .padding(.vertical, 200)
-                        //to login
-                        NavigationLink(
-                            destination: LoginView()
-                                .environmentObject(userSession)
-                                .navigationBarBackButtonHidden(true)
-                        ) {
-                            Text("Sign In")
-                                .fontWeight(.bold)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .foregroundColor(Color.white)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                        .foregroundColor(AppColors.primary1)
-                                )
-                        }
-                        .padding(.horizontal, 24)
-                        
-                        // Navigation to Create Account View
-                        NavigationLink(
-                            destination: CreateAccountView()
-                                .navigationBarBackButtonHidden(true) // Hide the back button
-                        ) {
-                            Text("Create Account")
-                                .fontWeight(.bold)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .foregroundColor(Color.white)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                        .foregroundColor(AppColors.primary2)
-                                )
-                        }
-                        .padding(.horizontal, 24)
-                        
-                        Spacer() 
+                    
+                    // Watermelon app icon
+                    Image("watermelon")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 150, height: 150)
+                        .padding(.bottom, 20)
+                    
+                    Text("SousChef")
+                        .font(.title)
+                        .fontWeight(.medium)
+                        .foregroundColor(Color.black)
+                        .padding(.bottom, 100)
+                    
+                    //to login
+                    NavigationLink(
+                        destination: LoginView()
+                            .environmentObject(userSession)
+                            .navigationBarBackButtonHidden(true)
+                    ) {
+                        Text("Sign In")
+                            .fontWeight(.bold)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .foregroundColor(Color.white)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .foregroundColor(AppColors.primary1)
+                            )
                     }
+                    .padding(.horizontal, 24)
+                    
+                    // Navigation to Create Account View
+                    NavigationLink(
+                        destination: CreateAccountView()
+                            .navigationBarBackButtonHidden(true) // Hide the back button
+                    ) {
+                        Text("Create Account")
+                            .fontWeight(.bold)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .foregroundColor(Color.white)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .foregroundColor(AppColors.primary2)
+                            )
+                    }
+                    .padding(.horizontal, 24)
+                    
+                    Spacer() 
                 }
-                .navigationBarBackButtonHidden(true)
             }
+            .navigationBarBackButtonHidden(true)
         }
     }
     
@@ -73,4 +81,5 @@ struct LoginPage: View {
                 .previewDevice("iPhone 16 Pro")
         }
     }
+}
 

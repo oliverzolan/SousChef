@@ -185,9 +185,9 @@ class EdamamRecipeComponent: EdamamAbstract {
     }
     
     func compareRecipeIngredientsWithPantry(recipeIngredients: [EdamamIngredientModel], completion: @escaping (Result<Set<String>, Error>) -> Void) {
-        let awsComponent = AWSIngredientsComponent(userSession: UserSession())
+        let awsComponent = AWSUserIngredientsComponent(userSession: UserSession())
 
-        awsComponent.fetchIngredients { [weak self] result in
+        awsComponent.fetchIngredients { [weak self] (result: Result<[AWSIngredientModel], Error>) in
             guard let self = self else {
                 return
             }
@@ -195,25 +195,22 @@ class EdamamRecipeComponent: EdamamAbstract {
             switch result {
             case .success(let pantryIngredients):
                 pantryIngredients.forEach { ingredient in
-                    print("Pantry Ingredient: \(ingredient.food)")
+                    print("Pantry Ingredient: \(ingredient.name)")
                 }
 
                 // Extract pantry ingredients as full items for exact matching
-                let pantryFullNames = Set(pantryIngredients.map { $0.food.lowercased() })
+                let pantryFullNames = Set(pantryIngredients.map { $0.name.lowercased() })
                 
                 // Extract all keywords from pantry ingredients for partial matching
                 let pantryKeywords = Set(pantryIngredients.flatMap { ingredient in
-                    self.extractKeywords(from: ingredient.food)
+                    self.extractKeywords(from: ingredient.name)
                 })
-
-                
 
                 // Compare each recipe ingredient with pantry
                 var matchedIngredients = Set<String>()
                 for recipeIngredient in recipeIngredients {
                     let recipeText = recipeIngredient.label.lowercased()
                     let recipeKeywords = self.extractKeywords(from: recipeText)
-                    
                     
                     if pantryFullNames.contains(recipeText) {
                         matchedIngredients.insert(recipeIngredient.foodId)

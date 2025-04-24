@@ -3,53 +3,78 @@ import SwiftUI
 struct AddIngredientPopup: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var userSession: UserSession
-    @ObservedObject private var viewModel: IngredientController
-    @FocusState private var isSearching: Bool
-
-    @Binding var ingredients: [String]
-    var scannedIngredient: BarcodeModel?
-    @State private var selectedIngredients: [EditableIngredient] = []
-    @State private var showToast: Bool = false
-    @State private var toastMessage: String = ""
-    @State private var showQuantitySheet: Bool = false
-    @State private var currentIngredient: EdamamIngredientModel?
-    @State private var tempQuantity: Double = 1.0
-    @State private var searchText: String = ""
-
-    init(ingredients: Binding<[String]>, scannedIngredient: BarcodeModel?, userSession: UserSession) {
-        self._ingredients = ingredients
-        self.scannedIngredient = scannedIngredient
-        self.viewModel = IngredientController(userSession: userSession)
+    @StateObject private var ingredientController: IngredientController
+    @StateObject private var pantryController: PantryController
+    @State private var searchText = ""
+    @State private var showQuantityPicker = false
+    @State private var selectedQuantity = 1
+    @State private var selectedUnit = "unit"
+    @State private var showError = false
+    @State private var errorMessage = ""
+    @State private var isAdding = false
+    @State private var selectedIngredient: AWSIngredientModel?
+    
+    // Grid layout for ingredient cards
+    private let columns = [
+        GridItem(.flexible(), spacing: 10),
+        GridItem(.flexible(), spacing: 10),
+        GridItem(.flexible(), spacing: 10)
+    ]
+    
+    init() {
+        let session = UserSession()
+        _ingredientController = StateObject(wrappedValue: IngredientController(userSession: session))
+        _pantryController = StateObject(wrappedValue: PantryController(userSession: session))
     }
-
+    
+    // Helper function to determine ingredient category
+    private func determineCategory(for ingredient: AWSIngredientModel) -> IngredientCategory {
+        let category = ingredient.foodCategory.lowercased()
+        
+        if category.contains("vegetable") { return .vegetable }
+        if category.contains("fruit") { return .fruit }
+        if category.contains("grain") { return .grain }
+        if category.contains("meat") || category.contains("protein") { return .protein }
+        if category.contains("dairy") { return .dairy }
+        if category.contains("condiment") { return .condiment }
+        if category.contains("canned") { return .canned }
+        if category.contains("spice") { return .spice }
+        if category.contains("drink") { return .drink }
+        
+        // Default category based on first letter
+        let firstChar = ingredient.name.prefix(1).lowercased()
+        switch firstChar {
+        case "a", "b", "c", "d": return .vegetable
+        case "e", "f", "g", "h": return .fruit
+        case "i", "j", "k", "l": return .grain
+        case "m", "n", "o", "p": return .protein
+        case "q", "r", "s", "t": return .dairy
+        case "u", "v", "w", "x", "y", "z": return .condiment
+        default: return .vegetable
+        }
+    }
+    
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
+        NavigationView {
+            VStack(spacing: 10) {
                 // Search Bar
                 HStack {
                     Image(systemName: "magnifyingglass")
                         .foregroundColor(.gray.opacity(0.7))
                         .padding(.leading, 8)
                     
-                    TextField("Search for ingredient...", text: $searchText)
-                        .focused($isSearching)
-                        .autocorrectionDisabled(true)
-                        .autocapitalization(.none)
-                        .submitLabel(.search)
-                        .onSubmit {
-                            let finalText = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-                            if !finalText.isEmpty {
-                                viewModel.searchText = finalText
-                                viewModel.performSearch()
-                            }
-                            isSearching = false
+                    TextField("Search ingredients...", text: $searchText)
+                        .padding(.vertical, 8)
+                        .onChange(of: searchText) { newValue in
+                            ingredientController.searchText = newValue
+                            ingredientController.performSearch()
                         }
                     
                     if !searchText.isEmpty {
-                        Button(action: {
+                        Button(action: { 
                             searchText = ""
-                            viewModel.searchText = ""
-                            viewModel.searchResults = []
+                            ingredientController.searchText = ""
+                            ingredientController.performSearch()
                         }) {
                             Image(systemName: "xmark.circle.fill")
                                 .foregroundColor(.gray)
@@ -57,308 +82,302 @@ struct AddIngredientPopup: View {
                         }
                     }
                 }
-                .padding(10)
                 .background(Color.gray.opacity(0.1))
                 .cornerRadius(10)
                 .padding(.horizontal)
-                .padding(.top, 10)
-                .onChange(of: searchText) { _, newValue in
-                    DispatchQueue.main.async {
-                        viewModel.searchText = newValue
-                        viewModel.performSearch()
-                    }
-                }
                 
-                // Main Content
-                ScrollView {
-                    VStack(spacing: 0) {
-                        // Scanned ingredient if available
-                        if let ingredient = scannedIngredient {
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text("Scanned Ingredient:")
-                                    .font(.headline)
-                                    .padding(.horizontal)
-                                    .padding(.top, 8)
-
-                                IngredientCard(
-                                    name: ingredient.label,
-                                    category: categoryForIngredient(ingredient)
+                // Search Results as Ingredient Cards
+                if ingredientController.isLoading {
+                    Spacer()
+                    ProgressView()
+                        .scaleEffect(1.5)
+                    Spacer()
+                } else if !ingredientController.searchResults.isEmpty {
+                    ScrollView {
+                        LazyVGrid(columns: columns, spacing: 15) {
+                            ForEach(ingredientController.searchResults, id: \.edamamFoodId) { ingredient in
+                                IngredientCardSelectable(
+                                    ingredient: ingredient,
+                                    category: determineCategory(for: ingredient),
+                                    isSelected: selectedIngredient?.edamamFoodId == ingredient.edamamFoodId,
+                                    onTap: {
+                                        selectedIngredient = ingredient
+                                        showQuantityPicker = true
+                                    }
                                 )
-                                .padding(.horizontal)
-                                
-                                Divider()
                             }
                         }
-                        
-                        // Search Results
-                        if (isSearching || !searchText.isEmpty) && !viewModel.searchResults.isEmpty {
-                            VStack(alignment: .leading, spacing: 10) {
-                                if viewModel.isLoading {
-                                    HStack {
-                                        Spacer()
-                                        ProgressView("Searching...")
-                                        Spacer()
-                                    }
-                                    .padding()
-                                } else if let errorMessage = viewModel.errorMessage {
-                                    Text(errorMessage)
-                                        .foregroundColor(.red)
-                                        .padding()
-                                } else {
-                                    HStack {
-                                        Text("Search Results")
-                                            .font(.headline)
-                                        
-                                        Spacer()
-                                        
-                                        Text("\(min(5, viewModel.searchResults.count)) of \(viewModel.searchResults.count)")
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
-                                    .padding(.horizontal)
-                                    .padding(.top, 8)
-                                    
-                                    LazyVGrid(columns: [
-                                        GridItem(.flexible(), spacing: 10),
-                                        GridItem(.flexible(), spacing: 10),
-                                        GridItem(.flexible(), spacing: 10)
-                                    ], spacing: 10) {
-                                        ForEach(viewModel.searchResults.prefix(5)) { ingredient in
-                                            Button(action: {
-                                                currentIngredient = ingredient
-                                                tempQuantity = 1.0
-                                                showQuantitySheet = true
-                                            }) {
-                                                IngredientCard(
-                                                    name: ingredient.label,
-                                                    category: categoryForIngredient(ingredient)
-                                                )
-                                            }
-                                        }
-                                    }
-                                    .padding()
-                                    
-                                    if viewModel.searchResults.count > 5 {
-                                        Button(action: {
-                                            isSearching = true // Keep keyboard active
-                                        }) {
-                                            Text("Type more to refine search...")
-                                                .font(.subheadline)
-                                                .foregroundColor(.blue)
-                                                .padding(.vertical, 8)
-                                                .frame(maxWidth: .infinity)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // Selected Ingredients
-                        if !selectedIngredients.isEmpty {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("Selected Ingredients")
-                                    .font(.headline)
-                                    .padding(.horizontal)
-                                    .padding(.top, 16)
-                                
-                                LazyVGrid(columns: [
-                                    GridItem(.flexible(), spacing: 10),
-                                    GridItem(.flexible(), spacing: 10),
-                                    GridItem(.flexible(), spacing: 10)
-                                ], spacing: 10) {
-                                    ForEach(selectedIngredients) { ingredient in
-                                        IngredientCard(
-                                            name: ingredient.label,
-                                            category: categoryForIngredient(ingredient)
-                                        )
-                                        .overlay(
-                                            Button(action: {
-                                                removeIngredientFromList(ingredient)
-                                            }) {
-                                                Image(systemName: "xmark.circle.fill")
-                                                    .foregroundColor(.red)
-                                                    .background(Color.white)
-                                                    .clipShape(Circle())
-                                            }
-                                            .padding(5),
-                                            alignment: .topTrailing
-                                        )
-                                    }
-                                }
-                                .padding()
-                            }
-                        } else if viewModel.searchResults.isEmpty && !viewModel.isLoading && searchText.isEmpty && scannedIngredient == nil {
-                            VStack(spacing: 20) {
-                                Image(systemName: "magnifyingglass")
-                                    .font(.system(size: 50))
-                                    .foregroundColor(.gray)
-                                
-                                Text("Search for ingredients to add to your pantry")
-                                    .font(.headline)
-                                    .multilineTextAlignment(.center)
-                                    .foregroundColor(.gray)
-                                    .padding()
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.top, 80)
-                        }
-                        
-                        Spacer()
+                        .padding()
+                        .padding(.bottom, 80)
                     }
-                    .padding(.bottom, 100)
+                } else if !searchText.isEmpty {
+                    Spacer()
+                    VStack {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 50))
+                            .foregroundColor(.gray)
+                            .padding()
+                        
+                        Text("No results found for \"\(searchText)\"")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                        
+                        Text("Try searching for a different ingredient")
+                            .font(.subheadline)
+                            .foregroundColor(.gray.opacity(0.8))
+                    }
+                    .padding(.bottom, 40)
+                    Spacer()
+                } else {
+                    Spacer()
+                    VStack {
+                        Image(systemName: "list.bullet")
+                            .font(.system(size: 50))
+                            .foregroundColor(.gray)
+                            .padding()
+                        
+                        Text("Search for ingredients to add to your pantry")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                        
+                        Text("Try searching for common ingredients like 'apple', 'chicken', or 'rice'")
+                            .font(.subheadline)
+                            .foregroundColor(.gray.opacity(0.8))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
+                    Spacer()
                 }
             }
-            .navigationTitle("Add Ingredients")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    if !selectedIngredients.isEmpty {
-                        Button(action: submitIngredientsFromList) {
-                            Text("Add")
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(Color.green)
-                                .cornerRadius(8)
-                        }
-                    }
-                }
-            }
-            .sheet(isPresented: $showQuantitySheet) {
-                if let ingredient = currentIngredient {
-                    QuantitySelectionSheet(
+            .navigationTitle("Add Ingredient")
+            .navigationBarItems(trailing: Button("Cancel") {
+                dismiss()
+            })
+            .sheet(isPresented: $showQuantityPicker) {
+                if let ingredient = selectedIngredient {
+                    QuantityPickerView(
                         ingredient: ingredient,
-                        quantity: $tempQuantity,
-                        onAdd: {
-                            addIngredientWithQuantity(ingredient, quantity: tempQuantity)
-                            showQuantitySheet = false
-                            // Clear search if the user has chosen an item
-                            searchText = ""
-                            viewModel.searchText = ""
-                            viewModel.searchResults = []
-                            UIApplication.shared.endEditing()
-                        },
-                        onCancel: {
-                            showQuantitySheet = false
+                        quantity: $selectedQuantity,
+                        unit: $selectedUnit,
+                        onAdd: { quantity, unit in
+                            addIngredient(ingredient, quantity: quantity, unit: unit)
                         }
                     )
                 }
             }
-            .onAppear {
-                // Add scanned ingredient if available
-                if let ingredient = scannedIngredient {
-                    addScannedIngredientToList(ingredient)
+            .alert(isPresented: $showError) {
+                Alert(
+                    title: Text("Error"),
+                    message: Text(errorMessage),
+                    dismissButton: .default(Text("OK"))
+                )
+            }
+        }
+    }
+    
+    private func addIngredient(_ ingredient: AWSIngredientModel, quantity: Int, unit: String) {
+        isAdding = true
+        
+        // Ensure the image URL is properly formatted
+        let imageURL = IngredientImageService.shared.getImageURL(
+            for: ingredient.name, 
+            category: ingredient.foodCategory,
+            existingURL: ingredient.imageURL
+        )
+        
+        let newIngredient = AWSIngredientModel(
+            edamamFoodId: ingredient.edamamFoodId,
+            foodCategory: ingredient.foodCategory,
+            name: ingredient.name,
+            quantityType: String(quantity), // Store the quantity as string
+            experiationDuration: 7, // Default expiration duration
+            imageURL: imageURL
+        )
+        
+        // Use the AWSUserIngredientsComponent directly
+        let ingredientsComponent = AWSUserIngredientsComponent(userSession: userSession)
+        ingredientsComponent.addIngredients(ingredients: [newIngredient]) { result in
+            isAdding = false
+            switch result {
+            case .success:
+                // Refresh the pantry immediately - without delay
+                self.pantryController.fetchIngredients()
+                
+                // Post a notification to refresh all pantry pages
+                NotificationCenter.default.post(name: NSNotification.Name("RefreshPantryContents"), object: nil)
+                
+                // Dismiss immediately after adding
+                dismiss()
+                
+            case .failure(let error):
+                errorMessage = error.localizedDescription
+                showError = true
+            }
+        }
+    }
+}
+
+// Selectable version of the IngredientCard for the AddIngredientPopup
+struct IngredientCardSelectable: View {
+    let ingredient: AWSIngredientModel
+    let category: IngredientCategory
+    let isSelected: Bool
+    let onTap: () -> Void
+    
+    private func fontSizeForText(_ text: String) -> CGFloat {
+        if text.count > 15 { return 14 }
+        else if text.count > 10 { return 16 }
+        else { return 18 }
+    }
+    
+    var body: some View {
+        Button(action: onTap) {
+            ZStack(alignment: .top) {
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(category.color)
+                    .frame(width: 110, height: 150)
+                
+                VStack(spacing: 0) {
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(Color.white)
+                        .frame(width: 110, height: 100)
+                        .overlay {
+                            // Use the ingredient's imageURL via IngredientImageService
+                            VStack {
+                                ZStack {
+                                    let imageUrl = IngredientImageService.shared.getImageURL(
+                                        for: ingredient.name,
+                                        category: ingredient.foodCategory,
+                                        existingURL: ingredient.imageURL
+                                    )
+                                    
+                                    AsyncImage(url: URL(string: imageUrl)) { phase in
+                                        switch phase {
+                                        case .empty:
+                                            ProgressView()
+                                                .frame(width: 80, height: 80)
+                                        case .success(let image):
+                                            image
+                                                .resizable()
+                                                .aspectRatio(contentMode: .fill)
+                                                .frame(width: 80, height: 80)
+                                                .clipShape(Circle())
+                                        case .failure:
+                                            // Fall back to emoji if image fails to load
+                                            Text(emojiForIngredient(ingredient.name, in: category))
+                                                .font(.system(size: 60))
+                                                .frame(width: 80, height: 80)
+                                        @unknown default:
+                                            Text(emojiForIngredient(ingredient.name, in: category))
+                                                .font(.system(size: 60))
+                                                .frame(width: 80, height: 80)
+                                        }
+                                    }
+                                    .frame(width: 80, height: 80)
+                                    
+                                    // Selected indicator
+                                    if isSelected {
+                                        Circle()
+                                            .fill(Color.blue.opacity(0.8))
+                                            .frame(width: 30, height: 30)
+                                            .overlay(
+                                                Image(systemName: "checkmark")
+                                                    .foregroundColor(.white)
+                                                    .font(.system(size: 16, weight: .bold))
+                                            )
+                                            .offset(x: 30, y: -30)
+                                    }
+                                    
+                                    // Add button indicator
+                                    if !isSelected {
+                                        Circle()
+                                            .fill(Color.white.opacity(0.9))
+                                            .frame(width: 26, height: 26)
+                                            .overlay(
+                                                Image(systemName: "plus")
+                                                    .foregroundColor(.blue)
+                                                    .font(.system(size: 14, weight: .bold))
+                                            )
+                                            .shadow(color: Color.black.opacity(0.2), radius: 2, x: 0, y: 2)
+                                            .offset(x: 30, y: -30)
+                                    }
+                                }
+                            }
+                            .padding(10)
+                        }
+                    Spacer()
+                }
+                .frame(height: 150)
+                
+                VStack {
+                    Spacer()
+                    Text(ingredient.name.capitalized)
+                        .font(.system(size: fontSizeForText(ingredient.name), weight: .bold))
+                        .foregroundColor(.white)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.8)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 4)
+                        .padding(.top, 5)
+                        .padding(.bottom, 15)
+                        .frame(height: 50)
+                }
+                .frame(height: 150)
+            }
+            .frame(width: 110, height: 150)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 3)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+struct QuantityPickerView: View {
+    let ingredient: AWSIngredientModel
+    @Binding var quantity: Int
+    @Binding var unit: String
+    let onAdd: (Int, String) -> Void
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("Quantity")) {
+                    Stepper("Quantity: \(quantity)", value: $quantity, in: 1...100)
+                }
+                
+                Section(header: Text("Unit")) {
+                    Picker("Unit", selection: $unit) {
+                        Text("unit").tag("unit")
+                        Text("g").tag("g")
+                        Text("kg").tag("kg")
+                        Text("ml").tag("ml")
+                        Text("l").tag("l")
+                    }
+                }
+                
+                Section {
+                    Button("Add to Pantry") {
+                        onAdd(quantity, unit)
+                        dismiss()
+                    }
                 }
             }
-            .toast(isPresented: $showToast, message: toastMessage)
+            .navigationTitle(ingredient.name)
+            .navigationBarItems(trailing: Button("Cancel") {
+                dismiss()
+            })
         }
     }
-    
-    // Helper function to determine category for ingredient
-    private func categoryForIngredient(_ ingredient: Any) -> IngredientCategory {
-        if let edamamIngredient = ingredient as? EdamamIngredientModel {
-            return categoryFromString(edamamIngredient.category ?? "")
-        } else if let barcodeIngredient = ingredient as? BarcodeModel {
-            return categoryFromString(barcodeIngredient.category ?? "")
-        } else if let editableIngredient = ingredient as? EditableIngredient {
-            return categoryFromString(editableIngredient.category ?? "")
-        }
-        return .vegetable // Default category
-    }
-    
-    private func categoryFromString(_ category: String) -> IngredientCategory {
-        switch category.lowercased() {
-        case "vegetable", "vegetables": return .vegetable
-        case "fruit", "fruits": return .fruit
-        case "grain", "grains": return .grain
-        case "protein", "meat", "meats": return .protein
-        case "dairy": return .dairy
-        case "condiment", "spice", "spices": return .condiment
-        default: return .vegetable
-        }
-    }
-    
-    // Check if ingredient is already selected
-    private func isIngredientSelected(_ ingredient: Any) -> Bool {
-        if let edamamIngredient = ingredient as? EdamamIngredientModel {
-            return selectedIngredients.contains(where: { $0.foodId == edamamIngredient.foodId })
-        } else if let barcodeIngredient = ingredient as? BarcodeModel {
-            return selectedIngredients.contains(where: { $0.foodId == barcodeIngredient.foodId })
-        }
-        return false
-    }
-    
-    // Add ingredient with specific quantity
-    private func addIngredientWithQuantity(_ ingredient: EdamamIngredientModel, quantity: Double) {
-        let newIngredient = EditableIngredient(
-            id: UUID(),
-            foodId: ingredient.foodId,
-            label: ingredient.label,
-            category: ingredient.category,
-            brand: nil,
-            image: ingredient.image,
-            quantity: quantity
-        )
-        
-        if !selectedIngredients.contains(where: { $0.foodId == newIngredient.foodId }) {
-            selectedIngredients.append(newIngredient)
-            toastMessage = "\(ingredient.label) Added!"
-            showToast = true
-        }
-    }
-    
-    // Add scanned ingredient to list
-    private func addScannedIngredientToList(_ ingredient: BarcodeModel) {
-        let newIngredient = EditableIngredient(
-            id: UUID(),
-            foodId: ingredient.foodId,
-            label: ingredient.label,
-            category: ingredient.category,
-            brand: ingredient.brand,
-            image: ingredient.image,
-            quantity: 1
-        )
-        
-        if !selectedIngredients.contains(where: { $0.foodId == newIngredient.foodId }) {
-            selectedIngredients.append(newIngredient)
-            toastMessage = "\(ingredient.label) Added!"
-            showToast = true
-        }
-    }
-    
-    // Remove ingredients
-    private func removeIngredientFromList(_ ingredient: EditableIngredient) {
-        selectedIngredients.removeAll { $0.id == ingredient.id }
-    }
-    
-    // Submit all ingredients
-    private func submitIngredientsFromList() {
-        for ingredient in selectedIngredients {
-            let barcodeModel = BarcodeModel(
-                foodId: ingredient.foodId,
-                label: ingredient.label,
-                brand: ingredient.brand,
-                category: ingredient.category,
-                image: ingredient.image,
-                nutrients: nil
-            )
-            viewModel.addIngredientToDatabase(barcodeModel) {
-                print("Added \(ingredient.label) to pantry.")
-            }
-        }
-        
-        // Show success toast and dismiss
-        toastMessage = "\(selectedIngredients.count) Ingredient\(selectedIngredients.count > 1 ? "s" : "") Added to Pantry"
-        showToast = true
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            dismiss()
-        }
+}
+
+struct AddIngredientPopup_Previews: PreviewProvider {
+    static var previews: some View {
+        AddIngredientPopup()
+            .environmentObject(UserSession())
     }
 }

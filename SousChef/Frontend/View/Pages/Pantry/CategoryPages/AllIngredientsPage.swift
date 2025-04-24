@@ -3,19 +3,26 @@ import SwiftUI
 struct AllIngredientsPage: View {
     @EnvironmentObject var userSession: UserSession
     @StateObject private var pantryController: PantryController
-
-    init(userSession: UserSession) {
-        _pantryController = StateObject(wrappedValue: PantryController(userSession: userSession))
+    
+    init() {
+        _pantryController = StateObject(wrappedValue: PantryController(userSession: UserSession()))
     }
     
     var body: some View {
         BaseIngredientsPage(
             title: "All Ingredients",
-            ingredients: pantryController.pantryItems.map { $0.text },
-            category: .vegetable // Default color, could be changed based on UI preference
+            ingredients: pantryController.pantryItems,
+            category: .vegetable 
         )
         .onAppear {
             pantryController.fetchIngredients()
+            
+            // Setup notification observer for refreshing contents
+            setupNotificationObserver()
+        }
+        .onDisappear {
+            // Remove notification observer when view disappears
+            NotificationCenter.default.removeObserver(self)
         }
         .alert(isPresented: Binding<Bool>(
             get: { pantryController.errorMessage != nil },
@@ -26,12 +33,23 @@ struct AllIngredientsPage: View {
                   dismissButton: .default(Text("OK")))
         }
     }
+    
+    // Setup notification observer for pantry refresh events
+    private func setupNotificationObserver() {
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("RefreshPantryContents"),
+            object: nil,
+            queue: .main
+        ) { _ in
+            pantryController.fetchIngredients()
+        }
+    }
 }
 
 struct AllIngredientsPage_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            AllIngredientsPage(userSession: UserSession())
+            AllIngredientsPage()
                 .environmentObject(UserSession())
         }
     }

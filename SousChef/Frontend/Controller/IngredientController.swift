@@ -9,19 +9,23 @@ import SwiftUI
 
 class IngredientController: ObservableObject {
     @Published var searchText: String = ""
-    @Published var searchResults: [EdamamIngredientModel] = []
+    @Published var searchResults: [AWSIngredientModel] = []
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     
-    private let ingredientsAPI = EdamamIngredientsComponent()
+    private let ingredientsAPI: AWSInternalIngredientsComponent
     private let userSession: UserSession
     private var searchTerms: [String] = []
-    private var searchCache: [String: [EdamamIngredientModel]] = [:]
+    private var searchCache: [String: [AWSIngredientModel]] = [:]
     private var searchTask: DispatchWorkItem?
     private let searchDebounceTime: Double = 0.6
+    private var shouldUseMockData: Bool = false
+    private var retryCount: Int = 0
+    private let maxRetries: Int = 1
 
     init(userSession: UserSession) {
         self.userSession = userSession
+        self.ingredientsAPI = AWSInternalIngredientsComponent(userSession: userSession)
     }
 
     // MARK: - Perform Search
@@ -31,10 +35,8 @@ class IngredientController: ObservableObject {
             return
         }
         
-        // Cancel any previous search task
         searchTask?.cancel()
         
-        // Create a new search task with debounce
         let task = DispatchWorkItem { [weak self] in
             guard let self = self else { return }
             self.executeSearch()
@@ -43,27 +45,44 @@ class IngredientController: ObservableObject {
         // Store the task
         searchTask = task
         
-        // Schedule the task after debounce time
         DispatchQueue.main.asyncAfter(deadline: .now() + searchDebounceTime, execute: task)
     }
     
+    // MARK: - Mock Data
+    
+    // Provide mock data for testing or when the API fails
+    private func getMockIngredients(for query: String) -> [AWSIngredientModel] {
+        // Common ingredients as fallback
+        let mockIngredientsBase = [
+            AWSIngredientModel(edamamFoodId: "food_a1gb9ubb72c7snbuxr3weagwv0dd", foodCategory: "Meat", name: "Chicken breast", quantityType: "Serving", experiationDuration: 3, imageURL: ""),
+            AWSIngredientModel(edamamFoodId: "food_b0mywndg6pe8jxb2x8nopa8gj60q", foodCategory: "Meat", name: "Chicken thigh", quantityType: "Serving", experiationDuration: 3, imageURL: ""),
+            AWSIngredientModel(edamamFoodId: "food_bdrxu94aj3x2djbpur8dhagfhkcn", foodCategory: "Meat", name: "Chicken wings", quantityType: "Serving", experiationDuration: 3, imageURL: ""),
+            AWSIngredientModel(edamamFoodId: "food_bpbsh0aab089s4bnzjgfrbpc3301", foodCategory: "Dairy", name: "Cheese", quantityType: "Serving", experiationDuration: 14, imageURL: ""),
+            AWSIngredientModel(edamamFoodId: "food_bhppgmha1u27voagb8eptbp9g376", foodCategory: "Dairy", name: "Milk", quantityType: "Cup", experiationDuration: 7, imageURL: ""),
+            AWSIngredientModel(edamamFoodId: "food_a6201h8buzt40ebrr6lo7bkgj8g4", foodCategory: "Vegetable", name: "Onion", quantityType: "Whole", experiationDuration: 30, imageURL: ""),
+            AWSIngredientModel(edamamFoodId: "food_b0759vvai2ugfcbzr9hp6avcwqth", foodCategory: "Vegetable", name: "Garlic", quantityType: "Clove", experiationDuration: 60, imageURL: ""),
+            AWSIngredientModel(edamamFoodId: "food_a7hgthbbhj1qm6bnx79mybkgxcvq", foodCategory: "Vegetable", name: "Tomato", quantityType: "Whole", experiationDuration: 7, imageURL: ""),
+            AWSIngredientModel(edamamFoodId: "food_bnbh4ycaqj9as0ay861deatgd0dd", foodCategory: "Grain", name: "Rice", quantityType: "Cup", experiationDuration: 365, imageURL: ""),
+            AWSIngredientModel(edamamFoodId: "food_blrpqo2bs9n22xaugiv2panns3w9", foodCategory: "Grain", name: "Pasta", quantityType: "Serving", experiationDuration: 365, imageURL: "")
+        ]
+        
+        // Add proper image URLs to mock ingredients
+        let mockIngredients = mockIngredientsBase.map { ensureProperImageURL(ingredient: $0) }
+        
+        // Filter mock data based on query
+        let normalizedQuery = query.lowercased()
+        return mockIngredients.filter { $0.name.lowercased().contains(normalizedQuery) }
+    }
+
     // MARK: - Execute Search
     private func executeSearch() {
-        // Make a local copy to ensure we're working with the correct value
         let currentSearchText = self.searchText
-        
-        // Normalize search text
         let normalizedSearchText = currentSearchText.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         
-        print("Executing search for: '\(normalizedSearchText)'")
-        
-        // Don't search if the term is too short
         guard normalizedSearchText.count >= 2 else {
             self.searchResults = []
             return
         }
-        
-        // Use cached results if available
         if let cachedResults = searchCache[normalizedSearchText] {
             self.searchResults = cachedResults
             return
@@ -71,81 +90,105 @@ class IngredientController: ObservableObject {
         
         isLoading = true
         errorMessage = nil
-        
-        // Break search into terms for better matching later
         searchTerms = normalizedSearchText.components(separatedBy: " ").filter { !$0.isEmpty }
 
-        ingredientsAPI.searchIngredients(query: normalizedSearchText) { result in
-            DispatchQueue.main.async {
+        if shouldUseMockData {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                guard let self = self else { return }
                 self.isLoading = false
-                switch result {
-                case .success(let response):
-                    if response.hints.isEmpty {
-                        // If no exact match found, try a broader search
-                        if self.searchTerms.count > 1 {
-                            // Try with just the first term (often the main ingredient)
-                            let broadSearchTerm = self.searchTerms[0]
-                            self.performBroadSearch(term: broadSearchTerm)
-                        } else {
-                            self.errorMessage = "No ingredients found."
-                            self.searchResults = []
-                        }
-                        return
-                    }
-                    
-                    // Get unique ingredients
-                    let allIngredients = Array(Set(response.hints.map { $0.food }))
-                    
-                    // Sort results by relevance to the search query
-                    let sortedIngredients = self.rankIngredientsByRelevance(allIngredients)
-                    
-                    // Cache results
-                    self.searchCache[normalizedSearchText] = sortedIngredients
-                    self.searchResults = sortedIngredients
-
-                case .failure(let error):
-                    print("API Error: \(error.localizedDescription)")
-                    self.errorMessage = "Failed to fetch ingredients."
+                let mockResults = self.getMockIngredients(for: normalizedSearchText)
+                if mockResults.isEmpty {
+                    self.errorMessage = "No ingredients found (using offline data)."
+                } else {
+                    self.searchResults = mockResults
+                    self.searchCache[normalizedSearchText] = mockResults
                 }
             }
+            return
         }
-    }
-    
-    // MARK: - Perform Broad Search
-    private func performBroadSearch(term: String) {
-        ingredientsAPI.searchIngredients(query: term) { result in
+
+        ingredientsAPI.searchIngredients(query: normalizedSearchText) { [weak self] result in
+            guard let self = self else { return }
+            
             DispatchQueue.main.async {
                 self.isLoading = false
+                
                 switch result {
-                case .success(let response):
-                    if response.hints.isEmpty {
+                case .success(let ingredients):
+                    if ingredients.isEmpty {
                         self.errorMessage = "No ingredients found."
                         self.searchResults = []
                         return
                     }
                     
-                    // Get unique ingredients
-                    let allIngredients = Array(Set(response.hints.map { $0.food }))
+                    let sortedIngredients = self.rankIngredientsByRelevance(ingredients)
                     
-                    // Filter and sort results to still prefer matches related to the original search
-                    let sortedIngredients = self.rankIngredientsByRelevance(allIngredients)
+                    // Map ingredients to ensure they have proper image URLs
+                    let ingredientsWithImages = sortedIngredients.map { self.ensureProperImageURL(ingredient: $0) }
                     
-                    // Only show the most relevant results
-                    self.searchResults = sortedIngredients
+                    // Reset retry count on success
+                    self.retryCount = 0
+                    self.shouldUseMockData = false
                     
+                    // Cache results
+                    self.searchCache[normalizedSearchText] = ingredientsWithImages
+                    self.searchResults = ingredientsWithImages
+
                 case .failure(let error):
-                    print("API Error: \(error.localizedDescription)")
-                    self.errorMessage = "Failed to fetch ingredients."
+                    if self.retryCount < self.maxRetries {
+                        self.retryCount += 1
+                        self.executeSearch()
+                        return
+                    }
+                    
+                    self.shouldUseMockData = true
+                    let mockResults = self.getMockIngredients(for: normalizedSearchText)
+                    
+                    if mockResults.isEmpty {
+                        self.errorMessage = "Could not connect to server. No offline results found."
+                    } else {
+                        self.errorMessage = "Using offline data. Some ingredients may not be available."
+                        self.searchResults = mockResults
+                        self.searchCache[normalizedSearchText] = mockResults
+                    }
                 }
             }
         }
     }
     
+    // MARK: - Ensure Proper Image URL
+    private func ensureProperImageURL(ingredient: AWSIngredientModel) -> AWSIngredientModel {
+        // Check if the ingredient needs an updated image URL
+        if ingredient.imageURL.isEmpty || 
+           ingredient.imageURL.contains("amazonaws.com") || 
+           (!ingredient.imageURL.contains(".webp") && !ingredient.imageURL.contains("cloudfront.net")) {
+            
+            // Use the image service to get the proper URL
+            let imageURL = IngredientImageService.shared.getImageURL(
+                for: ingredient.name,
+                category: ingredient.foodCategory,
+                existingURL: ingredient.imageURL
+            )
+            
+            // Create updated ingredient with proper URL
+            return AWSIngredientModel(
+                edamamFoodId: ingredient.edamamFoodId,
+                foodCategory: ingredient.foodCategory,
+                name: ingredient.name,
+                quantityType: ingredient.quantityType,
+                experiationDuration: ingredient.experiationDuration,
+                imageURL: imageURL
+            )
+        }
+        
+        return ingredient
+    }
+    
     // MARK: - Rank Ingredients by Relevance
-    private func rankIngredientsByRelevance(_ ingredients: [EdamamIngredientModel]) -> [EdamamIngredientModel] {
+    private func rankIngredientsByRelevance(_ ingredients: [AWSIngredientModel]) -> [AWSIngredientModel] {
         return ingredients.sorted { first, second in
-            let firstLabel = first.label.lowercased()
-            let secondLabel = second.label.lowercased()
+            let firstLabel = first.name.lowercased()
+            let secondLabel = second.name.lowercased()
             
             // Check for exact match with full search string
             let fullSearchText = searchText.lowercased()
@@ -183,41 +226,22 @@ class IngredientController: ObservableObject {
     
     // MARK: - Calculate Match Score
     private func getMatchScore(label: String) -> Int {
+        let searchTerms = searchText.lowercased().components(separatedBy: .whitespaces)
+        let labelTerms = label.components(separatedBy: .whitespaces)
+        
         var score = 0
-        let labelWords = label.lowercased().components(separatedBy: " ")
-        
-        // Higher score for matching more search terms
-        for term in searchTerms {
-            if label.contains(term) {
-                score += 3
-            }
-            
-            // Extra points if a word in the label exactly matches a search term
-            if labelWords.contains(term) {
-                score += 2
+        for (index, term) in searchTerms.enumerated() {
+            if index < labelTerms.count && labelTerms[index].hasPrefix(term) {
+                score += 1
             }
         }
-        
-        // Award bonus points for terms appearing in the same order as search
-        var lastFoundIndex = -1
-        var orderBonus = 0
-        
-        for term in searchTerms {
-            if let wordIndex = labelWords.firstIndex(where: { $0.contains(term) }) {
-                if wordIndex > lastFoundIndex {
-                    orderBonus += 1
-                    lastFoundIndex = wordIndex
-                }
-            }
-        }
-        
-        return score + orderBonus
+        return score
     }
     
-    // MARK: - Add Recognized Food from FatSecret
-    func addRecognizedFood(_ food: EdamamIngredientModel) {
+    // MARK: - Add Recognized Food
+    func addRecognizedFood(_ food: AWSIngredientModel) {
         DispatchQueue.main.async {
-            if !self.searchResults.contains(food) {
+            if !self.searchResults.contains(where: { $0.edamamFoodId == food.edamamFoodId }) {
                 self.searchResults.append(food)
             }
         }
@@ -227,38 +251,29 @@ class IngredientController: ObservableObject {
     func addIngredientToDatabase(_ ingredient: Any, completion: @escaping () -> Void) {
         let awsIngredient: AWSIngredientModel
 
-        if let edamamIngredient = ingredient as? EdamamIngredientModel {
-            awsIngredient = AWSIngredientModel(
-                food: edamamIngredient.label,
-                foodCategory: edamamIngredient.category ?? "Unknown",
-                foodId: edamamIngredient.foodId,
-                measure: "Serving",
-                quantity: 1,
-                text: edamamIngredient.label,
-                weight: edamamIngredient.nutrients?.energy ?? 0.0
-            )
+        if let internalIngredient = ingredient as? AWSIngredientModel {
+            awsIngredient = internalIngredient
         } else if let barcodeIngredient = ingredient as? BarcodeModel {
             awsIngredient = AWSIngredientModel(
-                food: barcodeIngredient.label,
+                edamamFoodId: barcodeIngredient.foodId,
                 foodCategory: barcodeIngredient.category ?? "Unknown",
-                foodId: barcodeIngredient.foodId,
-                measure: "Serving",
-                quantity: 1,
-                text: barcodeIngredient.label,
-                weight: barcodeIngredient.nutrients?.energy ?? 0.0
+                name: barcodeIngredient.label,
+                quantityType: "Serving",
+                experiationDuration: 7,
+                imageURL: ""
             )
         } else {
             print("Error: Unsupported ingredient type.")
             return
         }
 
-        let ingredientsAPI = AWSIngredientsComponent(userSession: userSession)
+        let ingredientsAPI = AWSUserIngredientsComponent(userSession: userSession)
 
         ingredientsAPI.addIngredients(ingredients: [awsIngredient]) { result in
             DispatchQueue.main.async {
                 switch result {
                 case .success:
-                    print("Ingredient added successfully: \(awsIngredient.text)")
+                    print("Ingredient added successfully: \(awsIngredient.name)")
                     completion()
                 case .failure(let error):
                     print("Failed to add ingredient: \(error.localizedDescription)")
@@ -270,22 +285,21 @@ class IngredientController: ObservableObject {
     // MARK: - Add Scanned Ingredient
     func addScannedIngredientToDatabase(_ ingredient: BarcodeModel, completion: @escaping () -> Void) {
         let awsIngredient = AWSIngredientModel(
-            food: ingredient.label,
+            edamamFoodId: ingredient.foodId,
             foodCategory: ingredient.category ?? "Unknown",
-            foodId: ingredient.foodId,
-            measure: "Serving",
-            quantity: 1,
-            text: ingredient.label,
-            weight: ingredient.nutrients?.energy ?? 0.0
+            name: ingredient.label,
+            quantityType: "Serving",
+            experiationDuration: 7,
+            imageURL: ""
         )
 
-        let ingredientsAPI = AWSIngredientsComponent(userSession: userSession)
+        let ingredientsAPI = AWSUserIngredientsComponent(userSession: userSession)
 
         ingredientsAPI.addIngredients(ingredients: [awsIngredient]) { result in
             DispatchQueue.main.async {
                 switch result {
                 case .success:
-                    print("Scanned Ingredient added successfully: \(awsIngredient.text)")
+                    print("Scanned Ingredient added successfully: \(awsIngredient.name)")
                     completion()
                 case .failure(let error):
                     print("Failed to add scanned ingredient: \(error.localizedDescription)")

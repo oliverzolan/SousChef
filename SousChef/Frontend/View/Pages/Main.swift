@@ -35,7 +35,7 @@ struct MainTabView: View {
             (AnyView(HomePage()), "house.fill", "Home", 0),
             (AnyView(PantryPage(userSession: userSession)), "refrigerator.fill", "Pantry", 1),
             (AnyView(EmptyView()), "barcode.viewfinder", "Scan", 2),
-            (AnyView(ShoppingListsPage(userSession: _userSession)), "cart.fill", "Shopping", 3),
+            (AnyView(ShoppingListsPage().environmentObject(userSession)), "cart.fill", "Shopping", 3),
             (AnyView(ChatbotPage()), "person.crop.circle", "Chef", 4)
         ]
     }

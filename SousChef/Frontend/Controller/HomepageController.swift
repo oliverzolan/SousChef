@@ -114,7 +114,7 @@ class HomepageController: ObservableObject {
             return 
         }
 
-        let ingredientNames = pantryItems.map { $0.food }
+        let ingredientNames = pantryItems.map { $0.name }
 
         // For display grid (3 recipes)
         var selectedIngredients = Set<String>()
