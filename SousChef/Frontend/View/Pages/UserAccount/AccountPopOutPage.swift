@@ -4,6 +4,8 @@ struct SideMenuView: View {
     let userName: String
     var closeMenu: () -> Void
 
+    @EnvironmentObject var userSession: UserSession
+
     @State private var showSavedRecipes = false
     @State private var showSettings     = false
     @State private var showHelp         = false
@@ -47,6 +49,13 @@ struct SideMenuView: View {
                     }
                     .foregroundColor(.white)
                     Divider().background(Color.white)
+
+
+                    Button("Log Out") {
+                        userSession.logout()
+                        closeMenu()
+                    }
+                    .foregroundColor(.red)
 
                     Spacer()
                 }

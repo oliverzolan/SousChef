@@ -49,7 +49,6 @@ struct LoginView: View {
                             .padding(.horizontal, 24)
                         }
 
-                        // Sign up & Forgot password on separate lines
                         VStack(spacing: 8) {
                             Button {
                                 showSignUp = true
