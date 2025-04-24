@@ -1,21 +1,16 @@
-//
-//  LoginPage.swift
-//  SousChef
-//
-//  Created by Bennet Rau on 11/8/24.
-//
-
 import SwiftUI
 
 struct LoginPage: View {
     @EnvironmentObject var userSession: UserSession
-    
+    @State private var showLogin = false
+    @State private var showSignUp = false
+
     var body: some View {
         NavigationView {
             ZStack {
                 AppColors.background
                     .edgesIgnoringSafeArea(.all)
-                
+
                 VStack(spacing: 30) {
                     Spacer()
                     
@@ -83,3 +78,10 @@ struct LoginPage: View {
     }
 }
 
+struct LoginPage_Previews: PreviewProvider {
+    static var previews: some View {
+        LoginPage()
+            .environmentObject(UserSession())
+            .previewDevice("iPhone 16 Pro")
+    }
+}
