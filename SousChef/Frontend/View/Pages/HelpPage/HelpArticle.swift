@@ -69,6 +69,80 @@ struct HelpArticle: Identifiable {
 
             You can also sort by popularity or newest creation date.
             """
+        ),
+        .init(
+            id: "shoppingLists",
+            title: "Managing Shopping Lists",
+            summary: "Learn how to create, add items to, and delete shopping lists.",
+            content: """
+            # Managing Shopping Lists
+
+            ## Creating a New List
+
+            1. Tap the **Shopping** tab.
+            2. Press **Create Shopping List**.
+            3. Enter a name and tap **Add**.
+
+            ## Adding Items to a List
+
+            1. Open your shopping list.
+            2. Tap the **+** button in the top-right corner.
+            3. Search or type an ingredient name.
+            4. Set the quantity and tap **Add**.
+
+            ## Deleting Items or Lists
+
+            - **Delete an item:**
+              1. Swipe left on the item.
+              2. Tap **Delete**.
+            - **Delete a list:**
+              1. From the **Shopping** tab, swipe left on the list.
+              2. Tap **Delete**.
+            """
+        ),
+        .init(
+            id: "pantryCategories",
+            title: "Organizing Your Pantry",
+            summary: "Explore organizing your pantry by categories for easy navigation.",
+            content: """
+            # Organizing Your Pantry
+
+            ## Viewing by Category
+
+            1. Tap the **Pantry** tab.
+            2. Use the **Category** dropdown at the top.
+            3. Select a category to filter ingredients (e.g. Baking, Spices, Dairy).
+
+            ## Adding or Editing Categories
+
+            1. In **Pantry**, tap **Edit Categories**.
+            2. Tap **+** to add a new category.
+            3. Enter a name and choose an icon.
+            4. Tap **Save**.
+
+            ## Assigning an Item to a Category
+
+            1. In your pantry list, swipe left on an item.
+            2. Tap **Edit**.
+            3. Choose a **Category** from the dropdown.
+            4. Tap **Save**.
+            """
+        ),
+        .init(
+            id: "addFromRecipe",
+            title: "Adding Recipe Ingredients to Your Shopping List",
+            summary: "Quickly move missing recipe ingredients into your shopping list.",
+            content: """
+            # Adding Recipe Ingredients to Your Shopping List
+
+            1. Go to the **Recipes** tab.
+            2. Select the recipe you want to make.
+            3. Tap **Missing Ingredients** at the bottom.
+            4. Review the list of items you don’t have.
+            5. Tap **Add All** to move missing items into your shopping list.
+
+            - **Tip:** You can uncheck any ingredients you already have before adding.
+            """
         )
     ]
 }
