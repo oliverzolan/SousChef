@@ -84,8 +84,15 @@ struct CardShape: Shape {
 
 // Displays a single ingredient card
 struct IngredientCard: View {
-    let name: String
+    let ingredient: AWSIngredientModel
     let category: IngredientCategory
+    
+    init(ingredient: AWSIngredientModel, category: IngredientCategory) {
+        self.ingredient = ingredient
+        self.category = category
+        
+        
+    }
     
     private func fontSizeForText(_ text: String) -> CGFloat {
         if text.count > 15 { return 14 }
@@ -103,19 +110,63 @@ struct IngredientCard: View {
                 RoundedRectangle(cornerRadius: 20)
                     .fill(Color.white)
                     .frame(width: 110, height: 100)
-                    .overlay(
-                        Text(emojiForIngredient(name, in: category))
-                            .font(.system(size: 60))
-                            .offset(y: -5)
-                    )
+                    .overlay {
+                        // Get the image URL directly from the ingredient or generate from category pattern
+                        let imageUrl = IngredientImageService.shared.getImageURL(
+                            for: ingredient.name,
+                            category: ingredient.foodCategory,
+                            existingURL: ingredient.imageURL
+                        )
+                        
+                        // Build the view with the image URL
+                        VStack {
+                            AsyncImage(url: URL(string: imageUrl)) { phase in
+                                switch phase {
+                                case .empty:
+                                    ProgressView()
+                                        .frame(width: 80, height: 80)
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(width: 80, height: 80)
+                                        .clipShape(Circle())
+                                case .failure(let error):
+                                    // Fall back to emoji if image fails to load
+                                    VStack {
+                                        Text(emojiForIngredient(ingredient.name, in: category))
+                                            .font(.system(size: 60))
+                                        
+                                        // Debug: Print error in development builds
+                                        #if DEBUG
+                                        Text(error.localizedDescription)
+                                            .font(.system(size: 6))
+                                            .lineLimit(1)
+                                            .opacity(0.6)
+                                        #endif
+                                    }
+                                    .frame(width: 80, height: 80)
+                                @unknown default:
+                                    Text(emojiForIngredient(ingredient.name, in: category))
+                                        .font(.system(size: 60))
+                                        .frame(width: 80, height: 80)
+                                }
+                            }
+                            .frame(width: 80, height: 80)
+                            .onAppear {
+                                // Remove debug logging for image loading
+                            }
+                        }
+                        .padding(10)
+                    }
                 Spacer()
             }
             .frame(height: 150)
             
             VStack {
                 Spacer()
-                Text(name.capitalized)
-                    .font(.system(size: fontSizeForText(name), weight: .bold))
+                Text(ingredient.name.capitalized)
+                    .font(.system(size: fontSizeForText(ingredient.name), weight: .bold))
                     .foregroundColor(.white)
                     .lineLimit(2)
                     .minimumScaleFactor(0.8)
@@ -136,7 +187,7 @@ struct IngredientCard: View {
 // Main page view for displaying ingredients
 struct BaseIngredientsPage: View {
     let title: String
-    let ingredients: [String]
+    let ingredients: [AWSIngredientModel]
     let category: IngredientCategory
     
     @EnvironmentObject var userSession: UserSession
@@ -149,11 +200,11 @@ struct BaseIngredientsPage: View {
         GridItem(.flexible(), spacing: 10)
     ]
     
-    var filteredIngredients: [String] {
+    var filteredIngredients: [AWSIngredientModel] {
         if searchText.isEmpty {
             return ingredients
         } else {
-            return ingredients.filter { $0.lowercased().contains(searchText.lowercased()) }
+            return ingredients.filter { $0.name.lowercased().contains(searchText.lowercased()) }
         }
     }
     
@@ -188,8 +239,8 @@ struct BaseIngredientsPage: View {
             
             ScrollView {
                 LazyVGrid(columns: columns, spacing: 10) {
-                    ForEach(filteredIngredients, id: \.self) { ingredient in
-                        IngredientCard(name: ingredient, category: category)
+                    ForEach(filteredIngredients, id: \.edamamFoodId) { ingredient in
+                        IngredientCard(ingredient: ingredient, category: category)
                     }
                 }
                 .padding()
@@ -213,7 +264,8 @@ struct BaseIngredientsPage: View {
             .background(Color(.systemBackground))
         }
         .sheet(isPresented: $showAddIngredientSheet) {
-            AddIngredientPopup(ingredients: .constant([]), scannedIngredient: nil, userSession: userSession)
+            AddIngredientPopup()
+                .environmentObject(userSession)
         }
     }
 }
@@ -223,7 +275,7 @@ struct BaseIngredientsPage_Previews: PreviewProvider {
         NavigationView {
             BaseIngredientsPage(
                 title: "Vegetables",
-                ingredients: ["Carrot", "Eggplant", "Broccoli"],
+                ingredients: [],
                 category: .vegetable
             )
         }

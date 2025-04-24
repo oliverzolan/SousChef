@@ -112,17 +112,28 @@ struct AddIngredientPopupShoppingCart: View {
                                 .foregroundColor(.red)
                                 .padding()
                         } else {
-                            List(viewModel.searchResults, id: \.foodId) { ingredient in
+                            ForEach(viewModel.searchResults, id: \.edamamFoodId) { ingredient in
                                 Button {
-                                    selectedIngredient = IngredientResult(foodId: ingredient.foodId, label: ingredient.label, category: ingredient.category)
+                                    selectedIngredient = IngredientResult(
+                                        foodId: ingredient.edamamFoodId,
+                                        label: ingredient.name,
+                                        category: ingredient.foodCategory
+                                    )
                                     quantityText = ""
                                 } label: {
                                     VStack(alignment: .leading) {
-                                        Text(ingredient.label)
+                                        Text(ingredient.name)
                                             .font(.headline)
-                                        if let category = ingredient.category {
-                                            Text(category)
-                                                .font(.subheadline)
+                                        Text(ingredient.foodCategory)
+                                            .font(.subheadline)
+                                            .foregroundColor(.secondary)
+                                        HStack {
+                                            Text("Quantity Type: \(ingredient.quantityType)")
+                                                .font(.caption)
+                                                .foregroundColor(.secondary)
+                                            Spacer()
+                                            Text("Expires in: \(ingredient.experiationDuration) days")
+                                                .font(.caption)
                                                 .foregroundColor(.secondary)
                                         }
                                     }

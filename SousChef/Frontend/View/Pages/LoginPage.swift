@@ -13,57 +13,67 @@ struct LoginPage: View {
 
                 VStack(spacing: 30) {
                     Spacer()
-
+                    
+                    // Watermelon app icon
+                    Image("watermelon")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 150, height: 150)
+                        .padding(.bottom, 20)
+                    
                     Text("SousChef")
                         .font(.title)
                         .fontWeight(.medium)
-                        .foregroundColor(.black)
-                        .padding(.vertical, 200)
-
-                    Button("Sign In") {
-                        showLogin = true
+                        .foregroundColor(Color.black)
+                        .padding(.bottom, 100)
+                    
+                    //to login
+                    NavigationLink(
+                        destination: LoginView()
+                            .environmentObject(userSession)
+                            .navigationBarBackButtonHidden(true)
+                    ) {
+                        Text("Sign In")
+                            .fontWeight(.bold)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .foregroundColor(Color.white)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .foregroundColor(AppColors.primary1)
+                            )
                     }
-                    .fontWeight(.bold)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .foregroundColor(.white)
-                    .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .foregroundColor(AppColors.primary1))
                     .padding(.horizontal, 24)
-
-                    Button("Create Account") {
-                        showSignUp = true
+                    
+                    // Navigation to Create Account View
+                    NavigationLink(
+                        destination: CreateAccountView()
+                            .navigationBarBackButtonHidden(true) // Hide the back button
+                    ) {
+                        Text("Create Account")
+                            .fontWeight(.bold)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .foregroundColor(Color.white)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .foregroundColor(AppColors.primary2)
+                            )
                     }
-                    .fontWeight(.bold)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .foregroundColor(.white)
-                    .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .foregroundColor(AppColors.primary2))
                     .padding(.horizontal, 24)
-
-                    Spacer()
-                }
-                .navigationBarBackButtonHidden(true)
-
-                NavigationLink(
-                    destination: LoginView()
-                        .environmentObject(userSession)
-                        .navigationBarBackButtonHidden(true),
-                    isActive: $showLogin
-                ) {
-                    EmptyView()
-                }
-
-                NavigationLink(
-                    destination: CreateAccountView()
-                        .environmentObject(userSession)
-                        .navigationBarBackButtonHidden(true),
-                    isActive: $showSignUp
-                ) {
-                    EmptyView()
+                    
+                    Spacer() 
                 }
             }
+            .navigationBarBackButtonHidden(true)
+        }
+    }
+    
+    struct profile_activity_Previews: PreviewProvider {
+        static var previews: some View {
+            LoginPage()
+                .environmentObject(UserSession())
+                .previewDevice("iPhone 16 Pro")
         }
     }
 }
