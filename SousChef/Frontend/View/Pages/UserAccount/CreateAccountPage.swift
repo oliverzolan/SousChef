@@ -2,7 +2,9 @@ import SwiftUI
 import AuthenticationServices
 
 struct CreateAccountView: View {
-    @StateObject private var viewModel = CreateAccountViewController()
+    @StateObject private var emailViewModel = CreateAccountViewController()
+    @StateObject private var googleViewModel = CreateAccountWithGoogleViewModel()
+    @StateObject private var appleViewModel  = CreateAccountWithAppleViewModel()
     @EnvironmentObject var userSession: UserSession
 
     var body: some View {
@@ -15,40 +17,39 @@ struct CreateAccountView: View {
                             .font(.title).fontWeight(.medium)
                             .foregroundColor(.black)
                             .padding(.top, 70)
-                        if let error = viewModel.errorMessage {
+
+                        if let error = emailViewModel.errorMessage ?? googleViewModel.errorMessage ?? appleViewModel.errorMessage {
                             Text(error)
                                 .foregroundColor(.red)
                                 .padding()
-                        } else if let success = viewModel.successMessage {
+                        } else if let success = emailViewModel.successMessage ?? googleViewModel.successMessage ?? appleViewModel.successMessage {
                             Text(success)
                                 .foregroundColor(.green)
                                 .padding()
                         }
-                        
 
                         VStack(spacing: 16) {
                             CustomTextField(
                                 label: "Display Name",
                                 placeholder: "Enter your display name",
-                                text: $viewModel.displayName
+                                text: $emailViewModel.displayName
                             )
                             CustomTextField(
                                 label: "Email",
                                 placeholder: "Enter your email",
-                                text: $viewModel.email
+                                text: $emailViewModel.email
                             )
                             CustomSecureField(
                                 label: "Password",
                                 placeholder: "Enter your password",
-                                text: $viewModel.password
+                                text: $emailViewModel.password
                             )
                         }
                         .padding(.horizontal, 24)
 
-
-                        Button(action: viewModel.signUp) {
+                        Button(action: emailViewModel.signUp) {
                             Group {
-                                if viewModel.isLoading {
+                                if emailViewModel.isLoading {
                                     ProgressView()
                                 } else {
                                     Text("Sign up")
@@ -64,7 +65,7 @@ struct CreateAccountView: View {
                             )
                         }
                         .padding(.horizontal, 24)
-                        .disabled(viewModel.isLoading)
+                        .disabled(emailViewModel.isLoading)
 
                         HStack {
                             Divider().background(Color.gray.opacity(0.5))
@@ -78,14 +79,26 @@ struct CreateAccountView: View {
                         .padding(.horizontal, 40)
 
                         VStack(spacing: 10) {
-                            SignInWithAppleButton(
-                                onRequest: viewModel.handleAppleRequest,
-                                onCompletion: viewModel.handleAppleCompletion
-                            )
-                            .frame(height: 50)
+                            Button(action: {
+                                appleViewModel.signUpWithApple()
+                            }) {
+                                HStack {
+                                    Image(systemName: "apple.logo")
+                                    Text("Sign up with Apple")
+                                        .fontWeight(.bold)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.black)
+                                .foregroundColor(.white)
+                                .cornerRadius(10)
+                            }
                             .padding(.horizontal, 24)
 
-                            Button(action: viewModel.signUpWithGoogle) {
+                            Button(action: {
+                                googleViewModel.displayName = emailViewModel.displayName
+                                googleViewModel.signInWithGoogle()
+                            }) {
                                 HStack {
                                     Image("google-logo")
                                         .resizable()
@@ -120,7 +133,14 @@ struct CreateAccountView: View {
                 }
                 .ignoresSafeArea(.keyboard, edges: .bottom)
             }
-            .navigationDestination(isPresented: $viewModel.navigateToHome) {
+
+
+            .navigationDestination(isPresented:
+                Binding(
+                    get: { emailViewModel.navigateToHome || googleViewModel.navigateToHome || appleViewModel.navigateToHome },
+                    set: { _ in }
+                )
+            ) {
                 MainTabView()
                     .environmentObject(userSession)
                     .navigationBarBackButtonHidden(true)
@@ -128,3 +148,5 @@ struct CreateAccountView: View {
         }
     }
 }
+
+

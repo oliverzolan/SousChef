@@ -101,7 +101,7 @@ class AppleAuthViewModel: NSObject, ObservableObject, ASAuthorizationControllerD
     private func handleAppleSignIn(credential: ASAuthorizationAppleIDCredential, nonce: String) {
         guard let identityToken = credential.identityToken,
               let tokenString = String(data: identityToken, encoding: .utf8) else {
-            print("❌ Error: Failed to retrieve identity token")
+            print("Error: Failed to retrieve identity token")
             return
         }
 
