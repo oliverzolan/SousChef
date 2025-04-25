@@ -37,25 +37,6 @@ enum IngredientCategory: String {
 func emojiForIngredient(_ name: String, in category: IngredientCategory) -> String {
     let lowercaseName = name.lowercased()
     
-    // Vegetables
-    if lowercaseName == "carrot" { return "🥕" }
-    if lowercaseName == "broccoli" { return "🥦" }
-    if lowercaseName == "eggplant" || lowercaseName == "aubergine" { return "🍆" }
-    if lowercaseName == "potato" { return "🥔" }
-    if lowercaseName == "tomato" { return "🍅" }
-    if lowercaseName == "cucumber" { return "🥒" }
-    if lowercaseName == "corn" { return "🌽" }
-    if lowercaseName == "garlic" { return "🧄" }
-    if lowercaseName == "onion" { return "🧅" }
-    
-    // Fruits
-    if lowercaseName == "apple" { return "🍎" }
-    if lowercaseName == "banana" { return "🍌" }
-    if lowercaseName == "orange" { return "🍊" }
-    if lowercaseName == "strawberry" { return "🍓" }
-    if lowercaseName == "pineapple" { return "🍍" }
-    if lowercaseName == "grapes" { return "🍇" }
-    
     return category.defaultEmoji
 }
 
