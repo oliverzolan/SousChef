@@ -17,7 +17,13 @@ struct HomeHeader: View {
     @Binding var showMenu: Bool
     @Binding var showNotifications: Bool
     @EnvironmentObject var userSession: UserSession
-    @StateObject private var notificationController = NotificationController()
+    @StateObject private var notificationController: NotificationController
+    
+    init(showMenu: Binding<Bool>, showNotifications: Binding<Bool>) {
+        self._showMenu = showMenu
+        self._showNotifications = showNotifications
+        _notificationController = StateObject(wrappedValue: NotificationController(ingredientController: AWSUserIngredientsComponent(userSession: UserSession())))
+    }
     
     var body: some View {
         HStack {
@@ -247,8 +253,7 @@ struct HomePage: View {
                 }
             }
             .sheet(isPresented: $showNotifications) {
-                NotificationPopup()
-                    .environmentObject(userSession)
+                NotificationPopup(ingredientController: AWSUserIngredientsComponent(userSession: userSession))
             }
             .onAppear {
                 // Reset filter category selection on appearing

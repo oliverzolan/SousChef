@@ -4,10 +4,16 @@ import Combine
 
 @MainActor
 class UserSession: ObservableObject {
+    static weak var shared: UserSession?
     @Published var token: String?
     @Published var fullName: String?
     @Published var isSignedIn: Bool = false
     @Published var isAuthResolved: Bool = false
+    @Published var deviceToken: String? {
+            didSet {
+                registerDeviceTokenIfNeeded()
+            }
+        }
 
     @Published var shoppingLists: [ShoppingList] = [] {
         didSet {
@@ -85,8 +91,31 @@ class UserSession: ObservableObject {
                 self.fullName = name
                 KeychainHelper.shared.save(name, for: "userFullName")
                 self.isSignedIn = true
+                
+                self.registerDeviceTokenIfNeeded()
             }
         }
+    }
+    
+    private func registerDeviceTokenIfNeeded() {
+        guard let token = token, let deviceToken = deviceToken else { return }
+
+        var request = URLRequest(url: URL(string: "https://your.api.domain/create")!)
+        request.httpMethod = "POST"
+        request.setValue(token, forHTTPHeaderField: "Authorization")
+        request.setValue(fullName ?? "SousChef", forHTTPHeaderField: "Email")
+        request.setValue(deviceToken, forHTTPHeaderField: "Device-Token")
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("Device token registration error: \(error.localizedDescription)")
+                return
+            }
+
+            if let response = response as? HTTPURLResponse {
+                print("Device token registered: HTTP \(response.statusCode)")
+            }
+        }.resume()
     }
 
     func loginAsGuest() {
@@ -139,6 +168,8 @@ class UserSession: ObservableObject {
                         self.fullName = name
                         KeychainHelper.shared.save(name, for: "userFullName")
                     }
+                    
+                    self.registerDeviceTokenIfNeeded()
                 }
             }
         }
