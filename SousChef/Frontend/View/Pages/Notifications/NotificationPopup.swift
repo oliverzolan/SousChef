@@ -3,8 +3,12 @@ import SwiftUI
 struct NotificationPopup: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var userSession: UserSession
-    @StateObject private var notificationController = NotificationController()
+    @StateObject private var notificationController: NotificationController
     @State private var showingClearConfirmation = false
+    
+    init(ingredientController: AWSUserIngredientsComponent) {
+        _notificationController = StateObject(wrappedValue: NotificationController(ingredientController: ingredientController))
+    }
     
     var body: some View {
         NavigationView {
@@ -151,7 +155,9 @@ struct NotificationRow: View {
 
 struct NotificationPopup_Previews: PreviewProvider {
     static var previews: some View {
-        NotificationPopup()
-            .environmentObject(UserSession())
+        let userSession = UserSession()
+        NotificationPopup(ingredientController: AWSUserIngredientsComponent(userSession: userSession))
+            .environmentObject(userSession)
     }
-} 
+}
+

@@ -26,10 +26,6 @@ struct SideMenuView: View {
                         .foregroundColor(.white)
                         .padding(.top, 70)
 
-                    Button("Saved Recipes") {
-                        showSavedRecipes = true
-                    }
-                    .foregroundColor(.white)
                     Divider().background(Color.white)
 
                     Button("Settings") {

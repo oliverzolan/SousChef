@@ -39,25 +39,6 @@ struct SousChefApp: App {
     }
 }
 
-
-//struct SousChefApp: App {
-//    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-//    @StateObject private var userSession = UserSession() // Initialize UserSession
-//
-//    var body: some Scene {
-//        WindowGroup {
-//            if let _ = userSession.token, !userSession.isGuest {
-//                // Navigate to the homepage if authenticated
-//                HomePage()
-//            } else {
-//                // Show login options
-//                LoginPage()
-//            }
-//            .environmentObject(userSession)
-//        }
-//    }
-//}
-
 class AppDelegate: NSObject, UIApplicationDelegate {
     func application(
         _ application: UIApplication,
@@ -65,15 +46,41 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     ) -> Bool {
         FirebaseApp.configure()
 
-        // Ensure GIDClientID is set for Google Sign-In
         if let clientID = FirebaseApp.app()?.options.clientID {
             GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
         }
 
+        registerForPushNotifications()
+
         return true
     }
 
-    // Handles Google Sign-In callback
+    private func registerForPushNotifications() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+            if granted {
+                DispatchQueue.main.async {
+                    UIApplication.shared.registerForRemoteNotifications()
+                }
+            } else {
+                print("Push permission denied: \(error?.localizedDescription ?? "No error")")
+            }
+        }
+    }
+
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        let tokenParts = deviceToken.map { String(format: "%02.2hhx", $0) }
+        let tokenString = tokenParts.joined()
+        print("APNs device token: \(tokenString)")
+
+        Task { @MainActor in
+            UserSession.shared?.deviceToken = tokenString
+        }
+    }
+
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        print("Failed to register for notifications: \(error.localizedDescription)")
+    }
+
     func application(
         _ app: UIApplication,
         open url: URL,
