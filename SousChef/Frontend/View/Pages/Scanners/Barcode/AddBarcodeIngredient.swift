@@ -179,20 +179,20 @@ struct SelectedIngredientItemView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 1) {
                     Text(ingredient.label)
-                        .font(.headline)
+                        .font(.caption)
+                        .fontWeight(.medium)
                     if let category = ingredient.category {
                         Text(category)
-                            .font(.caption)
+                            .font(.caption2)
                             .foregroundColor(.secondary)
                     }
                 }
                 
                 Spacer()
                 
-                HStack(spacing: 16) {
-                    // Find index of current ingredient to update quantity
+                HStack(spacing: 8) {
                     if let index = selectedIngredients.firstIndex(where: { $0.id == ingredient.id }) {
                         QuantityInputView(
                             quantity: Binding(
@@ -203,9 +203,8 @@ struct SelectedIngredientItemView: View {
                                 }
                             ),
                             onQuantityChanged: { newQuantity in
-                                // Explicitly update when quantity changes
                                 selectedIngredients[index].quantity = newQuantity
-                                self.displayQuantity = newQuantity // Update local display
+                                self.displayQuantity = newQuantity
                                 print("Updated quantity for \(ingredient.label) to \(newQuantity)")
                             }
                         )
@@ -215,24 +214,25 @@ struct SelectedIngredientItemView: View {
                         removeAction(ingredient)
                     }) {
                         Image(systemName: "trash")
+                            .font(.caption)
                             .foregroundColor(.red)
-                            .padding(8)
+                            .padding(4)
                             .background(Color(.systemGray6).opacity(0.5))
-                            .cornerRadius(8)
+                            .cornerRadius(6)
                     }
                 }
             }
-            .padding()
+            .padding(.vertical, 6)
+            .padding(.horizontal, 10)
             .onChange(of: ingredient.quantity) { _, newValue in
-                // Update local display when ingredient quantity changes
                 displayQuantity = newValue
             }
             
             Divider()
         }
-        .background(Color(.systemBackground))
+        .background(Color.white)
         .cornerRadius(8)
-        .padding(.horizontal)
+        .padding(.horizontal, 8)
     }
 }
 
@@ -267,7 +267,7 @@ struct AddIngredientBarcodePage: View {
                 
                 // Main Content
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 4) {
                         // Search Results
                         searchResultsView
                         
@@ -276,8 +276,9 @@ struct AddIngredientBarcodePage: View {
                         
                         Spacer()
                     }
-                    .padding(.bottom, 100) // Space for the bottom button
+                    .padding(.bottom, 70)
                 }
+                .frame(maxHeight: selectedIngredients.isEmpty ? .infinity : UIScreen.main.bounds.height * 0.4)
             }
             .overlay(addToPantryButton)
             .navigationTitle("Add Ingredients")
@@ -459,11 +460,11 @@ struct AddIngredientBarcodePage: View {
     @ViewBuilder
     private var selectedIngredientsView: some View {
         if !selectedIngredients.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text("Selected Ingredients")
-                    .font(.headline)
+                    .font(.subheadline)
                     .padding(.horizontal)
-                    .padding(.top, 16)
+                    .padding(.top, 8)
                 
                 ForEach(selectedIngredients) { ingredient in
                     SelectedIngredientItemView(
@@ -473,6 +474,10 @@ struct AddIngredientBarcodePage: View {
                     )
                 }
             }
+            .padding(.bottom, 8)
+            .background(Color.white)
+            .cornerRadius(15)
+            .shadow(color: Color.black.opacity(0.1), radius: 3, x: 0, y: 2)
         } else if viewModel.searchResults.isEmpty && !viewModel.isLoading && searchText.isEmpty {
             emptyStateView
         }
@@ -504,15 +509,16 @@ struct AddIngredientBarcodePage: View {
                         .font(.headline)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
-                        .padding()
+                        .padding(.vertical, 10)
                         .background(Color.green)
                         .cornerRadius(10)
                         .padding(.horizontal)
-                        .padding(.bottom, 8)
+                        .padding(.bottom, 5)
                 }
                 .background(
                     Rectangle()
-                        .fill(Color(.systemBackground))
+                        .fill(Color.white)
+                        .frame(height: 60)
                         .edgesIgnoringSafeArea(.bottom)
                         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: -5)
                 )
