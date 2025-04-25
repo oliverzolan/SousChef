@@ -17,7 +17,7 @@ class NotificationController: ObservableObject {
 
     // MARK: - Public Methods
 
-    func fetchNotifications() {
+    @MainActor func fetchNotifications() {
         isLoading = true
         errorMessage = nil
 
@@ -33,8 +33,8 @@ class NotificationController: ObservableObject {
                         AppNotification(
                             id: UUID().uuidString,
                             title: "Ingredient Expiring",
-                            message: "\(ingredient.name) is expiring in \(ingredient.days_left) day(s)",
-                            timestamp: Date(), // or use ingredient.date_added if you prefer
+                            message: "\(ingredient.name) is expiring in less than 24 hours",
+                            timestamp: Date(),
                             isRead: false
                         )
                     }
