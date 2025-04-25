@@ -284,6 +284,10 @@ class IngredientController: ObservableObject {
 
     // MARK: - Add Scanned Ingredient
     func addScannedIngredientToDatabase(_ ingredient: BarcodeModel, completion: @escaping () -> Void) {
+        // Check if this is a generic ingredient already (from our helper)
+        let ingredientName = ingredient.label.lowercased()
+        
+        // Create AWS ingredient from the barcode data
         let awsIngredient = AWSIngredientModel(
             edamamFoodId: ingredient.foodId,
             foodCategory: ingredient.category ?? "Unknown",
@@ -292,19 +296,40 @@ class IngredientController: ObservableObject {
             experiationDuration: 7,
             imageURL: ""
         )
+        
+        // Ensure we have a proper image URL for the ingredient
+        let formattedIngredient = ensureProperImageURL(ingredient: awsIngredient)
 
         let ingredientsAPI = AWSUserIngredientsComponent(userSession: userSession)
 
-        ingredientsAPI.addIngredients(ingredients: [awsIngredient]) { result in
+        ingredientsAPI.addIngredients(ingredients: [formattedIngredient]) { result in
             DispatchQueue.main.async {
                 switch result {
                 case .success:
-                    print("Scanned Ingredient added successfully: \(awsIngredient.name)")
+                    print("Scanned Ingredient added successfully: \(formattedIngredient.name)")
                     completion()
                 case .failure(let error):
                     print("Failed to add scanned ingredient: \(error.localizedDescription)")
                 }
             }
         }
+    }
+    
+    // MARK: - Get Basic Ingredients List
+    func getBasicIngredientsList() -> [String] {
+        return [
+            "apple", "banana", "carrot", "onion", "garlic", "potato", "tomato", "chicken", "beef", "pork",
+            "fish", "rice", "pasta", "cheese", "milk", "butter", "salt", "sugar", "flour", "egg",
+            "pepper", "olive oil", "lemon", "lime", "bread", "spinach", "broccoli", "cucumber", "lettuce",
+            "mushroom", "corn", "peanut butter", "honey", "chocolate", "cream", "yogurt", "beans",
+            "peas", "lentils", "avocado", "chili", "soy sauce", "vinegar", "basil", "parsley", "cilantro",
+            "mint", "rosemary", "thyme", "oregano", "paprika", "cinnamon", "cumin", "turmeric",
+            "ginger", "watermelon", "strawberry", "blueberry", "raspberry", "orange", "peach",
+            "pear", "grape", "pineapple", "coconut", "almond", "walnut", "cashew", "hazelnut",
+            "shrimp", "crab", "lobster", "salmon", "tuna", "cod", "bread crumbs", "zucchini",
+            "eggplant", "bell pepper", "cauliflower", "cabbage", "celery", "kale", "chard",
+            "beet", "radish", "asparagus", "artichoke", "leek", "scallion", "bok choy",
+            "tofu", "tempeh", "seitan", "quinoa", "bulgur", "oats", "barley", "chia", "flaxseed"
+        ]
     }
 }

@@ -17,6 +17,11 @@ struct ScanPopOut: View {
     @State private var selectedImage: UIImage? = nil
     @State private var recognizedText: String = ""
     @State private var isAnalyzing = false
+    @State private var internalIsShowing: Bool = true // Internal state to control visibility
+    @State private var slideOffset: CGFloat = 0 // For slide animation
+    
+    // Animation duration - adjust this to match the appearance animation
+    private let animationDuration: Double = 0.3
     
     enum ScanOption {
         case camera
@@ -33,7 +38,16 @@ struct ScanPopOut: View {
                 Spacer()
                 
                 Button(action: {
-                    isShowing = false
+                    // Close with animation
+                    withAnimation(.easeIn(duration: animationDuration)) {
+                        internalIsShowing = false
+                        slideOffset = 500 // Slide down off screen
+                    }
+                    
+                    // Set the binding after the animation completes
+                    DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
+                        isShowing = false
+                    }
                 }) {
                     Image(systemName: "xmark")
                         .font(.title3)
@@ -56,11 +70,20 @@ struct ScanPopOut: View {
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: -5)
         .padding()
+        .opacity(internalIsShowing ? 1 : 0.4) // Fade out but not completely
+        .offset(y: slideOffset) // Apply the slide offset
+        .animation(.easeIn(duration: animationDuration), value: internalIsShowing) // Match animation
+        .animation(.easeIn(duration: animationDuration), value: slideOffset) // Match animation for sliding
         .sheet(isPresented: $showImagePicker) {
             ImagePicker(selectedImage: $selectedImage, sourceType: .photoLibrary)
         }
         .sheet(isPresented: $showCamera) {
             ImagePicker(selectedImage: $selectedImage, sourceType: .camera)
+        }
+        .onAppear {
+            // Reset internal state when view appears
+            internalIsShowing = true
+            slideOffset = 0 // Reset slide position
         }
     }
     
@@ -279,12 +302,18 @@ struct ScanPopOut: View {
         hostingController.modalPresentationStyle = .fullScreen
         hostingController.modalTransitionStyle = .crossDissolve
         
-        // Dismiss the scan popup first
-        isShowing = false
+        // Close with animation
+        withAnimation(.easeIn(duration: animationDuration)) {
+            internalIsShowing = false
+            slideOffset = 500 // Slide down off screen
+        }
         
-        // Need to give UI time to dismiss the popup before presenting the scanner
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            // Find the top-most view controller to present from
+        // Present the scanner after the animation completes
+        DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
+            // Update binding
+            isShowing = false
+            
+            // Present the scanner
             if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                let rootViewController = scene.windows.first?.rootViewController {
                 
@@ -315,12 +344,18 @@ struct ScanPopOut: View {
         hostingController.modalPresentationStyle = .fullScreen
         hostingController.modalTransitionStyle = .crossDissolve
         
-        // Dismiss the scan popup first
-        isShowing = false
+        // Close with animation
+        withAnimation(.easeIn(duration: animationDuration)) {
+            internalIsShowing = false
+            slideOffset = 500 // Slide down off screen
+        }
         
-        // Need to give UI time to dismiss the popup before presenting the scanner
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            // Find the top-most view controller to present from
+        // Present the scanner after the animation completes
+        DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
+            // Update binding
+            isShowing = false
+            
+            // Present the scanner
             if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                let rootViewController = scene.windows.first?.rootViewController {
                 

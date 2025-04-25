@@ -97,4 +97,16 @@ class AWSInternalIngredientsComponent: AWSAbstract {
             }
         }.resume()
     }
+
+    /// Check if an ingredient exists by name
+    func checkIngredientExists(name: String, completion: @escaping (Bool) -> Void) {
+        searchIngredients(query: name, limit: 1) { result in
+            switch result {
+            case .success(let ingredients):
+                completion(!ingredients.isEmpty)
+            case .failure:
+                completion(false)
+            }
+        }
+    }
 }

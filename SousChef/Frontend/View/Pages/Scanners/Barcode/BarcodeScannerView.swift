@@ -25,6 +25,23 @@ struct BarcodeScannerView: UIViewControllerRepresentable {
 
         init(parent: BarcodeScannerView) {
             self.parent = parent
+            super.init()
+            
+            // Add observer for navigation to ingredient search AFTER super.init()
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(handleNavigateToIngredientSearch),
+                name: NSNotification.Name("NavigateToIngredientSearch"),
+                object: nil
+            )
+        }
+        
+        deinit {
+            NotificationCenter.default.removeObserver(self)
+        }
+        
+        @objc private func handleNavigateToIngredientSearch() {
+            navigateToIngredientSearch()
         }
 
         func didScanBarcode(_ barcode: String) {
@@ -72,16 +89,22 @@ struct BarcodeScannerView: UIViewControllerRepresentable {
 
         private func navigateToIngredientSearch() {
             DispatchQueue.main.async {
-                let searchView = AddIngredientBarcodePage(
-                    scannedIngredient: nil, 
-                    userSession: self.parent.userSession,
-                    preloadedIngredients: self.parent.scannedItems.map { $0.ingredient }
-                )
+                let searchView = AddIngredientPopup()
+                    .environmentObject(self.parent.userSession)
                 let hostingController = UIHostingController(rootView: searchView)
-                
-                if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                   let window = scene.windows.first(where: { $0.isKeyWindow }) {
-                    window.rootViewController?.present(hostingController, animated: true, completion: nil)
+                hostingController.modalPresentationStyle = .fullScreen
+
+                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                   let window = windowScene.windows.first(where: { $0.isKeyWindow }),
+                   let rootVC = window.rootViewController {
+                    var topVC = rootVC
+                    while let presentedVC = topVC.presentedViewController {
+                        topVC = presentedVC
+                    }
+                    topVC.present(hostingController, animated: true, completion: {
+                        // Restart scanner when the popup is dismissed
+                        NotificationCenter.default.post(name: NSNotification.Name("RestartScanner"), object: nil)
+                    })
                 }
             }
         }
