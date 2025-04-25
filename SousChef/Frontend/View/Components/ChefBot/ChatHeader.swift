@@ -14,7 +14,7 @@ struct ChatHeader: View {
         VStack {
             HStack {
                 Text("Personal SousChef")
-                    .font(.title2)
+                    .font(.system(size: 28))
                     .bold()
                     .foregroundColor(.black)
                     .padding(.leading, 16)
