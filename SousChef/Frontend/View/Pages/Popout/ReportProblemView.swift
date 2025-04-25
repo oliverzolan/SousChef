@@ -1,10 +1,5 @@
 import SwiftUI
 import FirebaseAuth
-import FirebaseFirestore
-
-import SwiftUI
-import FirebaseAuth
-import FirebaseFirestore
 
 class ReportProblemViewModel: ObservableObject {
     @Published var subject        = ""
@@ -14,52 +9,76 @@ class ReportProblemViewModel: ObservableObject {
     @Published var successMessage: String?
     @Published var navigateBack   = false
 
-    private let db = Firestore.firestore()
-
     func submitReport() {
-        // 1) must be logged in
         guard let user = Auth.auth().currentUser else {
             errorMessage = "You must be logged in to submit a report."
             return
         }
 
-        // 2) validate inputs
         guard !subject.trimmingCharacters(in: .whitespaces).isEmpty,
               !description.trimmingCharacters(in: .whitespaces).isEmpty else {
             errorMessage = "Please fill out all fields."
             return
         }
 
-        isLoading    = true
+        isLoading = true
         errorMessage = nil
 
-        // 3) build payload
-        let data: [String: Any] = [
-            "subject":     subject,
-            "description": description,
-            "createdAt":   FieldValue.serverTimestamp(),
-            "reportedBy":  user.uid
-        ]
-
-        // 4) submit to Firestore
-        db.collection("reports")
-          .addDocument(data: data) { [weak self] error in
-            DispatchQueue.main.async {
-                self?.isLoading = false
-
-                if let nsErr = error as NSError? {
-                    // map the nested Code enum
-                    if let code = FirestoreErrorCode.Code(rawValue: nsErr.code),
-                       code == .permissionDenied {
-                        self?.errorMessage = "You don’t have permission to submit a report."
-                    } else {
-                        self?.errorMessage = nsErr.localizedDescription
-                    }
-                } else {
-                    self?.successMessage = "Report sent. Thank you!"
-                    self?.navigateBack = true
+        user.getIDToken { idToken, error in
+            guard let idToken = idToken, error == nil else {
+                DispatchQueue.main.async {
+                    self.errorMessage = "Failed to get auth token."
+                    self.isLoading = false
                 }
+                return
             }
+            print("idToken: \(idToken)")
+            let url = URL(string: "https://souschef.click/reports/add")!
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.setValue(idToken, forHTTPHeaderField: "Authorization")
+
+            let payload: [String: Any] = [
+                "subject": self.subject,
+                "description": self.description
+            ]
+
+            do {
+                request.httpBody = try JSONSerialization.data(withJSONObject: payload)
+            } catch {
+                DispatchQueue.main.async {
+                    self.errorMessage = "Encoding error."
+                    self.isLoading = false
+                }
+                return
+            }
+
+            URLSession.shared.dataTask(with: request) { data, response, error in
+                DispatchQueue.main.async {
+                    self.isLoading = false
+
+                    if let error = error {
+                        self.errorMessage = "Network error: \(error.localizedDescription)"
+                        return
+                    }
+
+                    if let httpResponse = response as? HTTPURLResponse {
+                        if httpResponse.statusCode == 201 {
+                            self.successMessage = "Report sent. Thank you!"
+                            self.navigateBack = true
+                        } else {
+                            if let data = data,
+                               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                               let message = json["error"] as? String {
+                                self.errorMessage = message
+                            } else {
+                                self.errorMessage = "Server error (code: \(httpResponse.statusCode))"
+                            }
+                        }
+                    }
+                }
+            }.resume()
         }
     }
 }
