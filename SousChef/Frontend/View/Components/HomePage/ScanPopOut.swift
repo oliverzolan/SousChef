@@ -101,16 +101,16 @@ struct ScanPopOut: View {
                 )
             }
             
-            Button(action: {
-                selectedOption = .camera
-                showCamera = true
-            }) {
-                optionCard(
-                    icon: "camera.fill",
-                    title: "Scan Ingredient",
-                    description: "Take a photo of ingredients"
-                )
-            }
+//            Button(action: {
+//                selectedOption = .camera
+//                showCamera = true
+//            }) {
+//                optionCard(
+//                    icon: "camera.fill",
+//                    title: "Scan Ingredient",
+//                    description: "Take a photo of ingredients"
+//                )
+//            }
             
             Button(action: {
                 // Navigate to receipt scanner using UIKit presentation
@@ -124,16 +124,16 @@ struct ScanPopOut: View {
                 )
             }
             
-            Button(action: {
-                selectedOption = .gallery
-                showImagePicker = true
-            }) {
-                optionCard(
-                    icon: "photo.on.rectangle",
-                    title: "Choose from Gallery",
-                    description: "Select a photo from your gallery"
-                )
-            }
+//            Button(action: {
+//                selectedOption = .gallery
+//                showImagePicker = true
+//            }) {
+//                optionCard(
+//                    icon: "photo.on.rectangle",
+//                    title: "Choose from Gallery",
+//                    description: "Select a photo from your gallery"
+//                )
+//            }
         }
         .padding()
     }
@@ -260,7 +260,7 @@ struct ScanPopOut: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
-                        .background(AppColors.primary1)
+                        .background(AppColors.secondary2)
                         .cornerRadius(12)
                 }
             }

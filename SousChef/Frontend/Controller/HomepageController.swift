@@ -31,12 +31,10 @@ class HomepageController: ObservableObject {
         loadCachedPantryRecipes()
         refreshIfExpired()
 
-        // ✅ Wrap MainActor-isolated calls in Task
         Task { @MainActor in
             await fetchPantryRecipesIfNeeded()
         }
 
-        // ✅ Wrap pantry change handler in Task
         pantryController.onPantryItemsChanged = { [weak self] in
             Task { @MainActor in
                 await self?.refreshPantryRecipes()

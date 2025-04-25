@@ -576,7 +576,7 @@ struct AddIngredientBarcodePage: View {
         }
 
         // Add it to the selected list with appropriate toast message
-        let message = searchText.isEmpty && scannedIngredient == nil && preloadedIngredients.isEmpty ? 
+        let message = searchText.isEmpty && scannedIngredient == nil && preloadedIngredients.isEmpty ?
             "Food Added!" : ""
         
         addToSelectedList(newIngredient, notificationMessage: message)
@@ -823,5 +823,4 @@ struct AddIngredientPage_Previews: PreviewProvider {
         }
     }
 }
-
 

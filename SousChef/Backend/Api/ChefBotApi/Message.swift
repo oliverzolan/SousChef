@@ -13,4 +13,3 @@ struct Message: Identifiable {
     let isUser: Bool
     var isTyping: Bool = false
 }
-

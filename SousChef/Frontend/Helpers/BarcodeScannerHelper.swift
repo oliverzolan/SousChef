@@ -14,38 +14,44 @@ class BarcodeScannerHelper {
     private var knownIngredients: [String] = []
 
     private init() {
-        // Initialize with basic ingredients
-        loadIngredientsList()
+        knownIngredients = []
+        loadIngredientsFromJson()
+        Task { await loadIngredientsList() }
     }
     
-    private func loadIngredientsList() {
-        if let userSession = getUserSession() {
+    private func loadIngredientsFromJson() {
+        if let path = Bundle.main.path(forResource: "ingredients", ofType: "json", inDirectory: "Backend/Components/ReceiptScanner") {
+            do {
+                let data = try Data(contentsOf: URL(fileURLWithPath: path))
+                let decoder = JSONDecoder()
+                knownIngredients = try decoder.decode([String].self, from: data)
+            } catch {
+                print("Error loading ingredients from JSON: \(error)")
+                // Fallback to basic ingredients if json loading fails
+                knownIngredients = [
+                    "apple", "banana", "carrot", "onion", "garlic", "potato", "tomato", "chicken", "beef", "pork",
+                    "fish", "rice", "pasta", "cheese", "milk", "butter", "salt", "sugar", "flour", "egg", "lettuce"
+                ]
+            }
+        }
+    }
+    
+    @MainActor
+    private func loadIngredientsList() async {
+        if let userSession = await getUserSession() {
             let ingredientController = IngredientController(userSession: userSession)
             knownIngredients = ingredientController.getBasicIngredientsList()
-        } else {
-            knownIngredients = [
-                "apple", "banana", "carrot", "onion", "garlic", "potato", "tomato", "chicken", "beef", "pork",
-                "fish", "rice", "pasta", "cheese", "milk", "butter", "salt", "sugar", "flour", "egg"
-            ]
         }
     }
     
-    private nonisolated func getUserSession() -> UserSession? {
-        var session: UserSession? = nil
-        let semaphore = DispatchSemaphore(value: 0)
-        
-        Task { @MainActor in
-            session = UserSession()
-            semaphore.signal()
-        }
-        
-        semaphore.wait()
-        return session
+    @MainActor
+    private func getUserSession() async -> UserSession? {
+        return UserSession()
     }
 
     func fetchIngredient(by upc: String, completion: @escaping (BarcodeModel?) -> Void) {
         if knownIngredients.isEmpty {
-            loadIngredientsList()
+            Task { await loadIngredientsList() }
         }
         
         barcodeAPI.fetchFoodByBarcode(upc: upc) { result in
@@ -143,7 +149,7 @@ class BarcodeScannerHelper {
                 preferredStyle: .alert
             )
 
-            alert.addAction(UIAlertAction(title: "Try Another", style: .default, handler: { _ in 
+            alert.addAction(UIAlertAction(title: "Try Another", style: .default, handler: { _ in
                 NotificationCenter.default.post(name: NSNotification.Name("RestartScanner"), object: nil)
                 retryHandler()
             }))

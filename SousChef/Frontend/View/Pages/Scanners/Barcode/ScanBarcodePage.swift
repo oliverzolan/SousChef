@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import Foundation
 
 
 struct ScanBarcodePage: View {
@@ -11,22 +12,9 @@ struct ScanBarcodePage: View {
     @State private var toastMessage: String = ""
     @State private var isFlashing = false
     @Environment(\.dismiss) private var dismiss
-
-    // List of known ingredients
-    private let knownIngredients = [
-        "Apple", "Banana", "Orange", "Strawberry", "Blueberry", "Raspberry", "Blackberry", "Grape", "Watermelon", "Cantaloupe",
-        "Pineapple", "Mango", "Peach", "Pear", "Plum", "Kiwi", "Lemon", "Lime", "Avocado", "Coconut", "Date", "Carrot",
-        "Broccoli", "Spinach", "Lettuce", "Kale", "Cabbage", "Cauliflower", "Cucumber", "Tomato", "Bell Pepper", "Onion",
-        "Garlic", "Potato", "Sweet Potato", "Zucchini", "Eggplant", "Asparagus", "Celery", "Mushroom", "Corn", "Green Bean",
-        "Pea", "Brussels Sprout", "Artichoke", "Radish", "Beet", "Turnip", "Leek", "Shallot", "Scallion", "Bok Choy",
-        "Arugula", "Watercress", "Okra", "Parsnip", "Rutabaga", "Fennel", "Endive", "Radicchio", "Collard Greens",
-        "Swiss Chard", "Pumpkin", "Butternut Squash", "Acorn Squash", "Spaghetti Squash", "Jicama", "Tomatillo", "Chayote",
-        "Kohlrabi", "Daikon", "Milk", "Butter", "Cheese", "Yogurt", "Cream", "Sour Cream", "Cream Cheese", "Cottage Cheese",
-        "Ricotta Cheese", "Mozzarella Cheese", "Cheddar Cheese", "Swiss Cheese", "Parmesan Cheese", "Gouda Cheese", "Brie Cheese",
-        "Blue Cheese", "Feta Cheese", "Goat Cheese", "Provolone Cheese", "American Cheese", "Whipped Cream", "Half and Half",
-        "Buttermilk", "Condensed Milk", "Evaporated Milk", "Ice Cream", "Frozen Yogurt", "Whey", "Mascarpone", "Quark",
-        "Chicken Breast", "Chicken Thigh", "Ground Beef", "Beef Steak", "Pork Chop", "Bacon", "Ham", "Flour"
-    ]
+    
+    // Load ingredients from JSON file
+    @State private var knownIngredients: [String] = []
 
     var body: some View {
         ZStack {
@@ -63,6 +51,8 @@ struct ScanBarcodePage: View {
                 withAnimation(Animation.easeInOut(duration: 0.7).repeatForever()) {
                     isFlashing = true
                 }
+                // Load the ingredients when the view appears
+                loadIngredients()
             }
             
             // UI Controls and scanned items overlay
@@ -155,6 +145,19 @@ struct ScanBarcodePage: View {
                         }
                     }
             }
+        }
+    }
+    
+    private func loadIngredients() {
+        // Use IngredientController to load ingredients from JSON
+        let ingredientController = IngredientController(userSession: userSession)
+        let ingredients = ingredientController.getBasicIngredientsList()
+        
+        // Make sure all ingredients have proper capitalization
+        knownIngredients = ingredients.map { 
+            $0.split(separator: " ").map { 
+                $0.prefix(1).uppercased() + $0.dropFirst().lowercased() 
+            }.joined(separator: " ")
         }
     }
     
