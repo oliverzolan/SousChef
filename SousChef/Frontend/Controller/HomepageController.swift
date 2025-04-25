@@ -4,7 +4,6 @@
 //
 //  Created by Oliver Zolan on 3/30/25.
 //
-
 import Foundation
 import SwiftUI
 
@@ -22,7 +21,7 @@ class HomepageController: ObservableObject {
     private let pantryTimestampKey = "cachedPantryTimestamp"
     
     private let allIngredients = [
-        "chicken", "pasta", "rice", "tomato", "bell pepper", "beef", "tofu", "broccoli", "potato", 
+        "chicken", "pasta", "rice", "tomato", "bell pepper", "beef", "tofu", "broccoli", "potato",
         "egg", "cheese", "spinach", "onion", "garlic", "carrot", "salmon", "bacon"
     ]
 
@@ -31,11 +30,17 @@ class HomepageController: ObservableObject {
         loadCachedFeaturedRecipes()
         loadCachedPantryRecipes()
         refreshIfExpired()
-        fetchPantryRecipesIfNeeded()
-        
-        // Register for pantry changes
+
+        // ✅ Wrap MainActor-isolated calls in Task
+        Task { @MainActor in
+            await fetchPantryRecipesIfNeeded()
+        }
+
+        // ✅ Wrap pantry change handler in Task
         pantryController.onPantryItemsChanged = { [weak self] in
-            self?.refreshPantryRecipes()
+            Task { @MainActor in
+                await self?.refreshPantryRecipes()
+            }
         }
     }
 
@@ -44,15 +49,13 @@ class HomepageController: ObservableObject {
     }
     
     private func loadCachedPantryRecipes() {
-        // Load pantry recipes
         if let data = UserDefaults.standard.data(forKey: pantryRecipesCacheKey),
            let decoded = try? JSONDecoder().decode([EdamamRecipeModel].self, from: data) {
             self.pantryRecipes = decoded
         } else {
             self.pantryRecipes = []
         }
-        
-        // Load all pantry recipes
+
         if let data = UserDefaults.standard.data(forKey: allPantryRecipesCacheKey),
            let decoded = try? JSONDecoder().decode([EdamamRecipeModel].self, from: data) {
             self.allPantryRecipes = decoded
@@ -60,41 +63,37 @@ class HomepageController: ObservableObject {
             self.allPantryRecipes = []
         }
     }
-    
+
     private func cachePantryRecipes() {
         if let encoded = try? JSONEncoder().encode(pantryRecipes) {
             UserDefaults.standard.set(encoded, forKey: pantryRecipesCacheKey)
         }
-        
+
         if let encoded = try? JSONEncoder().encode(allPantryRecipes) {
             UserDefaults.standard.set(encoded, forKey: allPantryRecipesCacheKey)
         }
-        
+
         UserDefaults.standard.set(Date(), forKey: pantryTimestampKey)
     }
-    
+
     private func isPantryRecipesCacheExpired() -> Bool {
         guard let timestamp = UserDefaults.standard.object(forKey: pantryTimestampKey) as? Date else {
             return true
         }
-        // Cache expires after 24 hours
         return Date().timeIntervalSince(timestamp) > 86400
     }
 
-    func fetchPantryRecipesIfNeeded() {
-        // Fetch if cache is empty or expired
+    @MainActor func fetchPantryRecipesIfNeeded() {
         if pantryRecipes.isEmpty || allPantryRecipes.isEmpty || isPantryRecipesCacheExpired() {
             fetchPantryRecipes()
         }
     }
-    
-    // Called when a new ingredient is added to pantry
-    func refreshPantryRecipes() {
+
+    @MainActor func refreshPantryRecipes() {
         fetchPantryRecipes()
     }
 
-    func fetchPantryRecipes() {
-        // Makes sure pantry ingredients are fetched
+    @MainActor func fetchPantryRecipes() {
         if pantryController.pantryItems.isEmpty {
             pantryController.fetchIngredients()
 
@@ -108,15 +107,14 @@ class HomepageController: ObservableObject {
 
     private func queryPantryBasedRecipes() {
         let pantryItems = pantryController.pantryItems
-        guard !pantryItems.isEmpty else { 
+        guard !pantryItems.isEmpty else {
             print("No pantry items found, using default ingredients")
             fetchDefaultPantryRecipes()
-            return 
+            return
         }
 
         let ingredientNames = pantryItems.map { $0.name }
 
-        // For display grid (3 recipes)
         var selectedIngredients = Set<String>()
         var attempts = 0
         while selectedIngredients.count < min(3, ingredientNames.count) && attempts < 20 {
@@ -129,150 +127,103 @@ class HomepageController: ObservableObject {
         let ingredientsToQuery = ingredientNames.count < 3
             ? Array(ingredientNames)
             : Array(selectedIngredients)
-        
+
         let api = EdamamRecipeComponent()
         let group = DispatchGroup()
         var fetchedForGrid: [EdamamRecipeModel] = []
         var fetchedAll: [EdamamRecipeModel] = []
 
-        // First fetch for the grid display (3 recipes)
         for ingredient in ingredientsToQuery {
             group.enter()
             api.searchRecipes(query: ingredient) { result in
                 defer { group.leave() }
-                
-                switch result {
-                case .success(let response):
-                    if !response.hits.isEmpty {
-                        // Get recipes for the main grid display
-                        let recipes = response.hits.prefix(2).map { $0.recipe }
-                        fetchedForGrid.append(contentsOf: recipes)
-                    }
-                case .failure(let error):
-                    print("Error fetching recipes for \(ingredient): \(error.localizedDescription)")
+                if case .success(let response) = result {
+                    let recipes = response.hits.prefix(2).map { $0.recipe }
+                    fetchedForGrid.append(contentsOf: recipes)
                 }
             }
         }
-        
-        // Fetch all pantry ingredients for the "More" view
+
         let allGroup = DispatchGroup()
         for ingredient in ingredientNames {
             allGroup.enter()
             api.searchRecipes(query: ingredient) { result in
                 defer { allGroup.leave() }
-                
-                switch result {
-                case .success(let response):
-                    if !response.hits.isEmpty {
-                        // Grabs up to 5 recipes per ingredient for the "More" view
-                        let recipes = response.hits.prefix(5).map { $0.recipe }
-                        fetchedAll.append(contentsOf: recipes)
-                    }
-                case .failure(let error):
-                    print("Error fetching all pantry recipes: \(error.localizedDescription)")
+                if case .success(let response) = result {
+                    let recipes = response.hits.prefix(5).map { $0.recipe }
+                    fetchedAll.append(contentsOf: recipes)
                 }
             }
         }
-        
+
         group.notify(queue: .main) {
             if fetchedForGrid.isEmpty {
                 print("No pantry recipes found for grid, using default recipes")
                 self.fetchDefaultPantryRecipes()
             } else {
-                print("Found \(fetchedForGrid.count) pantry recipes for grid")
                 self.pantryRecipes = fetchedForGrid
-                
-                // Cache immediately to ensure we have something
                 if let encoded = try? JSONEncoder().encode(fetchedForGrid) {
                     UserDefaults.standard.set(encoded, forKey: self.pantryRecipesCacheKey)
                 }
             }
         }
-        
+
         allGroup.notify(queue: .main) {
             if fetchedAll.isEmpty {
-                print("No pantry recipes found for 'More' view, using defaults")
-                // Use the grid recipes if "More" recipes failed to load
                 self.allPantryRecipes = self.pantryRecipes
             } else {
-                print("Found \(fetchedAll.count) pantry recipes for 'More' view")
                 self.allPantryRecipes = fetchedAll
-                
-                // Cache all recipes
                 self.cachePantryRecipes()
             }
         }
     }
 
     private func fetchDefaultPantryRecipes() {
-        // Use some popular ingredients as fallback
         let defaultIngredients = ["chicken", "pasta", "rice", "potato", "tomato"]
         let selectedDefaults = defaultIngredients.shuffled().prefix(3)
-        
+
         let api = EdamamRecipeComponent()
         let gridGroup = DispatchGroup()
         var fetchedForGrid: [EdamamRecipeModel] = []
-        
+
         for ingredient in selectedDefaults {
             gridGroup.enter()
             api.searchRecipes(query: ingredient) { result in
                 defer { gridGroup.leave() }
-                
-                if case .success(let response) = result, 
-                   !response.hits.isEmpty {
-                    // Get a single recipe per default ingredient
-                    if let recipe = response.hits.first?.recipe {
-                        fetchedForGrid.append(recipe)
-                    }
+                if case .success(let response) = result,
+                   let recipe = response.hits.first?.recipe {
+                    fetchedForGrid.append(recipe)
                 }
             }
         }
-        
-        // Fetch more recipes for the "More" view
+
         let allGroup = DispatchGroup()
         var fetchedAll: [EdamamRecipeModel] = []
-        
+
         for ingredient in defaultIngredients {
             allGroup.enter()
             api.searchRecipes(query: ingredient) { result in
                 defer { allGroup.leave() }
-                
-                if case .success(let response) = result, 
-                   !response.hits.isEmpty {
+                if case .success(let response) = result {
                     let recipes = response.hits.prefix(3).map { $0.recipe }
                     fetchedAll.append(contentsOf: recipes)
                 }
             }
         }
-        
+
         gridGroup.notify(queue: .main) {
-            if !fetchedForGrid.isEmpty {
-                self.pantryRecipes = fetchedForGrid
-                
-                // Cache immediately
-                if let encoded = try? JSONEncoder().encode(fetchedForGrid) {
-                    UserDefaults.standard.set(encoded, forKey: self.pantryRecipesCacheKey)
-                }
-            } else {
-                // Use empty array
-                self.pantryRecipes = []
+            self.pantryRecipes = fetchedForGrid
+            if let encoded = try? JSONEncoder().encode(fetchedForGrid) {
+                UserDefaults.standard.set(encoded, forKey: self.pantryRecipesCacheKey)
             }
         }
-        
+
         allGroup.notify(queue: .main) {
-            if !fetchedAll.isEmpty {
-                self.allPantryRecipes = fetchedAll
-                
-                // Cache all recipes
-                if let encoded = try? JSONEncoder().encode(fetchedAll) {
-                    UserDefaults.standard.set(encoded, forKey: self.allPantryRecipesCacheKey)
-                }
-                
-                UserDefaults.standard.set(Date(), forKey: self.pantryTimestampKey)
-            } else {
-                // Use grid recipes as last resort
-                self.allPantryRecipes = self.pantryRecipes
+            self.allPantryRecipes = fetchedAll.isEmpty ? fetchedForGrid : fetchedAll
+            if let encoded = try? JSONEncoder().encode(self.allPantryRecipes) {
+                UserDefaults.standard.set(encoded, forKey: self.allPantryRecipesCacheKey)
             }
+            UserDefaults.standard.set(Date(), forKey: self.pantryTimestampKey)
         }
     }
 
@@ -281,7 +232,6 @@ class HomepageController: ObservableObject {
            let decoded = try? JSONDecoder().decode([EdamamRecipeModel].self, from: data) {
             self.featuredRecipes = decoded
         } else {
-            // Use empty array instead of placeholders
             self.featuredRecipes = []
         }
     }
@@ -310,22 +260,19 @@ class HomepageController: ObservableObject {
         for ingredient in selectedIngredients {
             group.enter()
             api.searchRecipes(query: ingredient) { result in
+                defer { group.leave() }
                 if case .success(let response) = result,
                    let recipe = response.hits.first?.recipe {
                     fetched.append(recipe)
                 }
-                group.leave()
             }
         }
 
         group.notify(queue: .main) {
-            if !fetched.isEmpty {
-                self.featuredRecipes = fetched
-
-                if let encoded = try? JSONEncoder().encode(fetched) {
-                    UserDefaults.standard.set(encoded, forKey: self.featuredCacheKey)
-                    UserDefaults.standard.set(Date(), forKey: self.timestampKey)
-                }
+            self.featuredRecipes = fetched
+            if let encoded = try? JSONEncoder().encode(fetched) {
+                UserDefaults.standard.set(encoded, forKey: self.featuredCacheKey)
+                UserDefaults.standard.set(Date(), forKey: self.timestampKey)
             }
         }
     }

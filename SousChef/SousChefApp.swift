@@ -9,17 +9,27 @@ import SwiftUI
 import Firebase
 import GoogleSignIn
 
+import SwiftUI
+import FirebaseAuth
+
 @main
 struct SousChefApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var userSession = UserSession()
-    
+
     var body: some Scene {
         WindowGroup {
             let pantryController = PantryController(userSession: userSession)
             let homepageController = HomepageController(pantryController: pantryController)
 
-            NavigationView {
+            if !userSession.isAuthResolved {
+                LoadingView()
+            } else if userSession.isSignedIn {
+                MainTabView()
+                    .environmentObject(userSession)
+                    .environmentObject(pantryController)
+                    .environmentObject(homepageController)
+            } else {
                 LoginPage()
                     .environmentObject(userSession)
                     .environmentObject(pantryController)
@@ -70,5 +80,15 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         options: [UIApplication.OpenURLOptionsKey: Any] = [:]
     ) -> Bool {
         return GIDSignIn.sharedInstance.handle(url)
+    }
+}
+
+struct LoadingView: View {
+    var body: some View {
+        VStack {
+            ProgressView()
+            Text("Checking login...")
+        }
+        .padding()
     }
 }

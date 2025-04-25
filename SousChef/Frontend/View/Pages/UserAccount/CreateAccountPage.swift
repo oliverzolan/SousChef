@@ -15,6 +15,16 @@ struct CreateAccountView: View {
                             .font(.title).fontWeight(.medium)
                             .foregroundColor(.black)
                             .padding(.top, 70)
+                        if let error = viewModel.errorMessage {
+                            Text(error)
+                                .foregroundColor(.red)
+                                .padding()
+                        } else if let success = viewModel.successMessage {
+                            Text(success)
+                                .foregroundColor(.green)
+                                .padding()
+                        }
+                        
 
                         VStack(spacing: 16) {
                             CustomTextField(
@@ -35,15 +45,6 @@ struct CreateAccountView: View {
                         }
                         .padding(.horizontal, 24)
 
-                        if let error = viewModel.errorMessage {
-                            Text(error)
-                                .foregroundColor(.red)
-                                .padding()
-                        } else if let success = viewModel.successMessage {
-                            Text(success)
-                                .foregroundColor(.green)
-                                .padding()
-                        }
 
                         Button(action: viewModel.signUp) {
                             Group {

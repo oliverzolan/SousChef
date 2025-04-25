@@ -37,25 +37,6 @@ enum IngredientCategory: String {
 func emojiForIngredient(_ name: String, in category: IngredientCategory) -> String {
     let lowercaseName = name.lowercased()
     
-    // Vegetables
-    if lowercaseName == "carrot" { return "🥕" }
-    if lowercaseName == "broccoli" { return "🥦" }
-    if lowercaseName == "eggplant" || lowercaseName == "aubergine" { return "🍆" }
-    if lowercaseName == "potato" { return "🥔" }
-    if lowercaseName == "tomato" { return "🍅" }
-    if lowercaseName == "cucumber" { return "🥒" }
-    if lowercaseName == "corn" { return "🌽" }
-    if lowercaseName == "garlic" { return "🧄" }
-    if lowercaseName == "onion" { return "🧅" }
-    
-    // Fruits
-    if lowercaseName == "apple" { return "🍎" }
-    if lowercaseName == "banana" { return "🍌" }
-    if lowercaseName == "orange" { return "🍊" }
-    if lowercaseName == "strawberry" { return "🍓" }
-    if lowercaseName == "pineapple" { return "🍍" }
-    if lowercaseName == "grapes" { return "🍇" }
-    
     return category.defaultEmoji
 }
 
@@ -131,21 +112,11 @@ struct IngredientCard: View {
                                         .aspectRatio(contentMode: .fill)
                                         .frame(width: 80, height: 80)
                                         .clipShape(Circle())
-                                case .failure(let error):
-                                    // Fall back to emoji if image fails to load
-                                    VStack {
-                                        Text(emojiForIngredient(ingredient.name, in: category))
-                                            .font(.system(size: 60))
-                                        
-                                        // Debug: Print error in development builds
-                                        #if DEBUG
-                                        Text(error.localizedDescription)
-                                            .font(.system(size: 6))
-                                            .lineLimit(1)
-                                            .opacity(0.6)
-                                        #endif
-                                    }
-                                    .frame(width: 80, height: 80)
+                                case .failure:
+                                    // Fall back to emoji if image fails to load - without showing the error
+                                    Text(emojiForIngredient(ingredient.name, in: category))
+                                        .font(.system(size: 60))
+                                        .frame(width: 80, height: 80)
                                 @unknown default:
                                     Text(emojiForIngredient(ingredient.name, in: category))
                                         .font(.system(size: 60))

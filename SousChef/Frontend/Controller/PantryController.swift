@@ -34,7 +34,7 @@ class PantryController: ObservableObject {
         self.internalIngredientsComponent = AWSUserIngredientsComponent(userSession: userSession)
     }
 
-    func fetchIngredients() {
+    @MainActor func fetchIngredients() {
         guard userSession.token != nil else {
             self.errorMessage = "User is not authenticated."
             return
