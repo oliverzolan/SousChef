@@ -164,6 +164,10 @@ struct BaseIngredientsPage: View {
     @EnvironmentObject var userSession: UserSession
     @State private var showAddIngredientSheet = false
     @State private var searchText = ""
+    @State private var isEditingMode = false
+    @State private var selectedIngredients: Set<String> = [] // Using food IDs to track selection
+    @State private var showDeleteAlert = false
+    @State private var isDeleting = false
     
     let columns = [
         GridItem(.flexible(), spacing: 10),
@@ -209,9 +213,29 @@ struct BaseIngredientsPage: View {
             .padding(.top, 10)
             
             ScrollView {
+                if isEditingMode {
+                    Text("Tap ingredients to select them for deletion")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                        .padding(.top, 8)
+                }
+                
                 LazyVGrid(columns: columns, spacing: 10) {
                     ForEach(filteredIngredients, id: \.edamamFoodId) { ingredient in
-                        IngredientCard(ingredient: ingredient, category: category)
+                        if isEditingMode {
+                            // When in edit mode, wrap with selectable version
+                            SelectableIngredientCard(
+                                ingredient: ingredient, 
+                                category: category,
+                                isSelected: selectedIngredients.contains(ingredient.edamamFoodId)
+                            )
+                            .onTapGesture {
+                                toggleSelection(ingredient)
+                            }
+                        } else {
+                            // Normal display mode
+                            IngredientCard(ingredient: ingredient, category: category)
+                        }
                     }
                 }
                 .padding()
@@ -220,24 +244,169 @@ struct BaseIngredientsPage: View {
         }
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
-        .safeAreaInset(edge: .bottom) {
-            Button(action: { showAddIngredientSheet = true }) {
-                Text("Add Ingredient")
-                    .fontWeight(.semibold)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(AppColors.primary2)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
-                    .padding(.horizontal)
-                    .padding(.vertical, 10)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                if isEditingMode {
+                    Button(action: {
+                        if !selectedIngredients.isEmpty {
+                            showDeleteAlert = true
+                        } else {
+                            isEditingMode = false
+                        }
+                    }) {
+                        if selectedIngredients.isEmpty {
+                            Text("Cancel")
+                                .foregroundColor(.blue)
+                        } else {
+                            Text("Delete \(selectedIngredients.count)")
+                                .foregroundColor(.red)
+                        }
+                    }
+                } else {
+                    Button(action: {
+                        isEditingMode = true
+                        selectedIngredients.removeAll()
+                    }) {
+                        Image(systemName: "trash")
+                            .foregroundColor(.red)
+                    }
+                }
             }
-            .background(Color(.systemBackground))
+        }
+        .safeAreaInset(edge: .bottom) {
+            if isEditingMode && !selectedIngredients.isEmpty {
+                Button(action: {
+                    showDeleteAlert = true
+                }) {
+                    Text("Delete Selected (\(selectedIngredients.count))")
+                        .fontWeight(.semibold)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.red)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                        .padding(.horizontal)
+                        .padding(.vertical, 10)
+                }
+                .background(Color(.systemBackground))
+            } else if !isEditingMode {
+                Button(action: { showAddIngredientSheet = true }) {
+                    Text("Add Ingredient")
+                        .fontWeight(.semibold)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(AppColors.primary2)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                        .padding(.horizontal)
+                        .padding(.vertical, 10)
+                }
+                .background(Color(.systemBackground))
+            }
         }
         .sheet(isPresented: $showAddIngredientSheet) {
             AddIngredientPopup()
                 .environmentObject(userSession)
         }
+        .alert(isPresented: $showDeleteAlert) {
+            Alert(
+                title: Text("Delete Ingredients"),
+                message: Text("Are you sure you want to delete the selected ingredients from your pantry?"),
+                primaryButton: .destructive(Text("Delete")) {
+                    deleteSelectedIngredients()
+                },
+                secondaryButton: .cancel()
+            )
+        }
+        .overlay(
+            Group {
+                if isDeleting {
+                    ZStack {
+                        Color.black.opacity(0.4)
+                        VStack {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .scaleEffect(1.5)
+                            Text("Deleting...")
+                                .foregroundColor(.white)
+                                .padding(.top)
+                        }
+                    }
+                    .edgesIgnoringSafeArea(.all)
+                }
+            }
+        )
+    }
+    
+    private func toggleSelection(_ ingredient: AWSIngredientModel) {
+        if selectedIngredients.contains(ingredient.edamamFoodId) {
+            selectedIngredients.remove(ingredient.edamamFoodId)
+        } else {
+            selectedIngredients.insert(ingredient.edamamFoodId)
+        }
+    }
+    
+    private func deleteSelectedIngredients() {
+        guard !selectedIngredients.isEmpty else { return }
+        
+        isDeleting = true
+        let api = AWSUserIngredientsComponent(userSession: userSession)
+        let dispatchGroup = DispatchGroup()
+        
+        for foodId in selectedIngredients {
+            if let ingredient = ingredients.first(where: { $0.edamamFoodId == foodId }) {
+                dispatchGroup.enter()
+                
+                Task {
+                    await api.deleteIngredient(ingredient: ingredient) { result in
+                        switch result {
+                        case .success:
+                            print("Successfully deleted \(ingredient.name)")
+                        case .failure(let error):
+                            print("Failed to delete \(ingredient.name): \(error.localizedDescription)")
+                        }
+                        dispatchGroup.leave()
+                    }
+                }
+            }
+        }
+        
+        dispatchGroup.notify(queue: .main) {
+            isDeleting = false
+            isEditingMode = false
+            selectedIngredients.removeAll()
+            
+            // Post notification to refresh pantry contents
+            NotificationCenter.default.post(name: NSNotification.Name("RefreshPantryContents"), object: nil)
+        }
+    }
+}
+
+// Add selectable ingredient card component
+struct SelectableIngredientCard: View {
+    let ingredient: AWSIngredientModel
+    let category: IngredientCategory
+    let isSelected: Bool
+    
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            IngredientCard(ingredient: ingredient, category: category)
+                .opacity(isSelected ? 0.7 : 1.0)
+            
+            if isSelected {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 22))
+                    .foregroundColor(.white)
+                    .background(Color.green)
+                    .clipShape(Circle())
+                    .padding(8)
+                    .shadow(color: Color.black.opacity(0.3), radius: 2, x: 0, y: 1)
+            }
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(isSelected ? Color.green : Color.clear, lineWidth: 3)
+        )
     }
 }
 

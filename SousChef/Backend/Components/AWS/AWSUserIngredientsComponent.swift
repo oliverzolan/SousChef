@@ -148,4 +148,73 @@ class AWSUserIngredientsComponent: AWSAbstract {
             }
         }.resume()
     }
+    
+    @MainActor
+    func deleteIngredient(ingredient: AWSIngredientModel, completion: @escaping (Result<Void, Error>) -> Void) {
+        guard let token = userSession.token else {
+            DispatchQueue.main.async {
+                completion(.failure(NSError(domain: "", code: 401, userInfo: [NSLocalizedDescriptionKey: "User is not authenticated"])))
+            }
+            return
+        }
+
+        let urlComponents = URLComponents(string: baseURL + route + "/update")
+
+        guard let url = urlComponents?.url else {
+            DispatchQueue.main.async {
+                completion(.failure(NSError(domain: "", code: 400, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
+            }
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.addValue(token, forHTTPHeaderField: "Authorization")
+
+        // Quantity = 0 to "delete"
+        let requestBody: [String: Any] = [
+            "ingredients": [
+                [
+                    "edamam_food_id": ingredient.edamamFoodId,
+                    "quantity": 0
+                ]
+            ]
+        ]
+
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: requestBody, options: [])
+            request.httpBody = jsonData
+        } catch {
+            DispatchQueue.main.async {
+                completion(.failure(NSError(domain: "", code: 500, userInfo: [NSLocalizedDescriptionKey: "Failed to encode ingredient data"])))
+            }
+            return
+        }
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                DispatchQueue.main.async {
+                    completion(.failure(error))
+                }
+                return
+            }
+            
+            if let data = data,
+                       let responseBody = String(data: data, encoding: .utf8) {
+                        print("🔁 Server Response Body: \(responseBody)")
+                    }
+
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                DispatchQueue.main.async {
+                    completion(.failure(NSError(domain: "", code: 500, userInfo: [NSLocalizedDescriptionKey: "Server error"])))
+                }
+                return
+            }
+
+            DispatchQueue.main.async {
+                completion(.success(()))
+            }
+        }.resume()
+    }
 }
