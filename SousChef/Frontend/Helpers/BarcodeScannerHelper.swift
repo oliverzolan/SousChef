@@ -30,8 +30,17 @@ class BarcodeScannerHelper {
         }
     }
     
-    private func getUserSession() -> UserSession? {
-        return UserSession()
+    private nonisolated func getUserSession() -> UserSession? {
+        var session: UserSession? = nil
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        Task { @MainActor in
+            session = UserSession()
+            semaphore.signal()
+        }
+        
+        semaphore.wait()
+        return session
     }
 
     func fetchIngredient(by upc: String, completion: @escaping (BarcodeModel?) -> Void) {

@@ -19,7 +19,6 @@ class IngredientController: ObservableObject {
     private var searchCache: [String: [AWSIngredientModel]] = [:]
     private var searchTask: DispatchWorkItem?
     private let searchDebounceTime: Double = 0.6
-    private var shouldUseMockData: Bool = false
     private var retryCount: Int = 0
     private let maxRetries: Int = 1
 
@@ -65,20 +64,6 @@ class IngredientController: ObservableObject {
         errorMessage = nil
         searchTerms = normalizedSearchText.components(separatedBy: " ").filter { !$0.isEmpty }
 
-        if shouldUseMockData {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-                guard let self = self else { return }
-                self.isLoading = false
-                let mockResults = self.getMockIngredients(for: normalizedSearchText)
-                self.searchResults = mockResults
-                self.searchCache[normalizedSearchText] = mockResults
-                if mockResults.isEmpty {
-                    self.errorMessage = "No ingredients found (using offline data)."
-                }
-            }
-            return
-        }
-
         ingredientsAPI.searchIngredients(query: normalizedSearchText) { [weak self] result in
             guard let self = self else { return }
 
@@ -97,7 +82,6 @@ class IngredientController: ObservableObject {
                     let enriched = sorted.map { self.ensureProperImageURL(ingredient: $0) }
 
                     self.retryCount = 0
-                    self.shouldUseMockData = false
                     self.searchResults = enriched
                     self.searchCache[normalizedSearchText] = enriched
 
@@ -107,15 +91,9 @@ class IngredientController: ObservableObject {
                         self.executeSearch()
                         return
                     }
-
-                    self.shouldUseMockData = true
-                    let mockResults = self.getMockIngredients(for: normalizedSearchText)
-                    self.searchResults = mockResults
-                    self.searchCache[normalizedSearchText] = mockResults
-
-                    self.errorMessage = mockResults.isEmpty
-                        ? "Could not connect to server. No offline results found."
-                        : "Using offline data. Some ingredients may not be available."
+                    
+                    self.searchResults = []
+                    self.errorMessage = "Could not connect to server. Please try again later."
                 }
             }
         }
