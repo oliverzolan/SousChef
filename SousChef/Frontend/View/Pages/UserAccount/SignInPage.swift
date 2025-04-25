@@ -19,6 +19,13 @@ struct LoginView: View {
                             .fontWeight(.medium)
                             .foregroundColor(.black)
                             .padding(.top, 50)
+                        
+                        if let error = viewModel.errorMessage {
+                            Text(error)
+                                .foregroundColor(.red)
+                                .padding()
+                        }
+                        
 
                         VStack(spacing: 16) {
                             CustomTextField(
@@ -76,11 +83,6 @@ struct LoginView: View {
                         .foregroundColor(.gray)
                         .padding(.horizontal, 40)
 
-                        if let error = viewModel.errorMessage {
-                            Text(error)
-                                .foregroundColor(.red)
-                                .padding()
-                        }
 
                         Button(action: viewModel.signInWithGoogle) {
                             HStack {
