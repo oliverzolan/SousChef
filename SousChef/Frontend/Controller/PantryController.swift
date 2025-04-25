@@ -14,7 +14,8 @@ class PantryController: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
     
-    // Callback for when pantry items change, to notify HomepageController
+    let nutritionController: NutritionController
+
     var onPantryItemsChanged: (() -> Void)?
     
     var userSession: UserSession {
@@ -31,6 +32,7 @@ class PantryController: ObservableObject {
         self.userSession = userSession
         self.userIngredientsComponent = AWSUserIngredientsComponent(userSession: userSession)
         self.internalIngredientsComponent = AWSUserIngredientsComponent(userSession: userSession)
+        self.nutritionController = NutritionController(userSession: userSession)
     }
 
     @MainActor func fetchIngredients() {
@@ -41,7 +43,7 @@ class PantryController: ObservableObject {
 
         isLoading = true
         errorMessage = nil
-
+        
         userIngredientsComponent.fetchIngredients { [weak self] result in
             DispatchQueue.main.async {
                 self?.isLoading = false

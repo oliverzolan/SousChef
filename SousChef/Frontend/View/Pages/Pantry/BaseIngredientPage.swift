@@ -165,9 +165,11 @@ struct BaseIngredientsPage: View {
     @State private var showAddIngredientSheet = false
     @State private var searchText = ""
     @State private var isEditingMode = false
-    @State private var selectedIngredients: Set<String> = [] // Using food IDs to track selection
+    @State private var selectedIngredients: Set<String> = []
     @State private var showDeleteAlert = false
     @State private var isDeleting = false
+    @State private var showNutritionPopup = false
+    @State private var selectedIngredient: AWSIngredientModel? = nil
     
     let columns = [
         GridItem(.flexible(), spacing: 10),
@@ -185,47 +187,12 @@ struct BaseIngredientsPage: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(.gray.opacity(0.7))
-                    .padding(.leading, 8)
-                
-                TextField("Search...", text: $searchText)
-                    .padding(.vertical, 8)
-                
-                if !searchText.isEmpty {
-                    Button(action: { searchText = "" }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.gray)
-                            .padding(.trailing, 8)
-                    }
-                } else {
-                    Button(action: {}) {
-                        Image(systemName: "slider.horizontal.3")
-                            .foregroundColor(.gray)
-                            .padding(.trailing, 8)
-                    }
-                }
-            }
-            .background(Color.gray.opacity(0.1))
-            .cornerRadius(10)
-            .padding(.horizontal)
-            .padding(.top, 10)
-            
             ScrollView {
-                if isEditingMode {
-                    Text("Tap ingredients to select them for deletion")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                        .padding(.top, 8)
-                }
-                
                 LazyVGrid(columns: columns, spacing: 10) {
                     ForEach(filteredIngredients, id: \.edamamFoodId) { ingredient in
                         if isEditingMode {
-                            // When in edit mode, wrap with selectable version
                             SelectableIngredientCard(
-                                ingredient: ingredient, 
+                                ingredient: ingredient,
                                 category: category,
                                 isSelected: selectedIngredients.contains(ingredient.edamamFoodId)
                             )
@@ -233,8 +200,13 @@ struct BaseIngredientsPage: View {
                                 toggleSelection(ingredient)
                             }
                         } else {
-                            // Normal display mode
                             IngredientCard(ingredient: ingredient, category: category)
+                                .onTapGesture {
+                                    print("Tapped Ingredient: \(ingredient.name), Category: \(ingredient.foodCategory)")
+                                    
+                                    selectedIngredient = ingredient
+                                    showNutritionPopup = true
+                                }
                         }
                     }
                 }
@@ -244,69 +216,28 @@ struct BaseIngredientsPage: View {
         }
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                if isEditingMode {
-                    Button(action: {
-                        if !selectedIngredients.isEmpty {
-                            showDeleteAlert = true
-                        } else {
-                            isEditingMode = false
-                        }
-                    }) {
-                        if selectedIngredients.isEmpty {
-                            Text("Cancel")
-                                .foregroundColor(.blue)
-                        } else {
-                            Text("Delete \(selectedIngredients.count)")
-                                .foregroundColor(.red)
-                        }
-                    }
-                } else {
-                    Button(action: {
-                        isEditingMode = true
-                        selectedIngredients.removeAll()
-                    }) {
-                        Image(systemName: "trash")
-                            .foregroundColor(.red)
-                    }
-                }
-            }
-        }
-        .safeAreaInset(edge: .bottom) {
-            if isEditingMode && !selectedIngredients.isEmpty {
-                Button(action: {
-                    showDeleteAlert = true
-                }) {
-                    Text("Delete Selected (\(selectedIngredients.count))")
-                        .fontWeight(.semibold)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.red)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                        .padding(.horizontal)
-                        .padding(.vertical, 10)
-                }
-                .background(Color(.systemBackground))
-            } else if !isEditingMode {
-                Button(action: { showAddIngredientSheet = true }) {
-                    Text("Add Ingredient")
-                        .fontWeight(.semibold)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(AppColors.primary2)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                        .padding(.horizontal)
-                        .padding(.vertical, 10)
-                }
-                .background(Color(.systemBackground))
-            }
-        }
+        
         .sheet(isPresented: $showAddIngredientSheet) {
             AddIngredientPopup()
                 .environmentObject(userSession)
+        }
+        .sheet(isPresented: $showNutritionPopup) {  
+            if let selectedIngredient = selectedIngredient {
+                // If the ingredient has a valid Edamam food ID, use it directly
+                if !selectedIngredient.edamamFoodId.isEmpty {
+                    NutritionFactsPopup(
+                        foodId: selectedIngredient.edamamFoodId,
+                        userSession: userSession,
+                        ingredientName: selectedIngredient.name
+                    )
+                } else {
+                    // Otherwise try to look up by name using our FoodIDService
+                    NutritionFactsPopup(
+                        foodName: selectedIngredient.name,
+                        userSession: userSession
+                    )
+                }
+            }
         }
         .alert(isPresented: $showDeleteAlert) {
             Alert(
@@ -376,7 +307,6 @@ struct BaseIngredientsPage: View {
             isEditingMode = false
             selectedIngredients.removeAll()
             
-            // Post notification to refresh pantry contents
             NotificationCenter.default.post(name: NSNotification.Name("RefreshPantryContents"), object: nil)
         }
     }

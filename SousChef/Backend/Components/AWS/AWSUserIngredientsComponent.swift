@@ -203,7 +203,7 @@ class AWSUserIngredientsComponent: AWSAbstract {
             if let data = data,
                        let responseBody = String(data: data, encoding: .utf8) {
                         print("🔁 Server Response Body: \(responseBody)")
-                    }
+            }
 
             guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
                 DispatchQueue.main.async {
