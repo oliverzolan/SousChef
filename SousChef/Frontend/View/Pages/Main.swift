@@ -26,7 +26,7 @@ struct MainTabView: View {
             (AnyView(PantryPage(userSession: userSession)), "refrigerator.fill", "Pantry", 1),
             (AnyView(EmptyView()), "barcode.viewfinder", "Scan", 2),
             (AnyView(ShoppingListsPage().environmentObject(userSession)), "cart.fill", "Shopping", 3),
-            (AnyView(ChatbotPage()), "person.crop.circle", "Chef", 4)
+            (AnyView(ChatbotPage()), "chef_hat_icon", "Chef", 4)
         ]
     }
     
@@ -66,7 +66,14 @@ struct MainTabView: View {
                         .tag(3)
 
                     ChatbotPage()
-                        .tabItem { Label("Chef",    systemImage: "person.crop.circle") }
+                        .tabItem {
+                            Label {
+                                Text("Chef")
+                            } icon: {
+                                Image("chef_hat_icon")
+                                    .renderingMode(.template)
+                            }
+                        }
                         .tag(4)
                 }
                 .accentColor(.black)
