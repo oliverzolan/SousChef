@@ -24,7 +24,7 @@ class EdamamRecipeComponent: EdamamAbstract {
     var searchInput: String?
 
     // Initialize the recipe component
-    override init(appId: String = "5732a059", appKey: String = "58090f7f2c16659ae520bd0f3a7f51d2") {
+    override init(appId: String = "c569ee5c", appKey: String = "c320bce71a7573c4cc35c70c56bbbf5a") {
         self.RECIPE_ENDPOINT = "/api/recipes/v2"
         self.user = "SousChef2950"
         self.type = "public"
