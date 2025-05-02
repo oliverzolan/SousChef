@@ -4,216 +4,344 @@ struct RecipeDetailView: View {
     let recipe: EdamamRecipeModel
 
     @EnvironmentObject var userSession: UserSession
+    @Environment(\.presentationMode) var presentationMode
     @State private var isFavorite = false
     @State private var isAddedToShoppingList = false
     @State private var availableIngredients: Set<String> = []
     @StateObject private var recipeApiComponent = EdamamRecipeComponent()
-
     
-    // New state variables for cart selection and success notification
     @State private var showCartSelection = false
     @State private var selectedCartName: String? = nil
     @State private var showSuccessNotification = false
-
     @State private var navigateToChat = false
 
-
-
     var body: some View {
-        NavigationView {
-            VStack {
-                ScrollView {
-                    VStack(spacing: 20) {
-                        topImageSection()
-                        Divider()
-                        ingredientsSection()
-                        addToShoppingListButton()
-                        Divider()
-                        nutritionInfoSection()
-                        Divider()
-                        additionalInfoSection()
-                    }
-                    .padding(.top)
-                }
-                bottomFixedButtons()
-                
-                NavigationLink(
-                    destination: ChatbotPage(recipeURL: recipe.url),
-                    isActive: $navigateToChat
-                ) {
-                    EmptyView()
-                }
-            }
-            .background(Color(.systemBackground).edgesIgnoringSafeArea(.all))
-            .navigationBarHidden(true)
-            .onAppear {
-                loadPantryIngredients()
-            }
-
-            // Present the shopping cart selection sheet
-            .sheet(isPresented: $showCartSelection) {
-                ShoppingCartSelectionView { selectedList in
-                    addMissingIngredients(to: selectedList)
-                    self.selectedCartName = selectedList.name
-                    self.isAddedToShoppingList = true
-                    
-                    
-                    withAnimation {
-                        showSuccessNotification = true
-                    }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                        withAnimation {
-                            showSuccessNotification = false
-                        }
-                    }
-                }
-                .environmentObject(userSession)
-            }
-            // Overlay for success notification
-            .overlay(
-                Group {
-                    if showSuccessNotification {
-                        VStack {
-                            Spacer()
-                            HStack {
-                                Spacer()
-                                Text("Ingredients added successfully!")
-                                    .padding()
-                                    .background(AppColors.primary2.opacity(0.9))
-                                    .foregroundColor(.white)
-                                    .cornerRadius(10)
-                                    .shadow(radius: 10)
-                                Spacer()
-                            }
-                            .padding(.bottom, 40)
-                        }
-                        .transition(.opacity)
-                    }
-                }
-            )
-
-        }
-    }
-
-    // Top Image Section
-    private func topImageSection() -> some View {
-        ZStack(alignment: .topLeading) {
-            RoundedRectangle(cornerRadius: 30)
-                .fill(AppColors.secondary2)
-                .frame(width: UIScreen.main.bounds.width, height: 370)
-                .offset(y: -70)
-                .ignoresSafeArea(edges: .top)
+        ZStack(alignment: .top) {
+            Color(.systemBackground).edgesIgnoringSafeArea(.all)
             
-            VStack {
-                if let imageUrl = URL(string: recipe.image) {
-                    AsyncImage(url: imageUrl) { image in
-                        image
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: UIScreen.main.bounds.width * 0.8, height: 200)
-                            .clipShape(RoundedRectangle(cornerRadius: 20))
-                    } placeholder: {
-                        ProgressView()
+            ScrollView {
+                VStack(spacing: 0) {
+                    // Top image and header
+                    ZStack(alignment: .bottom) {
+                        // Image background
+                        if let imageUrl = URL(string: recipe.image) {
+                            AsyncImage(url: imageUrl) { image in
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: UIScreen.main.bounds.width, height: 200)
+                                    .clipped()
+                            } placeholder: {
+                                Rectangle()
+                                    .fill(AppColors.secondary2.opacity(0.5))
+                                    .frame(width: UIScreen.main.bounds.width, height: 200)
+                            }
+                        } else {
+                            Rectangle()
+                                .fill(AppColors.secondary2.opacity(0.5))
+                                .frame(width: UIScreen.main.bounds.width, height: 200)
+                        }
+                        
+                        // Recipe info card
+                        recipeInfoCard()
+                            .padding(.horizontal)
+                            .padding(.bottom, -50) // Half the card extends below the image
                     }
+                    .frame(height: 200)
+                    
+                    VStack(spacing: 24) {
+                        Spacer().frame(height: 50)
+                        
+                        ingredientsSection()
+                            .padding(.horizontal)
+                        
+                        addToShoppingListButton()
+                            .padding(.horizontal)
+                        
+                        nutritionInfoSection()
+                            .padding(.horizontal)
+                        
+                        additionalInfoSection()
+                            .padding(.horizontal)
+                    }
+                    .padding(.bottom, 80)
+                }
+            }
+            
+            // Custom back button overlay
+            VStack {
+                HStack {
+                    Button(action: {
+                        // Dismiss the view
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.black)
+                            .padding(12)
+                            .background(Color.white.opacity(0.8))
+                            .clipShape(Circle())
+                            .shadow(color: Color.black.opacity(0.15), radius: 3, x: 0, y: 1)
+                    }
+                    .padding(.leading, 16)
+                    .padding(.top, 8)
+                    
+                    Spacer()
                 }
                 
-                ZStack {
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(Color.white)
-                        .shadow(radius: 3)
-                        .padding(.horizontal, 20)
-                    
-                    HStack {
-                        Text(recipe.label)
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .multilineTextAlignment(.center)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 10)
-                            .minimumScaleFactor(0.5)
-                    }
-                    .padding(10)
-                }
-                .padding(.top, 20)
+                Spacer()
             }
             .padding(.top, 40)
+            
+            VStack {
+                Spacer()
+                bottomFixedButtons()
+            }
+            
+            NavigationLink(
+                destination: ChatbotPage(recipeURL: recipe.url),
+                isActive: $navigateToChat
+            ) {
+                EmptyView()
+            }
         }
-        .padding(.top, -50)
+        .navigationBarHidden(true)
+        .navigationBarBackButtonHidden(true)
+        .ignoresSafeArea(.all, edges: .top)
+        .onAppear {
+            loadPantryIngredients()
+        }
+        .sheet(isPresented: $showCartSelection) {
+            ShoppingCartSelectionView { selectedList in
+                addMissingIngredients(to: selectedList)
+                self.selectedCartName = selectedList.name
+                self.isAddedToShoppingList = true
+                
+                withAnimation {
+                    showSuccessNotification = true
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    withAnimation {
+                        showSuccessNotification = false
+                    }
+                }
+            }
+            .environmentObject(userSession)
+        }
+        .overlay(
+            Group {
+                if showSuccessNotification {
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            Text("Ingredients added successfully!")
+                                .padding()
+                                .background(AppColors.primary2.opacity(0.9))
+                                .foregroundColor(.white)
+                                .cornerRadius(10)
+                                .shadow(radius: 10)
+                            Spacer()
+                        }
+                        .padding(.bottom, 40)
+                    }
+                    .transition(.opacity)
+                }
+            }
+        )
+    }
+
+    // Recipe info card
+    private func recipeInfoCard() -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(recipe.label)
+                .font(.system(size: 24, weight: .bold))
+                .foregroundColor(.primary)
+                .multilineTextAlignment(.leading)
+            
+            // Recipe info
+            HStack(spacing: 16) {
+                if let cuisineType = recipe.cuisineType?.first {
+                    metaInfoItem(icon: "globe", text: cuisineType.capitalized)
+                }
+                
+                // Use calories
+                metaInfoItem(icon: "flame", text: "\(Int(recipe.calories)) cal")
+                
+                // Use totalWeight for servings
+                let servings = max(1, Int(recipe.totalWeight / 250))
+                metaInfoItem(icon: "person.2", text: "\(servings) servings")
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white)
+                .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+        )
+    }
+    
+    // Meta info item
+    private func metaInfoItem(icon: String, text: String) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.system(size: 12))
+                .foregroundColor(AppColors.primary2)
+            
+            Text(text)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.secondary)
+        }
     }
 
     // Ingredients Section
     private func ingredientsSection() -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 16) {
             Text("Ingredients")
-                .font(.title2)
-                .fontWeight(.bold)
-                .padding(.horizontal)
+                .font(.system(size: 22, weight: .bold))
+                .foregroundColor(.primary)
             
-            ForEach(recipe.ingredients, id: \.foodId) { ingredient in
-                HStack {
-                    Text("• \(ingredient.text)")
-                    Spacer()
-                    if let foodId = ingredient.foodId, availableIngredients.contains(foodId) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.green)
-                    } else {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.red)
+            VStack(alignment: .leading, spacing: 12) {
+                ForEach(recipe.ingredients, id: \.foodId) { ingredient in
+                    HStack(spacing: 12) {
+                        if let foodId = ingredient.foodId, availableIngredients.contains(foodId) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                        } else {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.red)
+                        }
+                        
+                        Text(ingredient.text)
+                            .font(.system(size: 16))
+                            .foregroundColor(.primary)
+                            .lineLimit(2)
+                        
+                        Spacer()
                     }
+                    .padding(.vertical, 8)
                 }
             }
-            .padding(.horizontal)
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.white)
+                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+            )
         }
     }
 
-    // Updated Add to Shopping List Button
+    // Add to Shopping List Button
     private func addToShoppingListButton() -> some View {
         Button(action: {
             showCartSelection = true
         }) {
             HStack {
                 Image(systemName: "cart")
-                    .foregroundColor(AppColors.primary2)
+                    .foregroundColor(.white)
                 Text("Add missing ingredients to cart")
-                    .foregroundColor(AppColors.primary2)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white)
             }
             .padding()
             .frame(maxWidth: .infinity)
-            .background(Color.white)
-            .cornerRadius(10)
-            .overlay(
-                RoundedRectangle(cornerRadius: 30)
-                    .stroke(AppColors.primary2, lineWidth: 2)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(AppColors.primary2)
             )
         }
-        .padding(.horizontal)
     }
 
     // Nutrition Info Section
     private func nutritionInfoSection() -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Nutrition Info")
-                .font(.title2)
-                .fontWeight(.bold)
-                .padding(.leading, 1)
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Nutrition")
+                .font(.system(size: 22, weight: .bold))
+                .foregroundColor(.primary)
             
-            HStack(spacing: 15) {
-                nutritionCard(label: formattedCalories(recipe.totalNutrients.energy), subtitle: "Calories")
-                nutritionCard(label: formattedNutrient(recipe.totalNutrients.protein), subtitle: "Protein")
+            VStack(alignment: .center, spacing: 24) {
+                // Pie chart
+                RecipeNutritionPieChart(
+                    calories: getCaloriesValue(),
+                    protein: getProteinValue(),
+                    carbs: getCarbsValue(),
+                    fat: getFatValue()
+                )
+                .frame(height: 220)
+                .padding(.top, 8)
+                
+                // Nutrition details
+                HStack(spacing: 16) {
+                    nutritionInfoCard(value: formattedCalories(recipe.totalNutrients.energy), label: "Calories", color: Color.orange)
+                    nutritionInfoCard(value: formattedNutrient(recipe.totalNutrients.protein), label: "Protein", color: Color(hex: "#FF6B6B"))
+                }
+                
+                HStack(spacing: 16) {
+                    nutritionInfoCard(value: formattedNutrient(recipe.totalNutrients.carbs), label: "Carbs", color: Color(hex: "#4ECDC4"))
+                    nutritionInfoCard(value: formattedNutrient(recipe.totalNutrients.fat), label: "Fat", color: Color(hex: "#FFE66D"))
+                }
             }
-            HStack(spacing: 15) {
-                nutritionCard(label: formattedNutrient(recipe.totalNutrients.carbs), subtitle: "Carbs")
-                nutritionCard(label: formattedNutrient(recipe.totalNutrients.fat), subtitle: "Fat")
-            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.white)
+                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+            )
         }
+    }
+    
+    // Nutrition info card
+    private func nutritionInfoCard(value: String, label: String, color: Color) -> some View {
+        VStack(alignment: .center, spacing: 4) {
+            Text(value)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(.primary)
+            
+            Text(label)
+                .font(.system(size: 14))
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(color.opacity(0.15))
+        )
+    }
+    
+    // Helper functions to get nutritional values
+    private func getCaloriesValue() -> Double {
+        if let nutrient = recipe.totalNutrients.energy {
+            return nutrient.quantity
+        }
+        return 0
+    }
+    
+    private func getProteinValue() -> Double {
+        if let nutrient = recipe.totalNutrients.protein {
+            return nutrient.quantity
+        }
+        return 0
+    }
+    
+    private func getCarbsValue() -> Double {
+        if let nutrient = recipe.totalNutrients.carbs {
+            return nutrient.quantity
+        }
+        return 0
+    }
+    
+    private func getFatValue() -> Double {
+        if let nutrient = recipe.totalNutrients.fat {
+            return nutrient.quantity
+        }
+        return 0
     }
 
     // Helper to format calorie values (no unit)
     private func formattedCalories(_ nutrient: EdamamRecipeNutrient?) -> String {
         if let nutrient = nutrient {
-            return String(format: "%.1f", nutrient.quantity)
+            return String(format: "%.0f", nutrient.quantity)
         } else {
             return "N/A"
         }
@@ -274,78 +402,74 @@ struct RecipeDetailView: View {
             }
         }
     }
-
-    // Nutrition Card
-    private func nutritionCard(label: String, subtitle: String) -> some View {
-        VStack {
-            Text(label)
-                .font(.title)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
-            Text(subtitle)
-                .font(.subheadline)
-                .foregroundColor(.white)
-        }
-        .frame(width: 160, height: 80)
-        .background(AppColors.secondary2)
-        .cornerRadius(15)
-    }
     
     private func additionalInfoSection() -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 16) {
             Text("Recipe Information")
-                .font(.title2)
-                .fontWeight(.bold)
-                .padding(.horizontal)
+                .font(.system(size: 22, weight: .bold))
+                .foregroundColor(.primary)
             
-            if let dietLabels = recipe.dietLabels, !dietLabels.isEmpty {
-                infoRow(title: "Diet Labels:", value: dietLabels.joined(separator: ", "))
+            VStack(alignment: .leading, spacing: 12) {
+                if let dietLabels = recipe.dietLabels, !dietLabels.isEmpty {
+                    infoRow(title: "Diet Labels", value: dietLabels.joined(separator: ", "))
+                }
+                
+                if let healthLabels = recipe.healthLabels, !healthLabels.isEmpty {
+                    infoRow(title: "Health Labels", value: healthLabels.joined(separator: ", "))
+                }
+                
+                if let cuisineType = recipe.cuisineType, !cuisineType.isEmpty {
+                    infoRow(title: "Cuisine Type", value: cuisineType.joined(separator: ", "))
+                }
+                
+                if let mealType = recipe.mealType, !mealType.isEmpty {
+                    infoRow(title: "Meal Type", value: mealType.joined(separator: ", "))
+                }
+                
+                if let dishType = recipe.dishType, !dishType.isEmpty {
+                    infoRow(title: "Dish Type", value: dishType.joined(separator: ", "))
+                }
             }
-            
-            if let healthLabels = recipe.healthLabels, !healthLabels.isEmpty {
-                infoRow(title: "Health Labels:", value: healthLabels.joined(separator: ", "))
-            }
-            
-            if let cuisineType = recipe.cuisineType, !cuisineType.isEmpty {
-                infoRow(title: "Cuisine Type:", value: cuisineType.joined(separator: ", "))
-            }
-            
-            if let mealType = recipe.mealType, !mealType.isEmpty {
-                infoRow(title: "Meal Type:", value: mealType.joined(separator: ", "))
-            }
-            
-            if let dishType = recipe.dishType, !dishType.isEmpty {
-                infoRow(title: "Dish Type:", value: dishType.joined(separator: ", "))
-            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.white)
+                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+            )
         }
-        .padding(.horizontal)
     }
     
     private func infoRow(title: String, value: String) -> some View {
-        HStack {
+        VStack(alignment: .leading, spacing: 4) {
             Text(title)
-                .fontWeight(.bold)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.primary)
+            
             Text(value)
-            Spacer()
+                .font(.system(size: 14))
+                .foregroundColor(.secondary)
+                .lineLimit(3)
         }
+        .padding(.vertical, 4)
     }
 
     // Bottom Buttons Section
     private func bottomFixedButtons() -> some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             Button(action: {
                 if let url = URL(string: recipe.url) {
                     UIApplication.shared.open(url)
                 }
             }) {
                 Text("View Full Recipe")
-                    .font(.title3)
-                    .fontWeight(.bold)
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(AppColors.primary2)
-                    .cornerRadius(30)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(AppColors.primary2)
+                    )
             }
             .frame(width: UIScreen.main.bounds.width * 0.65)
             
@@ -353,21 +477,174 @@ struct RecipeDetailView: View {
                 navigateToChat = true
             }) {
                 Text("Ask AI")
-                    .font(.title3)
-                    .fontWeight(.bold)
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(AppColors.primary2)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 30)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
                             .stroke(AppColors.primary2, lineWidth: 2)
                     )
             }
-            .frame(width: UIScreen.main.bounds.width * 0.3)
-
+            .frame(width: UIScreen.main.bounds.width * 0.25)
         }
-        .padding(.horizontal)
-        .padding(.vertical, 10)
-        .background(Color(.systemBackground).edgesIgnoringSafeArea(.bottom))
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            Rectangle()
+                .fill(Color.white)
+                .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: -4)
+                .edgesIgnoringSafeArea(.bottom)
+        )
+    }
+}
+
+// Nutrition Pie Chart
+struct RecipeNutritionPieChart: View {
+    let calories: Double
+    let protein: Double
+    let carbs: Double
+    let fat: Double
+    
+    // Chart colors
+    private let proteinColor = Color(hex: "#FF6B6B")
+    private let carbsColor = Color(hex: "#4ECDC4")
+    private let fatColor = Color(hex: "#FFE66D")
+    
+    private var totalMacros: Double {
+        max(protein + carbs + fat, 1.0)
+    }
+    
+    private var proteinAngle: Double {
+        360.0 * (protein / totalMacros)
+    }
+    
+    private var carbsAngle: Double {
+        360.0 * (carbs / totalMacros)
+    }
+    
+    private var fatAngle: Double {
+        360.0 * (fat / totalMacros)
+    }
+    
+    var body: some View {
+        VStack(spacing: 24) {
+            ZStack {
+                // Empty circle with border if no data
+                if totalMacros <= 1.0 {
+                    Circle()
+                        .stroke(Color.gray.opacity(0.2), lineWidth: 20)
+                        .frame(width: 170, height: 170)
+                } else {
+                    // Chart background
+                    Circle()
+                        .stroke(Color.gray.opacity(0.1), lineWidth: 20)
+                        .frame(width: 170, height: 170)
+                    
+                    // Carbs slice
+                    PieSliceArc(startAngle: 0, endAngle: carbsAngle, innerRadiusFraction: 0.65)
+                        .fill(carbsColor)
+                        .frame(width: 170, height: 170)
+                    
+                    // Protein slice
+                    PieSliceArc(startAngle: carbsAngle, endAngle: carbsAngle + proteinAngle, innerRadiusFraction: 0.65)
+                        .fill(proteinColor)
+                        .frame(width: 170, height: 170)
+                    
+                    // Fat slice
+                    PieSliceArc(startAngle: carbsAngle + proteinAngle, endAngle: 360, innerRadiusFraction: 0.65)
+                        .fill(fatColor)
+                        .frame(width: 170, height: 170)
+                }
+                
+                // Calories in center
+                VStack(spacing: 4) {
+                    Text("\(Int(calories))")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundColor(.primary)
+                    
+                    Text("calories")
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                }
+            }
+            
+            // Legend
+            HStack(spacing: 16) {
+                macroLegendItem(color: carbsColor, name: "Carbs", value: "\(Int(carbs))g", percent: Int(round(carbs / totalMacros * 100)))
+                macroLegendItem(color: proteinColor, name: "Protein", value: "\(Int(protein))g", percent: Int(round(protein / totalMacros * 100)))
+                macroLegendItem(color: fatColor, name: "Fat", value: "\(Int(fat))g", percent: Int(round(fat / totalMacros * 100)))
+            }
+        }
+    }
+    
+    private func macroLegendItem(color: Color, name: String, value: String, percent: Int) -> some View {
+        HStack(spacing: 8) {
+            Circle()
+                .fill(color)
+                .frame(width: 12, height: 12)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(name)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.secondary)
+                
+                HStack(spacing: 4) {
+                    Text(value)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.primary)
+                        
+                    Text("(\(percent)%)")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+    }
+}
+
+// Arc-style pie slice shape
+struct PieSliceArc: Shape {
+    var startAngle: Double
+    var endAngle: Double
+    var innerRadiusFraction: CGFloat
+    
+    func path(in rect: CGRect) -> Path {
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        let radius = min(rect.width, rect.height) / 2
+        let innerRadius = radius * innerRadiusFraction
+        
+        let startAngleRadians = startAngle * Double.pi / 180 - Double.pi / 2
+        let endAngleRadians = endAngle * Double.pi / 180 - Double.pi / 2
+        
+        var path = Path()
+        
+        // Outer arc
+        path.addArc(
+            center: center,
+            radius: radius,
+            startAngle: .radians(startAngleRadians),
+            endAngle: .radians(endAngleRadians),
+            clockwise: false
+        )
+        
+        // Line to inner arc
+        path.addLine(to: CGPoint(
+            x: center.x + innerRadius * Foundation.cos(endAngleRadians),
+            y: center.y + innerRadius * Foundation.sin(endAngleRadians)
+        ))
+        
+        // Inner arc
+        path.addArc(
+            center: center,
+            radius: innerRadius,
+            startAngle: .radians(endAngleRadians),
+            endAngle: .radians(startAngleRadians),
+            clockwise: true
+        )
+        
+        // Close path
+        path.closeSubpath()
+        return path
     }
 }
