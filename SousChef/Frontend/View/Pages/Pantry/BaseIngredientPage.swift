@@ -186,58 +186,86 @@ struct BaseIngredientsPage: View {
     }
     
     var body: some View {
-        VStack(spacing: 0) {
-            ScrollView {
-                LazyVGrid(columns: columns, spacing: 10) {
-                    ForEach(filteredIngredients, id: \.edamamFoodId) { ingredient in
-                        if isEditingMode {
-                            SelectableIngredientCard(
-                                ingredient: ingredient,
-                                category: category,
-                                isSelected: selectedIngredients.contains(ingredient.edamamFoodId)
-                            )
-                            .onTapGesture {
-                                toggleSelection(ingredient)
-                            }
-                        } else {
-                            IngredientCard(ingredient: ingredient, category: category)
+        ZStack {
+            // Main content
+            VStack(spacing: 0) {
+                ScrollView {
+                    LazyVGrid(columns: columns, spacing: 10) {
+                        ForEach(filteredIngredients, id: \.edamamFoodId) { ingredient in
+                            if isEditingMode {
+                                SelectableIngredientCard(
+                                    ingredient: ingredient,
+                                    category: category,
+                                    isSelected: selectedIngredients.contains(ingredient.edamamFoodId)
+                                )
                                 .onTapGesture {
-                                    print("Tapped Ingredient: \(ingredient.name), Category: \(ingredient.foodCategory)")
-                                    
-                                    selectedIngredient = ingredient
-                                    showNutritionPopup = true
+                                    toggleSelection(ingredient)
                                 }
+                            } else {
+                                IngredientCard(ingredient: ingredient, category: category)
+                                    .onTapGesture {
+                                        print("Tapped Ingredient: \(ingredient.name), Category: \(ingredient.foodCategory)")
+                                        selectedIngredient = ingredient
+                                        showNutritionPopup = true
+                                    }
+                            }
                         }
                     }
+                    .padding()
+                    .padding(.bottom, 80)
                 }
-                .padding()
-                .padding(.bottom, 80)
+            }
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            
+            // Nutrition popup overlay
+            if showNutritionPopup, let ingredient = selectedIngredient {
+                Color.black.opacity(0.3)
+                    .edgesIgnoringSafeArea(.all)
+                    .onTapGesture {
+                        showNutritionPopup = false
+                    }
+                
+                // Center the card in the screen
+                VStack {
+                    Spacer()
+                    
+                    // Nutrition popup card with embedded close button
+                    ZStack(alignment: .topLeading) {
+                        // The nutrition facts
+                        NutritionFactsPopup(
+                            foodName: ingredient.name,
+                            userSession: userSession
+                        )
+                        .padding()
+                        
+                        // Close button in top-left
+                        Button(action: {
+                            showNutritionPopup = false
+                        }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.title)
+                                .foregroundColor(.gray)
+                                .padding(8)
+                                .background(Color.white.opacity(0.8))
+                                .clipShape(Circle())
+                        }
+                        .padding(8)
+                    }
+                    .background(Color.white)
+                    .cornerRadius(15)
+                    .shadow(radius: 10)
+                    .frame(width: UIScreen.main.bounds.width * 0.85, height: UIScreen.main.bounds.height * 0.6)
+                    
+                    Spacer()
+                }
+                .transition(.opacity)
+                .zIndex(2)
             }
         }
-        .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.inline)
-        
         .sheet(isPresented: $showAddIngredientSheet) {
             AddIngredientPopup()
                 .environmentObject(userSession)
-        }
-        .sheet(isPresented: $showNutritionPopup) {  
-            if let selectedIngredient = selectedIngredient {
-                // If the ingredient has a valid Edamam food ID, use it directly
-                if !selectedIngredient.edamamFoodId.isEmpty {
-                    NutritionFactsPopup(
-                        foodId: selectedIngredient.edamamFoodId,
-                        userSession: userSession,
-                        ingredientName: selectedIngredient.name
-                    )
-                } else {
-                    // Otherwise try to look up by name using our FoodIDService
-                    NutritionFactsPopup(
-                        foodName: selectedIngredient.name,
-                        userSession: userSession
-                    )
-                }
-            }
         }
         .alert(isPresented: $showDeleteAlert) {
             Alert(

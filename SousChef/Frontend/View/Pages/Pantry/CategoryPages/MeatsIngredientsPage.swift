@@ -8,6 +8,7 @@ struct MeatsIngredientsPage: View {
     @State private var cancellables = Set<AnyCancellable>()
     
     init() {
+        // Initialize with a temporary UserSession that will be replaced
         _pantryController = StateObject(wrappedValue: PantryController(userSession: UserSession()))
     }
     
@@ -18,9 +19,8 @@ struct MeatsIngredientsPage: View {
             category: .protein
         )
         .onAppear {
-            if let token = userSession.token {
-                pantryController.userSession = userSession
-            }
+            // Use the environment's userSession
+            pantryController.userSession = userSession
             
             setupPantryObserver()
             refreshIngredients()
@@ -57,7 +57,7 @@ struct MeatsIngredientsPage: View {
     private func updateFilteredIngredients(from ingredients: [AWSIngredientModel]) {
         filteredIngredients = ingredients.filter { ingredient in
             let category = ingredient.foodCategory.lowercased()
-            return category == "meat" || category == "meats" || category == "protein"
+            return category == "meat" || category == "meats" || category == "protein" || category == "seafood"
         }
     }
     

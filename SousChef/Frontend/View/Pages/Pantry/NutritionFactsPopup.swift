@@ -1,595 +1,724 @@
 import SwiftUI
 
 struct NutritionFactsPopup: View {
-    @EnvironmentObject var userSession: UserSession
-    @StateObject private var nutritionController: NutritionController
+    let foodName: String
+    let foodCategory: String
     
-    @State private var nutritionInfo: AWSIngredientNutritionModel? = nil
-    @State private var isError: Bool = false
-    @State private var isErrorMessage: String = "Failed to load nutrition info."
-    @State private var rawData: String = "No data"
-    @State private var showRawData: Bool = false
-    
-    let foodIdentifier: String
-    let usesDirectID: Bool
-    let ingredientName: String?
-    
-    // Initialize with a food ID
+    // Don't use user session or any complex state
     init(foodId: String, userSession: UserSession, ingredientName: String? = nil) {
-        self.foodIdentifier = foodId
-        self.usesDirectID = true
-        self.ingredientName = ingredientName
-        _nutritionController = StateObject(wrappedValue: NutritionController(userSession: userSession))
+        let name = ingredientName ?? foodId
+        self.foodName = name
+        self.foodCategory = NutritionFactsPopup.getFoodCategory(for: name.lowercased())
     }
     
     init(foodName: String, userSession: UserSession) {
-        self.foodIdentifier = foodName
-        self.usesDirectID = false
-        self.ingredientName = foodName
-        _nutritionController = StateObject(wrappedValue: NutritionController(userSession: userSession))
+        self.foodName = foodName
+        self.foodCategory = NutritionFactsPopup.getFoodCategory(for: foodName.lowercased())
     }
     
     var body: some View {
-        VStack(spacing: 20) {
-            if nutritionController.isLoading {
-                ProgressView("Loading nutrition info...")
-            } else if let nutrition = nutritionInfo {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
-                        VStack(alignment: .center, spacing: 8) {
-                        Text(nutrition.name)
-                                .font(.system(size: 28, weight: .bold))
-                                .foregroundColor(.primary)
-                                .multilineTextAlignment(.center)
-                                .frame(maxWidth: .infinity)
-                            
-                            Text("Category: \(nutrition.foodCategory)")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                        .padding(.bottom, 5)
-                        .frame(maxWidth: .infinity)
-                        
-                        Divider()
-                            .padding(.vertical, 8)
-                        
-                        // Nutrition Facts Label Style
-                        VStack(alignment: .leading, spacing: 16) {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Nutrition Facts")
-                                    .font(.title2)
-                                    .fontWeight(.black)
+        // Get nutrition values
+        let (calories, protein, carbs, fat) = getFoodNutrition(for: foodName.lowercased())
+        let (cholesterol, sodium, potassium) = getAdditionalNutrition(for: foodName.lowercased())
+        
+        // Calculate total macronutrients for the pie chart
+        let totalMacros = Double(protein + carbs + fat)
+        
+        // Calculate percentages for the pie chart
+        let proteinPercent = totalMacros > 0 ? Double(protein) / totalMacros : 0.33
+        let carbsPercent = totalMacros > 0 ? Double(carbs) / totalMacros : 0.33
+        let fatPercent = totalMacros > 0 ? Double(fat) / totalMacros : 0.34
+        
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(spacing: 28) {
+                    // Food name and category
+                    VStack(spacing: 10) {
+                        Text(foodName)
+                            .font(.system(size: 32, weight: .bold))
+                            .foregroundColor(.primary)
+                            .multilineTextAlignment(.center)
+                            .padding(.top, 22)
                                 
-                                Text("Serving Size: \(Int(nutrition.quantity)) \(nutrition.quantityType)")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                                
-                                Divider()
-                                    .background(Color.black)
-                                    .padding(.vertical, 4)
-                            }
-                            
-                            // Pie chart visualization
-                            VStack(alignment: .center, spacing: 8) {
-                                Text("Macronutrient Distribution")
-                                    .font(.headline)
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                                
-                                NutritionPieChart(
-                                    carbs: nutrition.carbohydrate,
-                                    protein: nutrition.protein,
-                                    fat: nutrition.fat
-                                )
-                                .frame(height: 180)
-                                .padding(.vertical, 8)
-                                
-                                HStack(spacing: 16) {
-                                    LegendItem(color: .blue, label: "Carbs")
-                                    LegendItem(color: .red, label: "Protein")
-                                    LegendItem(color: .yellow, label: "Fat")
-                                }
-                                .frame(maxWidth: .infinity)
-                            }
-                            .padding(.vertical, 8)
-                            .background(Color.gray.opacity(0.05))
-                            .cornerRadius(10)
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Calories")
-                                    .font(.headline)
-                                
-                                HStack {
-                                    Text("\(Int(nutrition.calorie))")
-                                        .font(.system(size: 24, weight: .bold))
-                                    
-                                    Spacer()
-                                }
-                                
-                                Divider()
-                                    .background(Color.black)
-                                    .padding(.vertical, 2)
-                            }
-                            
-                            // Nutritional Values Section
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("Nutritional Values")
-                                    .font(.headline)
-                                    .padding(.bottom, 4)
-                                
-                                Group {
-                                    NutrientRowEnhanced(name: "Total Fat", value: nutrition.fat, unit: "g", dailyValue: 78)
-                                    NutrientRowEnhanced(name: "Protein", value: nutrition.protein, unit: "g", dailyValue: 50)
-                                    NutrientRowEnhanced(name: "Total Carbohydrates", value: nutrition.carbohydrate, unit: "g", dailyValue: 275)
-                                    Divider()
-                                }
-                                
-                                Group {
-                                    NutrientRowEnhanced(name: "Cholesterol", value: nutrition.cholesterol, unit: "mg", dailyValue: 300)
-                                    NutrientRowEnhanced(name: "Sodium", value: nutrition.sodium, unit: "mg", dailyValue: 2300)
-                                    NutrientRowEnhanced(name: "Potassium", value: nutrition.potassium, unit: "mg", dailyValue: 3500)
-                                }
-                            }
-                            .padding()
-                            .background(Color.gray.opacity(0.1))
-                            .cornerRadius(10)
-                        }
-                        
-                        if let expiration = nutrition.experiationDuration {
-                            Divider()
-                                .padding(.vertical, 8)
-                            
-                            HStack {
-                                Image(systemName: "clock")
-                                    .foregroundColor(.gray)
-                                
-                                Text("Typical shelf life: \(expiration) days")
-                                    .italic()
-                                    .foregroundColor(.gray)
-                            }
-                            .padding(.horizontal, 4)
-                        }
-                        
-                        Divider()
-                            .padding(.vertical, 8)
-                        
-                        Button(showRawData ? "Hide Technical Data" : "Show Technical Data") {
-                            showRawData.toggle()
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.small)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        
-                        if showRawData {
-                            Text(rawData)
-                                .font(.system(.caption, design: .monospaced))
-                                .padding()
-                                .background(Color.black.opacity(0.05))
-                                .cornerRadius(8)
-                        }
+                        Text("Category: \(foodCategory)")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                            .padding(.bottom, 12)
                     }
-                    .padding()
-                }
-            } else if isError {
-                VStack(spacing: 10) {
-                    Text(isErrorMessage)
-                    .foregroundColor(.red)
-                        .multilineTextAlignment(.center)
-                    
-                    Text("Try tapping 'Retry with alternate lookup'")
-                        .foregroundColor(.secondary)
-                        .font(.caption)
-                        .padding(.top, 8)
-                    
-                    Button("Retry with alternate lookup") {
-                        tryAlternateLookup()
-                    }
-                    .padding(.top, 16)
-                    
-                    Button("Parse from raw JSON") {
-                        parseSampleJson()
-                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 42)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.white)
+                            .shadow(color: Color.black.opacity(0.14), radius: 6, x: 0, y: 3)
+                    )
+                    .padding(.horizontal, 16)
                     .padding(.top, 8)
                     
-                    Text(rawData)
-                        .font(.system(.caption, design: .monospaced))
-                        .padding()
-                        .background(Color.black.opacity(0.05))
-                        .cornerRadius(8)
-                }
-            } else {
-                Text("No nutrition info available.")
-            }
-        }
-        .padding()
-        .onAppear {
-            fetchNutrition()
-        }
-    }
-    
-    private func isUUID(_ string: String) -> Bool {
-        let uuidPattern = "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$"
-        let predicate = NSPredicate(format: "SELF MATCHES %@", uuidPattern)
-        return predicate.evaluate(with: string)
-    }
-    
-    private func isEdamamFoodID(_ string: String) -> Bool {
-        return string.starts(with: "food_") && string.count > 10
-    }
-    
-    private func lookupByName(_ name: String) {
-        if let foodId = FoodIDService.shared.getFoodID(for: name) {
-            performDirectIDLookup(foodId)
-        } else {
-            isError = true
-            isErrorMessage = "Couldn't find food ID for '\(name)'."
-        }
-    }
-    
-    private func performDirectIDLookup(_ id: String) {
-        nutritionController.fetchIngredientNutrition(for: id) { result in
-            switch result {
-            case .success(let nutrition):
-                self.nutritionInfo = nutrition
-                self.isError = false
-                
-                // Create raw data representation for debugging
-                if let data = try? JSONEncoder().encode(nutrition),
-                   let json = String(data: data, encoding: .utf8) {
-                    self.rawData = json
-                } else {
-                    self.rawData = "Error converting nutrition to JSON"
-                }
-                
-            case .failure(let error):
-                self.isError = true
-                self.isErrorMessage = "Failed to load nutrition: \(error.localizedDescription)"
-                
-                if let decodingError = error as? DecodingError {
-                    switch decodingError {
-                    case .typeMismatch(let type, let context):
-                        self.rawData = "Type mismatch: Expected \(type) at \(context.codingPath)"
-                    case .valueNotFound(let type, let context):
-                        self.rawData = "Value not found: Expected \(type) at \(context.codingPath)"
-                    case .keyNotFound(let key, let context):
-                        self.rawData = "Key not found: \(key) at \(context.codingPath)"
-                    case .dataCorrupted(let context):
-                        self.rawData = "Data corrupted: \(context.debugDescription)"
-                    @unknown default:
-                        self.rawData = "Unknown decoding error: \(decodingError)"
+                    // Nutrition wheel box
+                    VStack(spacing: 24) {
+                        Text("Nutrition Overview")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal)
+                            .padding(.top, 24)
+                        
+                        // Legend first for better clarity
+                        HStack {
+                            Spacer()
+                            
+                            ForEach([
+                                (color: Color.red, name: "Protein"),
+                                (color: Color.blue, name: "Carbs"),
+                                (color: Color.yellow, name: "Fat")
+                            ], id: \.name) { item in
+                                HStack(spacing: 6) {
+                                    Circle()
+                                        .fill(item.color)
+                                        .frame(width: 16, height: 16)
+                                    Text(item.name)
+                                        .font(.caption)
+                                        .fontWeight(.medium)
+                                }
+                                .padding(.horizontal, 8)
+                            }
+                        }
+                        .padding(.horizontal)
+                        
+                        // For larger screens, show wheel and macros side by side
+                        // For smaller screens, stack them vertically
+                        if geometry.size.width > 500 {
+                            HStack(alignment: .center, spacing: 30) {
+                                nutritionWheel(calories: calories, proteinPercent: proteinPercent, carbsPercent: carbsPercent, fatPercent: fatPercent)
+                                
+                                // Legend and macronutrient values
+                                VStack(alignment: .leading, spacing: 22) {
+                                    MacroRow(color: .red, name: "Protein", value: protein, unit: "g")
+                                    MacroRow(color: .blue, name: "Carbs", value: carbs, unit: "g")
+                                    MacroRow(color: .yellow, name: "Fat", value: fat, unit: "g")
+                                }
+                                .padding(.trailing)
+                            }
+                            .padding(.bottom, 30)
+                        } else {
+                            VStack(spacing: 24) {
+                                nutritionWheel(calories: calories, proteinPercent: proteinPercent, carbsPercent: carbsPercent, fatPercent: fatPercent)
+                                
+                                // Legend and macronutrient values in horizontal layout for small screens
+                                VStack(alignment: .leading, spacing: 22) {
+                                    MacroRow(color: .red, name: "Protein", value: protein, unit: "g")
+                                    MacroRow(color: .blue, name: "Carbs", value: carbs, unit: "g")
+                                    MacroRow(color: .yellow, name: "Fat", value: fat, unit: "g")
+                                }
+                                .padding(.horizontal)
+                            }
+                            .padding(.bottom, 30)
+                        }
                     }
-                } else {
-                    self.rawData = "Error: \(error.localizedDescription)"
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 26)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.white)
+                            .shadow(color: Color.black.opacity(0.14), radius: 6, x: 0, y: 3)
+                    )
+                    .padding(.horizontal, 16)
                     
-                    let errorString = error.localizedDescription
-                    if errorString.contains("AWSIngredientModel") {
-                        createNutritionFromIngredientModel(errorString)
+                    // Macronutrient Breakdown
+                    VStack(spacing: 24) {
+                        Text("Macronutrient Breakdown")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal)
+                            .padding(.top, 24)
+                        
+                        // Protein bar
+                        NutrientProgressBar(
+                            label: "Protein",
+                            value: protein,
+                            total: Int(totalMacros),
+                            unit: "g",
+                            color: .red
+                        )
+                        
+                        // Carbs bar
+                        NutrientProgressBar(
+                            label: "Carbohydrates",
+                            value: carbs,
+                            total: Int(totalMacros),
+                            unit: "g",
+                            color: .blue
+                        )
+                        
+                        // Fat bar
+                        NutrientProgressBar(
+                            label: "Fat",
+                            value: fat,
+                            total: Int(totalMacros),
+                            unit: "g",
+                            color: .yellow
+                        )
+                        
+                        // Percentage breakdown
+                        HStack(spacing: 0) {
+                            ForEach([
+                                (label: "Protein", value: proteinPercent, color: Color.red),
+                                (label: "Carbs", value: carbsPercent, color: Color.blue),
+                                (label: "Fat", value: fatPercent, color: Color.yellow)
+                            ], id: \.label) { item in
+                                VStack(spacing: 6) {
+                                    Text("\(Int(item.value * 100))%")
+                                        .font(.system(size: 20, weight: .bold))
+                                    
+                                    Text(item.label)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(item.color.opacity(0.1))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .padding(.horizontal, 4)
+                            }
+                        }
+                        .padding(.horizontal)
+                        .padding(.vertical, 20)
                     }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 26)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.white)
+                            .shadow(color: Color.black.opacity(0.14), radius: 6, x: 0, y: 3)
+                    )
+                    .padding(.horizontal, 16)
+                    
+                    // Additional Nutrients
+                    VStack(spacing: 24) {
+                        Text("Additional Nutrients")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal)
+                            .padding(.top, 24)
+                        
+                        // For larger screens, use grid layout
+                        if geometry.size.width > 500 {
+                            LazyVGrid(columns: [
+                                GridItem(.flexible()),
+                                GridItem(.flexible()),
+                                GridItem(.flexible())
+                            ], spacing: 16) {
+                                NutrientCard(name: "Cholesterol", value: cholesterol, unit: "mg")
+                                NutrientCard(name: "Sodium", value: sodium, unit: "mg")
+                                NutrientCard(name: "Potassium", value: potassium, unit: "mg")
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.bottom, 30)
+                        } else {
+                            HStack(spacing: 0) {
+                                // Cholesterol card
+                                NutrientCard(
+                                    name: "Cholesterol",
+                                    value: cholesterol,
+                                    unit: "mg"
+                                )
+                                
+                                // Sodium card
+                                NutrientCard(
+                                    name: "Sodium",
+                                    value: sodium,
+                                    unit: "mg"
+                                )
+                                
+                                // Potassium card
+                                NutrientCard(
+                                    name: "Potassium",
+                                    value: potassium,
+                                    unit: "mg"
+                                )
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.bottom, 30)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 26)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.white)
+                            .shadow(color: Color.black.opacity(0.14), radius: 6, x: 0, y: 3)
+                    )
+                    .padding(.horizontal, 16)
+                    
+                    // Food Benefits
+                    VStack(spacing: 14) {
+                        Text("Food Benefits")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal)
+                            .padding(.top, 24)
+                        
+                        Text(getFoodBenefits(for: foodName.lowercased(), category: foodCategory))
+                            .font(.body)
+                            .multilineTextAlignment(.leading)
+                            .lineSpacing(4)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 30)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 26)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.white)
+                            .shadow(color: Color.black.opacity(0.14), radius: 6, x: 0, y: 3)
+                    )
+                    .padding(.horizontal, 16)
+                    
+                    // Data source note
+                    Text("Note: Food data sourced from USDA Food Database and nutritional guidelines")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 20)
+                    
+                    Spacer(minLength: 24)
                 }
+                .padding(.vertical, 24)
+                .frame(width: geometry.size.width)
+                .padding(.bottom, geometry.safeAreaInsets.bottom)
+            }
+            .background(Color.white.edgesIgnoringSafeArea(.all))
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .edgesIgnoringSafeArea(.bottom)
+            .onAppear {
+                print("Full-screen nutrition view appeared for \(foodName)")
             }
         }
     }
     
-    /// Try to create a nutrition model from an AWSIngredientModel string in the error
-    private func createNutritionFromIngredientModel(_ errorString: String) {
-        let pattern = #"AWSIngredientModel\(edamamFoodId: "([^"]+)", foodCategory: "([^"]+)", name: "([^"]+)", quantityType: "([^"]+)", experiationDuration: (\d+), imageURL: "[^"]*"\)"#
-        
-        guard let regex = try? NSRegularExpression(pattern: pattern),
-              let match = regex.firstMatch(in: errorString, range: NSRange(errorString.startIndex..., in: errorString)) else {
-            return
-        }
-        
-        // Extract all the matched groups
-        let edamamFoodId = extractMatchGroup(match, at: 1, from: errorString)
-        let foodCategory = extractMatchGroup(match, at: 2, from: errorString)
-        let name = extractMatchGroup(match, at: 3, from: errorString)
-        let quantityType = extractMatchGroup(match, at: 4, from: errorString)
-        let experiationDurationStr = extractMatchGroup(match, at: 5, from: errorString)
-        let experiationDuration = Int(experiationDurationStr) ?? 0
-        
-        // Try to get nutritional values based on the name
-        let (fat, cholesterol, sodium, potassium, carbohydrate, protein, calorie) = 
-            getDefaultNutritionValues(for: name.lowercased())
-        
-        let simplifiedNutrition = AWSIngredientNutritionModel(
-            edamamFoodId: edamamFoodId,
-            name: name,
-            foodCategory: foodCategory,
-            quantityType: quantityType,
-            experiationDuration: experiationDuration,
-            fat: fat,
-            cholesterol: cholesterol,
-            sodium: sodium,
-            potassium: potassium,
-            carbohydrate: carbohydrate,
-            protein: protein,
-            calorie: calorie,
-            quantity: 100.0
-        )
-        
-        self.nutritionInfo = simplifiedNutrition
-        self.isError = false
-        self.rawData = "Created nutrition model from ingredient data with default nutrition values for \(name)."
-    }
-    
-    /// Return default nutrition values for common foods (per 100g)
-    private func getDefaultNutritionValues(for foodName: String) -> (fat: Double, cholesterol: Double, sodium: Double, potassium: Double, carbohydrate: Double, protein: Double, calorie: Double) {
-        
-        // Common nutritional values per 100g
-        let defaultValues: [String: (fat: Double, cholesterol: Double, sodium: Double, potassium: Double, carbohydrate: Double, protein: Double, calorie: Double)] = [
-            "egg": (5.0, 373.0, 124.0, 126.0, 0.7, 12.6, 143.0),
-            "chicken": (9.3, 88.0, 86.0, 229.0, 0.0, 27.0, 195.0),
-            "chicken breast": (3.6, 85.0, 65.0, 256.0, 0.0, 31.0, 165.0),
-            "beef": (15.0, 75.0, 66.0, 318.0, 0.0, 26.0, 250.0),
-            "salmon": (13.0, 55.0, 59.0, 363.0, 0.0, 20.0, 208.0),
-            "tuna": (1.0, 38.0, 37.0, 237.0, 0.0, 23.6, 109.0),
-            "shrimp": (0.9, 189.0, 111.0, 220.0, 0.0, 24.0, 119.0),
-            "apple": (0.2, 0.0, 1.0, 107.0, 14.0, 0.3, 52.0),
-            "banana": (0.3, 0.0, 1.0, 358.0, 23.0, 1.1, 89.0),
-            "broccoli": (0.4, 0.0, 33.0, 316.0, 7.0, 2.8, 34.0),
-            "carrot": (0.2, 0.0, 69.0, 320.0, 9.6, 0.9, 41.0),
-            "potato": (0.1, 0.0, 6.0, 421.0, 17.0, 2.0, 77.0),
-            "rice": (0.3, 0.0, 1.0, 35.0, 28.0, 2.7, 130.0),
-            "bread": (3.2, 0.0, 491.0, 126.0, 49.0, 9.0, 265.0),
-            "milk": (3.3, 10.0, 43.0, 150.0, 5.0, 3.4, 60.0),
-            "cheese": (33.0, 105.0, 653.0, 98.0, 3.1, 25.0, 402.0),
-            "yogurt": (0.4, 5.0, 36.0, 141.0, 4.7, 3.6, 59.0)
-        ]
-        
-        // Check for exact match
-        if let values = defaultValues[foodName] {
-            return values
-        }
-        
-        // Check for partial match
-        for (key, values) in defaultValues {
-            if foodName.contains(key) || key.contains(foodName) {
-                return values
-            }
-        }
-        
-        // Return generic values as fallback
-        return (fat: 5.0, cholesterol: 50.0, sodium: 100.0, potassium: 200.0, carbohydrate: 10.0, protein: 10.0, calorie: 150.0)
-    }
-    
-    /// Helper to extract a match group from a regex result
-    private func extractMatchGroup(_ match: NSTextCheckingResult, at idx: Int, from string: String) -> String {
-        let range = match.range(at: idx)
-        if range.location != NSNotFound,
-           let substringRange = Range(range, in: string) {
-            return String(string[substringRange])
-        }
-        return ""
-    }
-    
-    private func tryAlternateLookup() {
-        // If direct ID lookup failed, try by name
-        if usesDirectID && ingredientName != nil {
-            lookupByName(ingredientName!)
-        }
-        else if !usesDirectID {
-            // Try a fuzzy match
-            let words = foodIdentifier.lowercased().split(separator: " ")
-            var possibleMatches: [(name: String, id: String)] = []
-            
-            for word in words where word.count > 3 {
-                let similarNames = FoodIDService.shared.getSimilarNames(containing: String(word))
-                possibleMatches.append(contentsOf: similarNames)
-            }
-            
-            if let firstMatch = possibleMatches.first {
-                performDirectIDLookup(firstMatch.id)
-            } else {
-                isErrorMessage = "No similar ingredients found in our database."
-                
-                if rawData.contains("{") && rawData.contains("}") {
-                    parseRawJsonResponse(rawData)
-                }
-            }
-        } else {
-            if rawData.contains("{") && rawData.contains("}") {
-                parseRawJsonResponse(rawData)
-            }
-        }
-    }
-    
-    /// Attempt to manually parse the raw JSON response string if regular decoding fails
-    private func parseRawJsonResponse(_ jsonString: String) {
-        // Check if the string contains raw response
-        var cleanedJsonString = jsonString
-        if jsonString.contains("Raw response:") {
-            if let jsonStart = jsonString.range(of: "{"),
-               let jsonEnd = jsonString.range(of: "}", options: .backwards) {
-                let startIndex = jsonStart.lowerBound
-                let endIndex = jsonEnd.upperBound
-                cleanedJsonString = String(jsonString[startIndex..<endIndex])
-            }
-        }
-        
-        // Parse the json string
-        if let jsonData = cleanedJsonString.data(using: .utf8) {
-            do {
-                let nutrition = try JSONDecoder().decode(AWSIngredientNutritionModel.self, from: jsonData)
-                self.nutritionInfo = nutrition
-                self.isError = false
-                self.rawData = "Successfully parsed raw JSON: \(cleanedJsonString)"
-            } catch {
-                self.isError = true
-                self.isErrorMessage = "Failed to parse raw JSON: \(error.localizedDescription)"
-                self.rawData = "Error parsing JSON: \(error)\n\nRaw JSON: \(cleanedJsonString)"
-            }
-        }
-    }
-    
-    /// Parse sample JSON for testing purposes
-    private func parseSampleJson() {
-        let sampleJson = """
-        {"Calorie":72,"Carbohydrate":"0.00","Category":"Meats","Cholesterol":"136.85","Edamam_Food_ID":"food_bjap0xzbf5x6s3azkpwtfb14i25u","Fat":"0.43","Name":"Shrimp","Potassium":"224.40","Protein":"17.09","Quantity":85,"Quantity_Type":"grams","Sodium":"101.15"}
-        """
-        
-        if let jsonData = sampleJson.data(using: .utf8) {
-            do {
-                let nutrition = try JSONDecoder().decode(AWSIngredientNutritionModel.self, from: jsonData)
-                self.nutritionInfo = nutrition
-                self.isError = false
-                self.rawData = "Successfully parsed sample JSON"
-            } catch {
-                self.isError = true
-                self.isErrorMessage = "Failed to parse sample JSON: \(error.localizedDescription)"
-                self.rawData = "Error parsing JSON: \(error)"
-            }
-        }
-    }
-    
-    private func fetchNutrition() {
-        if usesDirectID && isEdamamFoodID(foodIdentifier) {
-            performDirectIDLookup(foodIdentifier)
-        }
-        else if usesDirectID && isUUID(foodIdentifier) && ingredientName != nil {
-            if let name = ingredientName {
-                lookupByName(name)
-            } else {
-                performDirectIDLookup(foodIdentifier)
-            }
-        } else if usesDirectID {
-            performDirectIDLookup(foodIdentifier)
-        } else {
-            lookupByName(foodIdentifier)
-        }
-    }
-}
-
-struct NutrientRow: View {
-    let name: String
-    let value: Double
-    let unit: String
-    
-    var body: some View {
-        HStack {
-            Text(name)
-                .font(.subheadline)
-            Spacer()
-            Text("\(value, specifier: "%.1f") \(unit)")
-                .font(.subheadline)
-                .bold()
-        }
-    }
-}
-
-struct NutrientRowEnhanced: View {
-    let name: String
-    let value: Double
-    let unit: String
-    let dailyValue: Int
-    
-    var percentOfDaily: Int {
-        Int(round(value / Double(dailyValue) * 100))
-    }
-    
-    var body: some View {
-        HStack(alignment: .center) {
-            Text(name)
-                .font(.body)
-            
-            Spacer()
-            
-            Text("\(value, specifier: "%.1f") \(unit)")
-                .font(.body)
-                .bold()
-            
-            Text("\(percentOfDaily)%")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .frame(width: 40, alignment: .trailing)
-        }
-    }
-}
-
-struct LegendItem: View {
-    let color: Color
-    let label: String
-    
-    var body: some View {
-        HStack(spacing: 4) {
-            Circle()
-                .fill(color)
-                .frame(width: 12, height: 12)
-            
-            Text(label)
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-    }
-}
-
-struct NutritionPieChart: View {
-    let carbs: Double
-    let protein: Double
-    let fat: Double
-    
-    private var total: Double {
-        max(carbs + protein + fat, 1.0)
-    }
-    
-    private var carbsAngle: Double {
-        360.0 * (carbs / total)
-    }
-    
-    private var proteinAngle: Double {
-        360.0 * (protein / total)
-    }
-    
-    private var fatAngle: Double {
-        360.0 * (fat / total)
-    }
-    
-    var body: some View {
+    // Extracted the nutrition wheel to a separate function for reuse
+    private func nutritionWheel(calories: Int, proteinPercent: Double, carbsPercent: Double, fatPercent: Double) -> some View {
         ZStack {
-            // Carbs (blue)
-            PieSlice(startAngle: 0, endAngle: carbsAngle)
-                .fill(Color.blue)
+            // Draw the pie chart segments
+            Circle()
+                .trim(from: 0, to: CGFloat(proteinPercent))
+                .stroke(Color.red, lineWidth: 45)
+                .rotationEffect(.degrees(-90))
+                .frame(width: 200, height: 200)
             
-            // Protein (red)
-            PieSlice(startAngle: carbsAngle, endAngle: carbsAngle + proteinAngle)
-                .fill(Color.red)
+            Circle()
+                .trim(from: 0, to: CGFloat(carbsPercent))
+                .stroke(Color.blue, lineWidth: 45)
+                .rotationEffect(.degrees(-90 + 360 * proteinPercent))
+                .frame(width: 200, height: 200)
             
-            // Fat (yellow)
-            PieSlice(startAngle: carbsAngle + proteinAngle, endAngle: 360)
-                .fill(Color.yellow)
+            Circle()
+                .trim(from: 0, to: CGFloat(fatPercent))
+                .stroke(Color.yellow, lineWidth: 45)
+                .rotationEffect(.degrees(-90 + 360 * (proteinPercent + carbsPercent)))
+                .frame(width: 200, height: 200)
             
+            // Center text with calorie count
             VStack {
-                Text("\(Int(total))")
-                    .font(.system(size: 24, weight: .bold))
+                Text("\(calories)")
+                    .font(.system(size: 34, weight: .bold))
                 
-                Text("grams")
+                Text("CALORIES")
                     .font(.caption)
+                    .fontWeight(.bold)
                     .foregroundColor(.secondary)
             }
         }
-        .aspectRatio(1, contentMode: .fit)
+        .frame(width: 200, height: 200)
+        .padding()
+    }
+    
+    // Get food benefits based on food category
+    // Food descriptions are generated based on category using a predefined template
+    private func getFoodBenefits(for name: String, category: String) -> String {
+        switch category {
+        case "Vegetables":
+            return "\(foodName) is rich in vitamins, minerals, and dietary fiber. Vegetables are generally low in calories and fat, making them an excellent choice for a healthy diet. They contain antioxidants that help protect your cells from damage."
+        case "Fruits":
+            return "\(foodName) contains natural sugars, fiber, and various essential nutrients. Fruits are packed with vitamins, particularly vitamin C, and antioxidants that can help reduce the risk of chronic diseases."
+        case "Meats":
+            return "\(foodName) is a good source of high-quality protein, iron, zinc, and B-vitamins. Protein is essential for building and repairing tissues, and supporting immune function."
+        case "Seafood":
+            return "\(foodName) is typically high in protein and omega-3 fatty acids, which are beneficial for heart health. Seafood is also rich in essential nutrients like vitamin D and selenium."
+        case "Grains":
+            return "\(foodName) provides complex carbohydrates, fiber, and essential nutrients. Whole grains in particular can help reduce the risk of heart disease, type 2 diabetes, and maintain digestive health."
+        case "Dairy":
+            return "\(foodName) is rich in calcium, protein, and often fortified with vitamin D. These nutrients are important for bone health, muscle function, and immune support."
+        case "Spices":
+            return "\(foodName) can add flavor to dishes without adding significant calories. Many spices contain compounds with anti-inflammatory and antioxidant properties."
+        case "Condiments":
+            return "\(foodName) adds flavor to meals. Using condiments moderately can enhance the taste of food while being mindful of added sugars, sodium, or fats."
+        default:
+            return "\(foodName) is part of a balanced diet. Different foods provide various nutrients that your body needs for overall health and wellbeing."
+        }
+    }
+    
+    // Helper functions
+    private static func getFoodCategory(for name: String) -> String {
+        let vegetables = ["tomato", "broccoli", "carrot", "spinach", "kale", "potato", "garlic", 
+                         "bell pepper", "corn", "endive", "lettuce", "celery", "onion", "green bean",
+                         "asparagus", "cabbage", "cucumber", "eggplant", "zucchini", "squash", "pumpkin"]
+        
+        let fruits = ["apple", "banana", "orange", "pineapple", "grape", "strawberry", 
+                      "blueberry", "avocado", "coconut", "mango", "watermelon", "kiwi", "peach",
+                      "pear", "plum", "cherry", "lemon", "lime", "grapefruit", "raspberry", "blackberry"]
+        
+        let meats = ["chicken", "beef", "pork", "bacon", "ham", "turkey", "sausage", "lamb",
+                    "steak", "ground beef", "brisket", "ribs", "veal", "venison", "duck"]
+        
+        let seafood = ["salmon", "tuna", "shrimp", "crab", "lobster", "cod", "tilapia",
+                       "trout", "halibut", "sardine", "anchovy", "mackerel", "oyster", "clam", "mussel", "scallop"]
+                       
+        let grains = ["rice", "bread", "pasta", "oat", "barley", "quinoa", "couscous", "cereal",
+                     "wheat", "bulgur", "rye", "buckwheat", "millet", "corn", "tortilla"]
+                     
+        let dairy = ["milk", "cheese", "yogurt", "butter", "cream", "ice cream", "cottage cheese",
+                    "sour cream", "cream cheese", "cheddar", "mozzarella", "parmesan", "brie"]
+                    
+        let spices = ["salt", "pepper", "oregano", "basil", "thyme", "rosemary", "cinnamon",
+                     "cumin", "curry", "paprika", "chili", "nutmeg", "ginger", "turmeric", "cardamom"]
+                     
+        let condiments = ["ketchup", "mustard", "mayonnaise", "sauce", "dressing", "vinegar",
+                         "oil", "honey", "syrup", "jam", "jelly", "salsa", "relish", "soy sauce"]
+        
+        // Check for matches in each category
+        if containsAny(name, words: vegetables) { return "Vegetables" }
+        if containsAny(name, words: fruits) { return "Fruits" }
+        if containsAny(name, words: meats) { return "Meats" }
+        if containsAny(name, words: seafood) { return "Seafood" }
+        if containsAny(name, words: grains) { return "Grains" }
+        if containsAny(name, words: dairy) { return "Dairy" }
+        if containsAny(name, words: spices) { return "Spices" }
+        if containsAny(name, words: condiments) { return "Condiments" }
+        
+        return "Other"
+    }
+    
+    // Helper function to check if a string contains any word from a list
+    private static func containsAny(_ text: String, words: [String]) -> Bool {
+        for word in words {
+            if text.contains(word) || word.contains(text) {
+                return true
+            }
+        }
+        return false
+    }
+    
+    private func getFoodNutrition(for name: String) -> (calories: Int, protein: Int, carbs: Int, fat: Int) {
+        let nutrition: [String: (calories: Int, protein: Int, carbs: Int, fat: Int)] = [
+            // Vegetables
+            "tomato": (18, 1, 4, 0),
+            "broccoli": (34, 3, 7, 0),
+            "carrot": (41, 1, 10, 0),
+            "spinach": (23, 3, 4, 0),
+            "kale": (49, 4, 9, 1),
+            "potato": (77, 2, 17, 0),
+            "garlic": (149, 6, 33, 1),
+            "bell pepper": (30, 1, 7, 0),
+            "corn": (86, 3, 19, 1),
+            "endive": (17, 1, 3, 0),
+            "lettuce": (15, 1, 3, 0),
+            "celery": (16, 1, 3, 0),
+            "onion": (40, 1, 9, 0),
+            "green bean": (31, 2, 7, 0),
+            "asparagus": (20, 2, 4, 0),
+            "cucumber": (15, 1, 3, 0),
+            "eggplant": (25, 1, 6, 0),
+            "zucchini": (17, 1, 3, 0),
+            
+            // Fruits
+            "apple": (52, 0, 14, 0),
+            "banana": (89, 1, 23, 0),
+            "orange": (47, 1, 12, 0),
+            "pineapple": (50, 1, 13, 0),
+            "grape": (69, 1, 18, 0),
+            "strawberry": (32, 1, 8, 0),
+            "blueberry": (57, 1, 14, 0),
+            "avocado": (160, 2, 9, 15),
+            "coconut": (354, 3, 15, 33),
+            "mango": (60, 1, 15, 0),
+            "watermelon": (30, 1, 8, 0),
+            "kiwi": (61, 1, 15, 1),
+            "peach": (39, 1, 10, 0),
+            "lemon": (29, 1, 9, 0),
+            
+            // Meats
+            "chicken": (165, 31, 0, 4),
+            "beef": (250, 26, 0, 15),
+            "pork": (242, 26, 0, 14),
+            "bacon": (541, 37, 1, 42),
+            "ham": (145, 21, 1, 5),
+            "turkey": (189, 29, 0, 7),
+            "sausage": (301, 16, 3, 25),
+            "lamb": (294, 25, 0, 21),
+            "steak": (271, 25, 0, 19),
+            "ground beef": (250, 26, 0, 15),
+            "duck": (337, 19, 0, 28),
+            
+            // Seafood
+            "salmon": (208, 20, 0, 13),
+            "tuna": (109, 24, 0, 1),
+            "shrimp": (119, 24, 0, 1),
+            "crab": (97, 19, 0, 2),
+            "lobster": (89, 19, 0, 1),
+            "cod": (82, 18, 0, 1),
+            "tilapia": (128, 26, 0, 3),
+            "trout": (190, 27, 0, 8),
+            "halibut": (111, 23, 0, 2),
+            
+            // Specific cuts
+            "chicken breast": (165, 31, 0, 4),
+            "chicken wings": (290, 27, 0, 19),
+            
+            // Dairy
+            "milk": (60, 3, 5, 3),
+            "cheese": (402, 25, 3, 33),
+            "yogurt": (59, 4, 5, 0),
+            "butter": (717, 1, 0, 81),
+            "cream": (340, 2, 7, 33),
+            
+            // Grains
+            "rice": (130, 3, 28, 0),
+            "bread": (265, 9, 49, 3),
+            "pasta": (131, 5, 25, 1),
+            "oat": (389, 17, 66, 7),
+            "quinoa": (120, 4, 21, 2),
+            
+            // Other
+            "egg": (143, 13, 1, 10),
+            "honey": (304, 0, 82, 0),
+            "olive oil": (884, 0, 0, 100),
+            "sugar": (387, 0, 100, 0),
+            "chocolate": (546, 5, 61, 31),
+            "peanut butter": (588, 25, 20, 50)
+        ]
+        
+        // Check for exact match first
+        if let exact = nutrition[name] {
+            return exact
+        }
+        
+        // Check for partial match
+        for (key, value) in nutrition {
+            if name.contains(key) || key.contains(name) {
+                return value
+            }
+        }
+        
+        // Return standard values if no match found
+        return (120, 5, 10, 5)
+    }
+    
+    // Get additional nutrition info
+    private func getAdditionalNutrition(for name: String) -> (cholesterol: Int, sodium: Int, potassium: Int) {
+        let additionalNutrition: [String: (cholesterol: Int, sodium: Int, potassium: Int)] = [
+            // Vegetables
+            "tomato": (0, 5, 237),
+            "broccoli": (0, 33, 316),
+            "carrot": (0, 69, 320),
+            "spinach": (0, 79, 558),
+            "kale": (0, 53, 491),
+            "potato": (0, 6, 421),
+            "bell pepper": (0, 4, 211),
+            "corn": (0, 15, 270),
+            "cucumber": (0, 2, 147),
+            "onion": (0, 4, 146),
+            "garlic": (0, 17, 401),
+            "zucchini": (0, 8, 295),
+            "eggplant": (0, 2, 229),
+            "asparagus": (0, 2, 202),
+            
+            // Fruits
+            "apple": (0, 1, 107),
+            "banana": (0, 1, 358),
+            "orange": (0, 0, 181),
+            "avocado": (0, 7, 485),
+            "pineapple": (0, 1, 109),
+            "grape": (0, 2, 191),
+            "strawberry": (0, 1, 153),
+            "blueberry": (0, 1, 77),
+            "watermelon": (0, 2, 112),
+            "peach": (0, 0, 190),
+            "kiwi": (0, 3, 312),
+            "mango": (0, 2, 168),
+            "lemon": (0, 2, 138),
+            
+            // Meats
+            "chicken": (85, 65, 256),
+            "beef": (75, 66, 318),
+            "pork": (80, 65, 340),
+            "bacon": (110, 1900, 240),
+            "ham": (53, 1203, 270),
+            "turkey": (65, 68, 252),
+            "sausage": (65, 800, 315),
+            "lamb": (83, 65, 310),
+            "steak": (77, 56, 323),
+            "ground beef": (78, 76, 305),
+            "duck": (84, 59, 271),
+            "chicken breast": (85, 65, 256),
+            "chicken wings": (93, 86, 243),
+            
+            // Seafood
+            "salmon": (55, 59, 363),
+            "tuna": (38, 37, 237),
+            "shrimp": (189, 111, 220),
+            "crab": (78, 320, 275),
+            "lobster": (95, 323, 300),
+            "cod": (43, 58, 302),
+            "tilapia": (57, 56, 302),
+            "trout": (63, 58, 375),
+            "halibut": (41, 59, 490),
+            
+            // Dairy
+            "milk": (10, 43, 150),
+            "cheese": (105, 653, 98),
+            "yogurt": (12, 56, 234),
+            "butter": (215, 714, 24),
+            "cream": (166, 104, 28),
+            
+            // Grains
+            "rice": (0, 5, 55),
+            "bread": (0, 450, 107),
+            "pasta": (0, 1, 61),
+            "oat": (0, 2, 165),
+            "quinoa": (0, 7, 172),
+            
+            // Others
+            "egg": (373, 124, 126),
+            "honey": (0, 4, 52),
+            "olive oil": (0, 2, 1),
+            "peanut butter": (0, 156, 208)
+        ]
+        
+        // Check for exact match first
+        if let exact = additionalNutrition[name] {
+            return exact
+        }
+        
+        // Check for partial match
+        for (key, value) in additionalNutrition {
+            if name.contains(key) || key.contains(name) {
+                return value
+            }
+        }
+        
+        // Standard values if no match found
+        return (20, 80, 200)
     }
 }
 
-// Pie slice shape for the chart
-struct PieSlice: Shape {
-    var startAngle: Double
-    var endAngle: Double
+// Macro nutrient row with color indicator
+struct MacroRow: View {
+    let color: Color
+    let name: String
+    let value: Int
+    let unit: String
     
-    func path(in rect: CGRect) -> Path {
-        let center = CGPoint(x: rect.midX, y: rect.midY)
-        let radius = min(rect.width, rect.height) / 2
-        
-        var path = Path()
-        path.move(to: center)
-        
-        path.addArc(
-            center: center,
-            radius: radius,
-            startAngle: .degrees(startAngle - 90),
-            endAngle: .degrees(endAngle - 90),
-            clockwise: false
-        )
-        
-        path.closeSubpath()
-        return path
+    var body: some View {
+        HStack(spacing: 14) {
+            Circle()
+                .fill(color)
+                .frame(width: 18, height: 18)
+            
+            Text(name)
+                .font(.system(size: 16, weight: .medium))
+            
+            Spacer()
+            
+            Text("\(value)\(unit)")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(color.opacity(0.9))
+        }
+        .padding(.vertical, 8)
+    }
+}
+
+// Nutrient progress bar
+struct NutrientProgressBar: View {
+    let label: String
+    let value: Int
+    let total: Int
+    let unit: String
+    let color: Color
+    
+    var percentage: CGFloat {
+        if total <= 0 { return 0.05 }
+        return min(CGFloat(value) / CGFloat(total), 1.0)
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text(label)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(.secondary)
+                
+                Spacer()
+                
+                Text("\(value)\(unit)")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(color.opacity(0.9))
+            }
+            .padding(.bottom, 4)
+            
+            ZStack(alignment: .leading) {
+                Rectangle()
+                    .fill(Color.gray.opacity(0.15))
+                    .frame(height: 16)
+                    .cornerRadius(8)
+                
+                Rectangle()
+                    .fill(color)
+                    .frame(width: max(24, UIScreen.main.bounds.width * 0.7 * percentage), height: 16)
+                    .cornerRadius(8)
+            }
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 12)
+    }
+}
+
+// Nutrient card for additional nutrients
+struct NutrientCard: View {
+    let name: String
+    let value: Int
+    let unit: String
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            Text(name)
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.top, 8)
+            
+            Text("\(value)")
+                .font(.system(size: 28, weight: .bold))
+                .padding(.vertical, 4)
+            
+            Text(unit)
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundColor(.secondary)
+                .padding(.bottom, 8)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 28)
+        .background(Color.white)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.08), radius: 3, x: 0, y: 2)
+        .padding(.horizontal, 4)
     }
 }
