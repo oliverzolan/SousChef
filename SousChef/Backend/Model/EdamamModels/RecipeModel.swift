@@ -27,7 +27,6 @@ struct EdamamRecipeResponse: Codable {
         to = try container.decodeIfPresent(Int.self, forKey: .to)
         count = try container.decodeIfPresent(Int.self, forKey: .count)
         
-        // Creates empty _link if cannot decode
         _links = try? container.decodeIfPresent(EdamamLinks.self, forKey: ._links)
     }
 }

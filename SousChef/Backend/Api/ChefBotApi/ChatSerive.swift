@@ -11,13 +11,13 @@ class ChatService {
     private let apiURL = "https://api.openai.com/v1/chat/completions"
     
     private init() {
-        // Try to load API key from environment variable (Info.plist or XCConfig)
+        // Try to load API key from environment variable
         if let key = ProcessInfo.processInfo.environment["OPENAI_API_KEY"] {
             self.apiKey = key
             return
         }
 
-        // Or try loading from .env file in dev (optional)
+        // Or try loading from .env file in dev
         if let envPath = Bundle.main.path(forResource: ".env", ofType: nil),
            let envContents = try? String(contentsOfFile: envPath, encoding: .utf8) {
             let lines = envContents.components(separatedBy: .newlines)
@@ -30,12 +30,11 @@ class ChatService {
             }
         }
 
-        // Final fallback
         fatalError("OPENAI_API_KEY not found. Please set it in environment variables or .env file.")
     }
 
 
-    private var messageHistory: [[String: String]] = []  // Stores previous interactions
+    private var messageHistory: [[String: String]] = []
 
     // Customizable system prompt
     private var systemPrompt: String = """
@@ -49,7 +48,7 @@ class ChatService {
     - End responses with flair like: 'Let's get cookin'!' or 'Bon appétit!'
     """
 
-    /// Update system prompt dynamically
+    // Update system prompt dynamically
     func updateSystemPrompt(_ newPrompt: String) {
         self.systemPrompt = newPrompt
     }

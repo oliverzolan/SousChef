@@ -16,7 +16,7 @@ class FoodIDService {
         loadFoodIDs()
     }
     
-    /// Find the path to the foodID.json file
+    // Find the path to the foodID.json file
     private func findJSONFilePath() {
         // Get the main bundle path for debugging
         let mainBundlePath = Bundle.main.bundlePath
@@ -62,7 +62,7 @@ class FoodIDService {
         print("Could not find foodID.json in any expected location")
     }
     
-    /// Load the food IDs from the JSON file
+    // Load the food IDs from the JSON file
     private func loadFoodIDs() {
         // If we found a path to the JSON file, try to load it
         if let path = jsonFilePath {
@@ -105,7 +105,7 @@ class FoodIDService {
         }
     }
     
-    /// Load food IDs directly from a string of the JSON data
+    // Load food IDs directly from a string of the JSON data
     private func loadFromEmbeddedData() -> Bool {
         let jsonString = """
         {
@@ -133,13 +133,13 @@ class FoodIDService {
         """
         
         guard let jsonData = jsonString.data(using: .utf8) else {
-            print("⛔️ Failed to convert embedded JSON string to data")
+            print("Failed to convert embedded JSON string to data")
             return false
         }
         
         do {
             let decodedData = try JSONDecoder().decode([String: String].self, from: jsonData)
-            print("✅ Successfully loaded \(decodedData.count) food IDs from embedded data")
+            print("Successfully loaded \(decodedData.count) food IDs from embedded data")
             
             // Store the decoded data
             for (id, name) in decodedData {
@@ -149,12 +149,12 @@ class FoodIDService {
             
             return true
         } catch {
-            print("⛔️ Error decoding embedded JSON data: \(error)")
+            print("Error decoding embedded JSON data: \(error)")
             return false
         }
     }
     
-    /// Fallback to load hardcoded data when file is not found
+    // Fallback to load hardcoded data when file is not found
     private func loadHardcodedData() {
         // Add a few common items directly here as fallback
         idToNameMap = [
@@ -179,9 +179,7 @@ class FoodIDService {
         print("Loaded \(idToNameMap.count) hardcoded food IDs as fallback")
     }
     
-    /// Get the food name for a given ID
-    /// - Parameter id: The Edamam food ID
-    /// - Returns: The food name if available, nil otherwise
+    // Get the food name for a given ID
     func getFoodName(for id: String) -> String? {
         if !isLoaded {
             loadFoodIDs()
@@ -189,9 +187,7 @@ class FoodIDService {
         return idToNameMap[id]
     }
     
-    /// Get the food ID for a given name
-    /// - Parameter name: The food name
-    /// - Returns: The Edamam food ID if available, nil otherwise
+    // Get the food ID for a given name
     func getFoodID(for name: String) -> String? {
         if !isLoaded {
             loadFoodIDs()
@@ -220,9 +216,7 @@ class FoodIDService {
         return nil
     }
     
-    /// Find similar food names that contain a given substring
-    /// - Parameter substring: The substring to search for in food names
-    /// - Returns: A dictionary of matching food names and their IDs
+    // Find similar food names that contain a given substring
     func getSimilarNames(containing substring: String) -> [(name: String, id: String)] {
         if !isLoaded {
             loadFoodIDs()
@@ -240,9 +234,7 @@ class FoodIDService {
         return matches
     }
     
-    /// Check if we have an ID for a given food name
-    /// - Parameter name: The food name
-    /// - Returns: True if the ID exists, false otherwise
+    // Check if we have an ID for a given food name
     func hasIDForName(_ name: String) -> Bool {
         if !isLoaded {
             loadFoodIDs()
@@ -257,7 +249,7 @@ class FoodIDService {
         return nameToIdMap[name.lowercased()] != nil
     }
     
-    /// Debug method to verify if foodID.json can be found
+    // Debug method to verify if foodID.json can be found
     func debugFilePaths() -> [String: Bool] {
         let fileManager = FileManager.default
         var results: [String: Bool] = [:]
@@ -277,12 +269,12 @@ class FoodIDService {
         return results
     }
     
-    /// Get the number of food IDs that have been loaded
+    // Get the number of food IDs that have been loaded
     func getLoadedCount() -> Int {
         return idToNameMap.count
     }
     
-    /// Check if we're using hardcoded data or loaded from file
+    // Check if we're using hardcoded data or loaded from file
     func isUsingHardcodedData() -> Bool {
         return jsonFilePath == nil
     }

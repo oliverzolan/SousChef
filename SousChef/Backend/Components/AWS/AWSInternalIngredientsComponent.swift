@@ -14,7 +14,7 @@ class AWSInternalIngredientsComponent: AWSAbstract {
         super.init(userSession: userSession, route: "/internal_ingredients") // Setting route for this component
     }
 
-    /// Search ingredients by name
+    // Search ingredients by name
     @MainActor func searchIngredients(query: String, limit: Int = 50, completion: @escaping (Result<[AWSIngredientModel], Error>) -> Void) {
         var urlComponents = URLComponents(string: baseURL + route + "/search")
         urlComponents?.queryItems = [
@@ -57,11 +57,6 @@ class AWSInternalIngredientsComponent: AWSAbstract {
                 return
             }
             
-            // Debug: Print the raw response data
-            if let responseString = String(data: data, encoding: .utf8) {
-                print("Raw response: \(responseString)")
-            }
-            
             // Check for error status code
             guard (200...299).contains(httpResponse.statusCode) else {
                 // Try to parse error message if available
@@ -75,7 +70,7 @@ class AWSInternalIngredientsComponent: AWSAbstract {
             }
             
             // Handle empty response (valid but empty)
-            if data.isEmpty || data.count == 2 { // Empty JSON array is 2 bytes "[]"
+            if data.isEmpty || data.count == 2 {
                 completion(.success([]))
                 return
             }
@@ -157,7 +152,7 @@ class AWSInternalIngredientsComponent: AWSAbstract {
             }
             
             // Handle empty response (valid but empty)
-            if data.isEmpty || data.count == 2 { // Empty JSON array is 2 bytes "[]"
+            if data.isEmpty || data.count == 2 {
                 completion(.success([]))
                 return
             }
@@ -180,7 +175,7 @@ class AWSInternalIngredientsComponent: AWSAbstract {
         }.resume()
     }
 
-    /// Check if an ingredient exists by name
+    // Check if an ingredient exists by name
     func checkIngredientExists(name: String, completion: @escaping (Bool) -> Void) {
         Task {
             await MainActor.run {

@@ -132,9 +132,9 @@ struct FoodIDDebugView: View {
         let isHardcoded = FoodIDService.shared.isUsingHardcodedData()
         
         if isHardcoded {
-            loadedInfo = "⚠️ Using hardcoded data with \(loadedCount) items\nEgg: \(egg ?? "Not found")\nApple: \(apple ?? "Not found")\nBanana: \(banana ?? "Not found")"
+            loadedInfo = "Using hardcoded data with \(loadedCount) items\nEgg: \(egg ?? "Not found")\nApple: \(apple ?? "Not found")\nBanana: \(banana ?? "Not found")"
         } else {
-            loadedInfo = "✅ Loaded \(loadedCount) items from JSON file\nEgg: \(egg ?? "Not found")\nApple: \(apple ?? "Not found")\nBanana: \(banana ?? "Not found")"
+            loadedInfo = "Loaded \(loadedCount) items from JSON file\nEgg: \(egg ?? "Not found")\nApple: \(apple ?? "Not found")\nBanana: \(banana ?? "Not found")"
         }
     }
     
@@ -143,9 +143,9 @@ struct FoodIDDebugView: View {
         
         for food in foods {
             if let id = FoodIDService.shared.getFoodID(for: food) {
-                lookupResults.append("\(food): ✅ (\(id))")
+                lookupResults.append("\(food): (\(id))")
             } else {
-                lookupResults.append("\(food): ❌ (Not found)")
+                lookupResults.append("\(food): (Not found)")
             }
         }
     }

@@ -97,7 +97,7 @@ class LiveReceiptScannerViewController: UIViewController, AVCaptureVideoDataOutp
         textDetectionRequest.usesLanguageCorrection = true
     }
 
-    //bottom view need to be connected (ignore edges)
+    //bottom view need to be connected
     private func setupOverlay() {
         view.layer.addSublayer(previewLayer)
         
@@ -123,9 +123,9 @@ class LiveReceiptScannerViewController: UIViewController, AVCaptureVideoDataOutp
         itemsTableView.dataSource = self
         itemsTableView.register(UITableViewCell.self, forCellReuseIdentifier: "itemCell")
         itemsTableView.translatesAutoresizingMaskIntoConstraints = false
-        itemsTableView.rowHeight = 44 // Set explicit row height
+        itemsTableView.rowHeight = 44
         itemsTableView.estimatedRowHeight = 44
-        itemsTableView.isScrollEnabled = true // Enable scrolling if there are many items
+        itemsTableView.isScrollEnabled = true
         itemsTableView.showsVerticalScrollIndicator = true
         overlayView.addSubview(itemsTableView)
         
@@ -149,7 +149,7 @@ class LiveReceiptScannerViewController: UIViewController, AVCaptureVideoDataOutp
             overlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             overlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             overlayView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            overlayView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.4), // Increase height
+            overlayView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.4),
             
             titleLabel.topAnchor.constraint(equalTo: overlayView.topAnchor, constant: 16),
             titleLabel.leadingAnchor.constraint(equalTo: overlayView.leadingAnchor),
